@@ -28,6 +28,8 @@ import com.tencent.mmkv.MMKV
 import ink.chyk.neuqrcode.components.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
+import java.time.*
+import java.time.format.*
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,7 +62,7 @@ fun ECodeView(mmkv: MMKV) {
   var showCode by remember { mutableStateOf(false) }
   var code by remember { mutableStateOf("") }
   var codeExpiredAt by remember { mutableStateOf(0L) }  // 以 ms 为单位的时间戳
-
+  var codeGenerateTime by remember { mutableStateOf(0L) }  // 以 ms 为单位的时间戳
   var userInfo by remember { mutableStateOf<ECodeUserinfoAttributes?>(null) }
 
   val scope = rememberCoroutineScope()
@@ -159,6 +161,7 @@ fun ECodeView(mmkv: MMKV) {
 
             showCode = true
             code = eCode!!.data[0].attributes.qrCode
+            codeGenerateTime = eCode.data[0].attributes.createTime
             codeExpiredAt = eCode.data[0].attributes.qrInvalidTime
           } catch (e: Exception) {
             // 错误处理逻辑
@@ -179,6 +182,7 @@ fun ECodeView(mmkv: MMKV) {
     Column(
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
       Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -198,25 +202,39 @@ fun ECodeView(mmkv: MMKV) {
         Spacer(modifier = Modifier.width(16.dp))
         Text("一码通", style = MaterialTheme.typography.headlineLarge)
       }
+
       Spacer(modifier = Modifier.height(32.dp))
+
       if (showCode) {
         ECodeImage(code)
       } else {
         ECodeLoading()
       }
+
       Spacer(modifier = Modifier.height(32.dp))
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Text(
-          text = if (userInfo != null) {
-            "${userInfo?.userCode} | ${userInfo?.userName} | ${userInfo?.unitName}"
-          } else {
-            "加载中..."
-          },
-          style = MaterialTheme.typography.bodyMedium
-        )
-      }
+
+      Text(
+        text = if (userInfo != null) {
+          "${userInfo?.userCode} | ${userInfo?.userName} | ${userInfo?.unitName}"
+        } else {
+          "加载中..."
+        },
+        style = MaterialTheme.typography.bodyMedium
+      )
+
+      Text(
+        text = if (showCode) {
+          val instant = Instant.ofEpochMilli(codeGenerateTime)
+          val localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime()
+          val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+          val generateTime = localDateTime.format(formatter)
+          "生成时间: $generateTime"
+        } else {
+          ""
+        },
+        style = MaterialTheme.typography.bodyMedium
+      )
+
     }
   }
 }
