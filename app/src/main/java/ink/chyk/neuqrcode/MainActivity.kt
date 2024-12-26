@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.*
@@ -243,7 +244,7 @@ fun ECodeView(mmkv: MMKV) {
 fun ECodeLoading() {
   Box(
     modifier = Modifier
-      .size(300.dp)
+      .size(210.dp)
       .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
     contentAlignment = Alignment.Center
   ) {
@@ -255,40 +256,42 @@ fun ECodeLoading() {
 fun ECodeImage(code: String) {
   Box(
     modifier = Modifier
-      .size(300.dp)
+      .size(210.dp)
       .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
     contentAlignment = Alignment.Center
   ) {
     val customFont = FontFamily(Font(R.font.iconfont))
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val backgroundColor = MaterialTheme.colorScheme.background
+    val primaryColor = Color(0xff006533)
+    val backgroundColor = Color.White
 
     generateColoredQRCode(
       code,
-      dpToPx(300.dp),
+      dpToPx(210.dp),
       primaryColor.toArgb(),
       backgroundColor.toArgb()
     ).let {
       Image(
         bitmap = it!!.asImageBitmap(),
         contentDescription = "ECode",
-        modifier = Modifier.size(300.dp),
+        modifier = Modifier
+          .size(210.dp)
+          .clip(RoundedCornerShape(8.dp)),
         contentScale = ContentScale.FillWidth
       )
     }
 
     Text(
       text = "●",
-      color = backgroundColor,
+      color = primaryColor,
       fontFamily = customFont,
-      fontSize = 70.sp,
+      fontSize = 48.sp,
     )
 
     Text(
       text = "\uE6BE",
-      color = primaryColor,
+      color = backgroundColor,
       fontFamily = customFont,
-      fontSize = 48.sp,
+      fontSize = 32.sp,
     )
   }
 }
