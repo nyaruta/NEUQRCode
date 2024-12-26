@@ -56,6 +56,7 @@ fun LoginForm(openMainPage: () -> Unit = {}) {
   var passwordVisible by remember { mutableStateOf(false) }
   var showErrorMessage by remember { mutableStateOf(false) }
   var errorMessage by remember { mutableStateOf("") }
+  var buttonEnabled by remember { mutableStateOf(true) }
 
   Box(
     modifier = Modifier
@@ -73,7 +74,10 @@ fun LoginForm(openMainPage: () -> Unit = {}) {
           .padding(16.dp)
       ) {
         UniformAuthTitle()
-        StudentIdInput(studentId, onStudentIdChange = { studentId = it })
+        StudentIdInput(studentId, onStudentIdChange = {
+          studentId = it
+          buttonEnabled = it.length == 8
+        })
         PasswordInput(
           password = password,
           onPasswordChange = { password = it },
@@ -85,7 +89,11 @@ fun LoginForm(openMainPage: () -> Unit = {}) {
             errorMessage = it
             showErrorMessage = true
           },
-          openMainPage = openMainPage
+          openMainPage = openMainPage,
+          enabled = buttonEnabled,
+          onClickAnd = {
+            buttonEnabled = false
+          }
         )
         if (showErrorMessage) {
           ErrorDialog(errorMessage, onDismissRequest = {
@@ -189,10 +197,13 @@ fun LoginButton(
   studentId: String,
   password: String,
   openErrorDialog: (String) -> Unit,
-  openMainPage: () -> Unit
+  openMainPage: () -> Unit,
+  enabled: Boolean,
+  onClickAnd: () -> Unit
 ) {
   // 登录按钮
   val coroScope = rememberCoroutineScope()
+
   Row(
     modifier = Modifier
       .fillMaxWidth()
@@ -201,6 +212,7 @@ fun LoginButton(
   ) {
     Button(
       onClick = {
+        onClickAnd()
         val mmkv = MMKV.defaultMMKV()
         mmkv.encode("student_id", studentId)
         mmkv.encode("password", password)
@@ -221,6 +233,7 @@ fun LoginButton(
           }
         }
       },
+      enabled = enabled
     ) {
       Text("登录")
     }
