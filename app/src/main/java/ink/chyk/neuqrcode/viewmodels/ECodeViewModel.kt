@@ -47,23 +47,33 @@ class ECodeViewModel(
   /**
    * 获取二维码
    */
+  private suspend fun _refreshECode() {
+    prepareSessionAnd { session ->
+      // 重新获取二维码
+      val eCode = neu.getQRCode(session)
+      if (_userInfo.value == null) {
+        _userInfo.value = neu.getECodeUserInfo(session).data[0].attributes
+      }
+      _code.value = eCode.data[0].attributes.qrCode
+      _codeGenerateTime.value = eCode.data[0].attributes.createTime
+      _codeExpiredAt.value = eCode.data[0].attributes.qrInvalidTime
+    }
+  }
+
   fun refreshECode() {
+    viewModelScope.launch {
+      _refreshECode()
+    }
+  }
+
+  private fun startRefreshECode() {
     viewModelScope.launch {
       while (true) {
         // 计时器
         val currentTime: Long = System.currentTimeMillis()
         // Log.d("ECode", "Current Time: $currentTime, Expired At: $codeExpiredAt")
         if (currentTime >= _codeExpiredAt.value) {
-          prepareSessionAnd { session ->
-            // 重新获取二维码
-            val eCode = neu.getQRCode(session)
-            if (_userInfo.value == null) {
-              _userInfo.value = neu.getECodeUserInfo(session).data[0].attributes
-            }
-            _code.value = eCode.data[0].attributes.qrCode
-            _codeGenerateTime.value = eCode.data[0].attributes.createTime
-            _codeExpiredAt.value = eCode.data[0].attributes.qrInvalidTime
-          }
+          _refreshECode()
         }
 
         // 每秒检查一次
@@ -73,6 +83,6 @@ class ECodeViewModel(
   }
 
   init {
-    refreshECode()
+    startRefreshECode()
   }
 }

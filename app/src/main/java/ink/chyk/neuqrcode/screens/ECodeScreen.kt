@@ -19,7 +19,6 @@ import androidx.navigation.*
 import com.google.zxing.*
 import com.google.zxing.qrcode.*
 import com.google.zxing.qrcode.decoder.*
-import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.viewmodels.*
 import java.time.*
@@ -64,7 +63,9 @@ fun ECodeScreen(viewModel: ECodeViewModel, navController: NavController) {
       Spacer(modifier = Modifier.height(32.dp))
 
       if (loadComplete) {
-        ECodeImage(code)
+        ECodeImage(code) {
+          viewModel.refreshECode()
+        }
       } else {
         ECodeLoading()
       }
@@ -112,7 +113,7 @@ fun ECodeLoading() {
 }
 
 @Composable
-fun ECodeImage(code: String) {
+fun ECodeImage(code: String, onClick: () -> Unit) {
   Box(
     modifier = Modifier
       .size(210.dp)
@@ -134,8 +135,9 @@ fun ECodeImage(code: String) {
         contentDescription = "ECode",
         modifier = Modifier
           .size(210.dp)
-          .clip(RoundedCornerShape(8.dp)),
-        contentScale = ContentScale.FillWidth
+          .clip(RoundedCornerShape(8.dp))
+          .clickable { onClick() },
+        contentScale = ContentScale.FillWidth,
       )
     }
 
