@@ -28,7 +28,6 @@ import com.google.zxing.qrcode.decoder.*
 import com.tencent.mmkv.MMKV
 import ink.chyk.neuqrcode.components.*
 import kotlinx.coroutines.*
-import kotlinx.serialization.json.*
 import java.time.*
 import java.time.format.*
 
@@ -68,113 +67,6 @@ fun ECodeView(mmkv: MMKV) {
 
   val scope = rememberCoroutineScope()
 
-  suspend fun getPortalTicket(neu: NEUPass, mmkv: MMKV, reLogin: Boolean = false): String {
-    val studentId = mmkv.decodeString("student_id")!!
-    val password = mmkv.decodeString("password")!!
-
-    var portalTicket: String? = mmkv.decodeString("portal_ticket")
-    if (portalTicket == null || reLogin) {
-      portalTicket = neu.loginPortalTicket(studentId, password)
-      mmkv.encode("portal_ticket", portalTicket)
-    }
-
-    return portalTicket
-  }
-
-  suspend fun getECodeTicket(neu: NEUPass, mmkv: MMKV): String {
-    var eCodeTicket: String? = mmkv.decodeString("ecode_ticket")
-    if (eCodeTicket == null) {
-      var portalTicket = getPortalTicket(neu, mmkv)
-      try {
-        // 假设 portalTicket 没过期
-        eCodeTicket = neu.loginECodeTicket(portalTicket)
-      } catch (e: TicketFailedException) {
-        // 重新登录
-        portalTicket = getPortalTicket(neu, mmkv, true)
-        eCodeTicket = neu.loginECodeTicket(portalTicket)
-      }
-      mmkv.encode("ecode_ticket", eCodeTicket)
-    }
-    return eCodeTicket!! // 不可能为空!!
-  }
-
-  suspend fun getECodeSession(neu: NEUPass, mmkv: MMKV): ECodeSession {
-    var eCodeSession: String? = mmkv.decodeString("ecode_session")
-    var xsrfToken: String? = mmkv.decodeString("xsrf_token")
-    var expiredAt: Long? = mmkv.decodeLong("expired_at")  // 以秒为单位
-
-    val current = System.currentTimeMillis() / 1000
-    if (eCodeSession == null || xsrfToken == null || expiredAt == null || expiredAt < current) {
-      Log.d("ECode", "Session 过期")
-      val session = neu.newECodeSession()
-      eCodeSession = session.session
-      xsrfToken = session.xsrfToken
-      expiredAt = session.expiredAt
-      mmkv.encode("ecode_session", eCodeSession)
-      mmkv.encode("xsrf_token", xsrfToken)
-      mmkv.encode("expired_at", expiredAt)
-    }
-
-    // 不可能为空!!
-    return ECodeSession(eCodeSession, xsrfToken, expiredAt)
-  }
-
-  LaunchedEffect(Unit) {
-    scope.launch {
-      while (true) {
-        // 计时器
-        val currentTime: Long = System.currentTimeMillis()
-        // Log.d("ECode", "Current Time: $currentTime, Expired At: $codeExpiredAt")
-        if (currentTime >= codeExpiredAt) {
-          try {
-            // 获取新的二维码逻辑
-            val neu = NEUPass()
-            val eCodeSession = getECodeSession(neu, mmkv)
-            var eCode: ECodeQRCode? = null
-            try {
-              eCode = neu.getQRCode(eCodeSession)
-              if (userInfo == null) {
-                userInfo = neu.getUserInfo(eCodeSession).data[0].attributes
-              }
-            } catch (e: SessionExpiredException) {
-              // session 过期
-              val session = neu.newECodeSession()
-              mmkv.encode("ecode_session", session.session)
-              mmkv.encode("xsrf_token", session.xsrfToken)
-              mmkv.encode("expired_at", session.expiredAt)
-
-              // 重新登录
-              val eCodeTicket = getECodeTicket(neu, mmkv)
-              try {
-                neu.loginECode(session, eCodeTicket)
-              } catch (e: TicketExpiredException) {
-                // 重新获取 ticket
-                val portalTicket = getPortalTicket(neu, mmkv, true)
-                val newECodeTicket = neu.loginECodeTicket(portalTicket)
-                mmkv.encode("ecode_ticket", newECodeTicket)
-                neu.loginECode(session, newECodeTicket)
-              }
-              eCode = neu.getQRCode(session)
-              if (userInfo == null) {
-                userInfo = neu.getUserInfo(eCodeSession).data[0].attributes
-              }
-            }
-
-            showCode = true
-            code = eCode!!.data[0].attributes.qrCode
-            codeGenerateTime = eCode.data[0].attributes.createTime
-            codeExpiredAt = eCode.data[0].attributes.qrInvalidTime
-          } catch (e: Exception) {
-            // 错误处理逻辑
-            e.printStackTrace()
-          }
-        }
-
-        // 每秒检查一次
-        delay(1000L)
-      }
-    }
-  }
 
   Box(
     modifier = Modifier.fillMaxSize(),

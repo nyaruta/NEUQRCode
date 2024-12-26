@@ -62,4 +62,6 @@ dependencies {
     implementation(libs.mmkv)
     implementation(libs.serialization.json)
     implementation(libs.zxing)
+    implementation(libs.androidx.navigation)
+    implementation(libs.androidx.viewmodel.compose)
 }

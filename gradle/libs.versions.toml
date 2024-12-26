@@ -12,6 +12,8 @@ okhttp = "4.12.0"
 mmkv = "2.0.1"
 serialization = "1.8.0-RC"
 zxing = "3.5.3"
+navigationCompose = "2.8.5"
+viewModelCompose = "2.8.7"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -32,6 +34,9 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 mmkv = { group = "com.tencent", name = "mmkv", version.ref = "mmkv" }
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 zxing = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
+androidx-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+androidx-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "viewModelCompose" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
