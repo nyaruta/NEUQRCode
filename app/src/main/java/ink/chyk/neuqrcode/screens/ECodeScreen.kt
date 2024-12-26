@@ -1,6 +1,8 @@
 package ink.chyk.neuqrcode.screens
 
+import android.app.*
 import android.graphics.*
+import android.view.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
@@ -31,6 +33,26 @@ fun ECodeScreen(viewModel: ECodeViewModel, navController: NavController) {
   val code by viewModel.code.collectAsState()
   val userInfo by viewModel.userInfo.collectAsState()
   val codeGenerateTime by viewModel.codeGenerateTime.collectAsState()
+
+
+  val context = LocalContext.current
+  val activity = context as? Activity
+
+  // 调整亮度为最大值
+  LaunchedEffect(Unit) {
+    activity?.let {
+      setScreenBrightness(it.window, 1.0f)
+    }
+  }
+
+  // 恢复亮度
+  DisposableEffect(Unit) {
+    onDispose {
+      activity?.let {
+        setScreenBrightness(it.window, WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE)
+      }
+    }
+  }
 
   Box(
     modifier = Modifier.fillMaxSize(),
@@ -199,3 +221,9 @@ fun generateColoredQRCode(
   }
 }
 
+
+fun setScreenBrightness(window: Window, brightness: Float) {
+  val layoutParams = window.attributes
+  layoutParams.screenBrightness = brightness // 范围：0.0f（最暗）到 1.0f（最亮）
+  window.attributes = layoutParams
+}
