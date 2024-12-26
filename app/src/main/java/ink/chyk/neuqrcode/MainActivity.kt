@@ -1,42 +1,30 @@
 package ink.chyk.neuqrcode
 
-import android.content.Intent
-import android.graphics.*
-import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.*
+import android.content.*
+import android.os.*
+import android.widget.*
+import androidx.activity.*
+import androidx.activity.compose.*
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.*
-import androidx.compose.ui.platform.*
+import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.res.*
-import androidx.compose.ui.text.font.*
-import androidx.compose.ui.unit.*
-import com.google.zxing.*
-import com.google.zxing.qrcode.*
-import com.google.zxing.qrcode.decoder.*
-import com.tencent.mmkv.MMKV
+import androidx.lifecycle.viewmodel.compose.*
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.*
+import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.components.*
-import kotlinx.coroutines.*
-import java.time.*
-import java.time.format.*
+import ink.chyk.neuqrcode.screens.*
+import ink.chyk.neuqrcode.viewmodels.*
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-
     // 初始化 mmkv
     MMKV.initialize(this)
+
     val mmkv = MMKV.defaultMMKV()
 
     // 检查是否登录？
@@ -50,183 +38,75 @@ class MainActivity : ComponentActivity() {
 
     enableEdgeToEdge()
     setContent {
-      AppBackground {
-        ECodeView(mmkv)
-      }
+      MainApp()
     }
   }
 }
 
+
+data class BottomNavigationItem(
+  val label: String = "",
+  val icon: ImageVector = Icons.Default.Home,
+  val route: String = ""
+) {
+  @Composable
+  fun navigationItems(): List<BottomNavigationItem> {
+    return listOf(
+      BottomNavigationItem(
+        "一码通",
+        ImageVector.vectorResource(
+          id = R.drawable.ic_fluent_qr_code_24_filled
+        ),
+        "ecode"
+      ),
+      BottomNavigationItem(
+        "个人信息",
+        ImageVector.vectorResource(
+          id = R.drawable.ic_fluent_person_24_filled
+        ),
+        "profile"
+      )
+    )
+  }
+}
+
 @Composable
-fun ECodeView(mmkv: MMKV) {
-  var showCode by remember { mutableStateOf(false) }
-  var code by remember { mutableStateOf("") }
-  var codeExpiredAt by remember { mutableStateOf(0L) }  // 以 ms 为单位的时间戳
-  var codeGenerateTime by remember { mutableStateOf(0L) }  // 以 ms 为单位的时间戳
-  var userInfo by remember { mutableStateOf<ECodeUserinfoAttributes?>(null) }
+fun MainApp() {
+  val viewModel: ECodeViewModel = viewModel(factory = ECodeViewModelFactory())
+  val navController = rememberNavController()
+  var selectedItem by remember { mutableIntStateOf(0) }
 
-  val scope = rememberCoroutineScope()
-
-
-  Box(
-    modifier = Modifier.fillMaxSize(),
-    contentAlignment = Alignment.Center
-  ) {
-    Column(
-      horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-      ) {
-        Image(
-          painter = painterResource(
-            if (isSystemInDarkTheme()) {
-              R.drawable.logo_white
-            } else {
-              R.drawable.logo_black
+  AppBackground(
+    bottomBar = {
+      NavigationBar {
+        BottomNavigationItem().navigationItems().forEachIndexed { index, item ->
+          NavigationBarItem(
+            selected = index == selectedItem,
+            label = { Text(item.label) },
+            icon = { Icon(imageVector = item.icon, contentDescription = item.label) },
+            onClick = {
+              selectedItem = index
+              navController.navigate(item.route) {
+                // https://medium.com/@bharadwaj.rns/bottom-navigation-in-jetpack-compose-using-material3-c153ccbf0593
+                popUpTo(navController.graph.findStartDestination().id) {
+                  saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+              }
             }
-          ),
-          modifier = Modifier.height(48.dp),
-          contentDescription = "NEU ECode",
-          contentScale = ContentScale.FillHeight
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text("一码通", style = MaterialTheme.typography.headlineLarge)
+          )
+        }
       }
-
-      Spacer(modifier = Modifier.height(32.dp))
-
-      if (showCode) {
-        ECodeImage(code)
-      } else {
-        ECodeLoading()
-      }
-
-      Spacer(modifier = Modifier.height(32.dp))
-
-      Text(
-        text = if (userInfo != null) {
-          "${userInfo?.userCode} | ${userInfo?.userName} | ${userInfo?.unitName}"
-        } else {
-          "加载中..."
-        },
-        style = MaterialTheme.typography.bodyMedium
-      )
-
-      Text(
-        text = if (showCode) {
-          val instant = Instant.ofEpochMilli(codeGenerateTime)
-          val localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime()
-          val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-          val generateTime = localDateTime.format(formatter)
-          "生成时间: $generateTime"
-        } else {
-          ""
-        },
-        style = MaterialTheme.typography.bodyMedium
-      )
-
     }
-  }
-}
-
-@Composable
-fun ECodeLoading() {
-  Box(
-    modifier = Modifier
-      .size(210.dp)
-      .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
-    contentAlignment = Alignment.Center
   ) {
-    CircularProgressIndicator()
-  }
-}
-
-@Composable
-fun ECodeImage(code: String) {
-  Box(
-    modifier = Modifier
-      .size(210.dp)
-      .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
-    contentAlignment = Alignment.Center
-  ) {
-    val customFont = FontFamily(Font(R.font.iconfont))
-    val primaryColor = Color(0xff006533)
-    val backgroundColor = Color.White
-
-    generateColoredQRCode(
-      code,
-      dpToPx(210.dp),
-      primaryColor.toArgb(),
-      backgroundColor.toArgb()
-    ).let {
-      Image(
-        bitmap = it!!.asImageBitmap(),
-        contentDescription = "ECode",
-        modifier = Modifier
-          .size(210.dp)
-          .clip(RoundedCornerShape(8.dp)),
-        contentScale = ContentScale.FillWidth
-      )
-    }
-
-    Text(
-      text = "●",
-      color = primaryColor,
-      fontFamily = customFont,
-      fontSize = 48.sp,
-    )
-
-    Text(
-      text = "\uE6BE",
-      color = backgroundColor,
-      fontFamily = customFont,
-      fontSize = 32.sp,
-    )
-  }
-}
-
-// Generated by ChatGPT
-
-@Composable
-fun dpToPx(dp: Dp): Int {
-  val density = LocalDensity.current
-  return with(density) { dp.toPx().toInt() }
-}
-
-fun generateColoredQRCode(
-  text: String,
-  size: Int,
-  foregroundColor: Int,
-  backgroundColor: Int
-): Bitmap? {
-  try {
-    val qrCodeWriter = QRCodeWriter()
-    val hints = mapOf(
-      EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.H,
-      EncodeHintType.MARGIN to 1
-    )
-    val bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, size, size, hints)
-
-    val width = bitMatrix.width
-    val height = bitMatrix.height
-    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-
-    for (x in 0 until width) {
-      for (y in 0 until height) {
-        bitmap.setPixel(
-          x,
-          y,
-          if (bitMatrix[x, y]) foregroundColor else backgroundColor
-        )
+    NavHost(navController = navController, startDestination = "ecode") {
+      composable("ecode") {
+        ECodeScreen(viewModel = viewModel, navController = navController)
+      }
+      composable("profile") {
+        ProfileScreen(navController = navController)
       }
     }
-    return bitmap
-  } catch (e: WriterException) {
-    e.printStackTrace()
-    return null
   }
 }
-

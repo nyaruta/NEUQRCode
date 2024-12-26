@@ -14,13 +14,15 @@ import ink.chyk.neuqrcode.ui.theme.AppTheme
 
 @Composable
 fun AppBackground(
+  bottomBar: @Composable () -> Unit = {},
   darkTheme: Boolean = isSystemInDarkTheme(),
   content: @Composable () -> Unit
 ) {
   AppTheme {
     Scaffold(
       modifier = Modifier
-        .fillMaxSize()
+        .fillMaxSize(),
+      bottomBar = bottomBar
     ) { innerPadding ->
       Box(
         modifier = Modifier

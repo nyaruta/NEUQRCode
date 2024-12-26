@@ -38,15 +38,6 @@ class ECodeViewModel(
 
 
   /**
-   * 检查 mmkv 中是否有 student_id 记录判断用户是否已登录。
-   *
-   * @return 如果用户已登录，返回 `true`；如果未登录，返回 `false`。
-   */
-  fun checkIsLogin(): Boolean {
-    return mmkv.containsKey("student_id")
-  }
-
-  /**
    * 获取智慧东大 统一身份认证 的 ticket
    * 如果 mmkv 中没有记录，或者 reLogin 为 true，则重新登录。
    *
