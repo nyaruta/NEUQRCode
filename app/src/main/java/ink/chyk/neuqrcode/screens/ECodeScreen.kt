@@ -28,7 +28,7 @@ import java.time.format.*
 
 @Composable
 fun ECodeScreen(viewModel: ECodeViewModel, navController: NavController) {
-  val showCode by viewModel.showCode.collectAsState()
+  val loadComplete by viewModel.loadComplete.collectAsState()
   val code by viewModel.code.collectAsState()
   val userInfo by viewModel.userInfo.collectAsState()
   val codeGenerateTime by viewModel.codeGenerateTime.collectAsState()
@@ -63,7 +63,7 @@ fun ECodeScreen(viewModel: ECodeViewModel, navController: NavController) {
 
       Spacer(modifier = Modifier.height(32.dp))
 
-      if (showCode) {
+      if (loadComplete) {
         ECodeImage(code)
       } else {
         ECodeLoading()
@@ -81,7 +81,7 @@ fun ECodeScreen(viewModel: ECodeViewModel, navController: NavController) {
       )
 
       Text(
-        text = if (showCode) {
+        text = if (loadComplete) {
           val instant = Instant.ofEpochMilli(codeGenerateTime)
           val localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime()
           val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
