@@ -7,8 +7,8 @@ import ink.chyk.neuqrcode.*
 import kotlinx.coroutines.flow.*
 
 abstract class BasicViewModel(
-  private val mmkv: MMKV,
-  private val neu: NEUPass
+  open val mmkv: MMKV,
+  open val neu: NEUPass
 ) : ViewModel() {
   // 一些参数，Kotlin 状态流机制
 
@@ -21,7 +21,7 @@ abstract class BasicViewModel(
 
 
   // 下面这些都是用来 override 的
-  abstract val appName: String
+  abstract val appName: String  // 在 mmkv 中储存的小程序名称
 
   abstract suspend fun newAppTicket(portalTicket: String): String
 

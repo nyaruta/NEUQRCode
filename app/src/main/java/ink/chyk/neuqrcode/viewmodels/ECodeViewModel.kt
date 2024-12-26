@@ -8,8 +8,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 class ECodeViewModel(
-  private val mmkv: MMKV,
-  private val neu: NEUPass
+  override val mmkv: MMKV,
+  override val neu: NEUPass
 ) : BasicViewModel(mmkv, neu) {
   // 具体实现：app 名称，以及几个方法
 

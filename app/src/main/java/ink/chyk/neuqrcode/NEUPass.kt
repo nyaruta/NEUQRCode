@@ -73,12 +73,51 @@ data class MobileApiUserAttributes(
   val isDeleted: Int
 )
 
+@Serializable
+data class MobileApiUserInfo(
+  val DH: String,  // 学号
+  val XM: String,  // 姓名
+  val RYLX: String,  // 人员类型
+  val ZZJG: String,  // 组织机构
+  val ZZJGBH: String,  // 组织机构编号
+  val XB: String,  // 性别
+  val EMAIL: String,  // 邮箱地址 neu.edu.cn 结尾
+)
+
+@Serializable
+data class MobileApiCampusCard(
+  val createUser: Int,
+  val createTime: String,
+  val updateUser: Int,
+  val updateTime: String,
+  val status: Int,
+  val isDeleted: Int,
+  val balance: String,
+  val supply: String,
+  val jumpUrl: String
+)
+
+@Serializable
+data class MobileApiCampusNetwork(
+  val createUser: Int,
+  val createTime: String,
+  val updateUser: Int,
+  val updateTime: String,
+  val status: Int,
+  val isDeleted: Int,
+  val balance: String,
+  val usedData: String,
+  val jumpUrl: String
+)
+
 
 class NEUPass {
   // 智慧东大 API
 
   private fun useRequestedWith(request: Request.Builder): Request.Builder {
-    return request.header("X-Requested-With", "com.sunyt.testdemo")
+    return request
+      .header("X-Requested-With", "com.sunyt.testdemo")
+      .header("X-App-Version", R.string.simulated_sunyt_version.toString())
   }
 
   suspend fun loginPortalTicket(studentId: String, password: String): String {
@@ -309,4 +348,17 @@ class NEUPass {
   suspend fun getMobileApiUser(session: NEUAppSession): MobileApiUser {
     return basicAppRequest(session, "https://portal.neu.edu.cn/mobile/api/user")
   }
+
+  suspend fun getMobileApiUserInfo(session: NEUAppSession): MobileApiUserInfo {
+    return basicAppRequest(session, "https://portal.neu.edu.cn/mobile/api/user/info")
+  }
+
+  suspend fun getMobileApiCampusCard(session: NEUAppSession): MobileApiCampusCard {
+    return basicAppRequest(session, "https://portal.neu.edu.cn/mobile/api/personal/campusInfo/card")
+  }
+
+  suspend fun getMobileApiCampusNetwork(session: NEUAppSession): MobileApiCampusNetwork {
+    return basicAppRequest(session, "https://portal.neu.edu.cn/mobile/api/personal/campusInfo/network")
+  }
+
 }
