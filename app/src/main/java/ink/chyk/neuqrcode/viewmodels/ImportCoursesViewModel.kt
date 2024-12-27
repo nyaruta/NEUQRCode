@@ -87,6 +87,19 @@ class ImportCoursesViewModel(
     return output to resultContent
   }
 
+  private fun getTermStart(text: String): String {
+    // 定义正则表达式
+    val regex = Regex("""本学期开始于 (\d{4})-(\d{2})-(\d{2})""")
+
+    // 匹配并提取日期
+    val matchResult = regex.find(text)
+    val year = matchResult?.groupValues?.get(1)
+    val month = matchResult?.groupValues?.get(2)
+    val day = matchResult?.groupValues?.get(3)
+
+    return "$year$month$day"
+  }
+
   fun runImport(
     context: Context,
     resource: Int
@@ -99,6 +112,7 @@ class ImportCoursesViewModel(
         _output.value = output
         _resultContent.value = resultContent
         mmkv.encode("courses", resultContent)
+        mmkv.encode("term_start", getTermStart(output))
         _importing.value = false
         _importCompleted.value = true
       }

@@ -81,6 +81,7 @@ data class BottomNavigationItem(
 fun MainApp() {
   val eCodeViewModel: ECodeViewModel = viewModel(factory = ECodeViewModelFactory())
   val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory())
+  val coursesViewModel: CoursesViewModel = viewModel(factory = CoursesViewModelFactory())
 
   val navController = rememberNavController()
   var selectedItem by remember { mutableIntStateOf(0) }
@@ -114,7 +115,7 @@ fun MainApp() {
         ECodeScreen(viewModel = eCodeViewModel, navController = navController)
       }
       composable("courses") {
-        CoursesScreen(navController = navController)
+        CoursesScreen(viewModel = coursesViewModel, navController = navController)
       }
       composable("profile") {
         ProfileScreen(viewModel = profileViewModel, navController = navController)

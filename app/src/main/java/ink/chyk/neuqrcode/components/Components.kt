@@ -31,12 +31,10 @@ fun AppBackground(
           .background(
             brush = Brush.radialGradient(
               colors = if (darkTheme) {
-                listOf(Color(0xFF1A1F35), Color(0xFF202020))
+                listOf(Color(0xFF1A1F1F), Color(0xFF202020))
               } else {
                 listOf(Color(0xFFEFF4F9), Color(0xFFF3F3F3))
               },
-              center = androidx.compose.ui.geometry.Offset(0.5f, 0.5f), // 中心点
-              radius = Float.POSITIVE_INFINITY // 使用最大半径来模拟渐变效果
             )
           )
       ) {

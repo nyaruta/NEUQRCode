@@ -14,6 +14,8 @@ serialization = "1.8.0-RC"
 zxing = "3.5.3"
 navigationCompose = "2.8.5"
 viewModelCompose = "2.8.7"
+ical4j = "4.0.8"
+pangu = "0.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,6 +38,8 @@ serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serializ
 zxing = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 androidx-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "viewModelCompose" }
+ical4j = { group = "org.mnode.ical4j", name = "ical4j", version.ref = "ical4j" }
+pangu = { group = "io.github.darkokoa", name = "pangu-jvm", version.ref = "pangu" }
 
 
 [plugins]
