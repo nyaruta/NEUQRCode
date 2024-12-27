@@ -60,6 +60,13 @@ data class BottomNavigationItem(
         "ecode"
       ),
       BottomNavigationItem(
+        "课程表",
+        ImageVector.vectorResource(
+          id = R.drawable.ic_fluent_calendar_24_filled
+        ),
+        "courses"
+      ),
+      BottomNavigationItem(
         "个人信息",
         ImageVector.vectorResource(
           id = R.drawable.ic_fluent_person_24_filled
@@ -105,6 +112,9 @@ fun MainApp() {
     NavHost(navController = navController, startDestination = "ecode") {
       composable("ecode") {
         ECodeScreen(viewModel = eCodeViewModel, navController = navController)
+      }
+      composable("courses") {
+        CoursesScreen(navController = navController)
       }
       composable("profile") {
         ProfileScreen(viewModel = profileViewModel, navController = navController)

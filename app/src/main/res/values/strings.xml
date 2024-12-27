@@ -21,4 +21,9 @@
     <string name="login_failed">登录失败</string>
     <string name="confirm">确定</string>
     <string name="import_courses">导入课表</string>
+    <string name="import_courses_content_1">将从学校教务系统导入本学期的课程表。</string>
+    <string name="import_courses_content_2">在进行此操作时，</string>
+    <string name="import_courses_content_3">非常建议</string>
+    <string name="import_courses_content_4">连接到东北大学校园网。</string>
+    <string name="logs">日志</string>
 </resources>

@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
 import ink.chyk.neuqrcode.*
+import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.ui.theme.AppTheme
 
 @Composable
