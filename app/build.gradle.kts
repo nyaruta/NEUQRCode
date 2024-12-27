@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.tasks.*
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -21,7 +23,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -37,6 +39,10 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+
+    tasks.withType<L8DexDesugarLibTask> {
+        keepRulesConfigurations.set(listOf("-keep class java.time.zone.** { *; }", "-keep interface java.time.zone.** { *; }"))
     }
 }
 
@@ -66,4 +72,6 @@ dependencies {
     implementation(libs.androidx.viewmodel.compose)
     implementation(libs.ical4j)
     implementation(libs.pangu)
+    implementation(libs.joda.time)
+    implementation(libs.threetenbp)
 }

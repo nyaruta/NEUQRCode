@@ -3,7 +3,7 @@
 # proguardFiles setting in build.gradle.
 #
 # For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+#   http://developer.android.com/guide/developing/tools/pwroguard.html
 
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
@@ -19,5 +19,11 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
--dontwarn java.time.zone.ZoneRulesProvider
--dontwarn org.joda.convert.ToString
+
+# 保留 java.time.zone.ZoneRulesProvider 类
+-keep class java.time.zone.ZoneRulesProvider { *; }
+-keep interface java.time.zone.ZoneRulesProvider { *; }
+
+# 保留与时区相关的所有类
+-keep class java.time.zone.** { *; }
+-keep class java.time.** { *; }

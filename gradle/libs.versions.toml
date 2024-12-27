@@ -16,6 +16,8 @@ navigationCompose = "2.8.5"
 viewModelCompose = "2.8.7"
 ical4j = "4.0.8"
 pangu = "0.2.0"
+jodaTime = "2.10.13"
+threetenbp = "1.5.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -40,6 +42,8 @@ androidx-navigation = { group = "androidx.navigation", name = "navigation-compos
 androidx-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "viewModelCompose" }
 ical4j = { group = "org.mnode.ical4j", name = "ical4j", version.ref = "ical4j" }
 pangu = { group = "io.github.darkokoa", name = "pangu-jvm", version.ref = "pangu" }
+joda-time = { group = "joda-time", name = "joda-time", version.ref = "jodaTime" }
+threetenbp = { group = "org.threeten", name = "threetenbp", version.ref = "threetenbp" }
 
 
 [plugins]
