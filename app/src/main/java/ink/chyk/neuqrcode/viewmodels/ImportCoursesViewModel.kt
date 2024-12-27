@@ -33,7 +33,7 @@ class ImportCoursesViewModel(
   }
 
   fun extractExecutable(context: Context, resource: Int): File {
-    val executableFile = File(context.cacheDir, "elise_arm64")
+    val executableFile = File(context.filesDir, "elise_arm64")
     if (!executableFile.exists()) {
       context.resources.openRawResource(resource).use { input ->
         executableFile.outputStream().use { output ->
@@ -57,7 +57,7 @@ class ImportCoursesViewModel(
   ): Pair<String, String?> {
     val executable = extractExecutable(context, resource)
     val (studentId, password) = getStudentIdAndPassword()
-    val resultFile = File(context.cacheDir, "courses.ics")
+    val resultFile = File(context.filesDir, "courses.ics")
     if (resultFile.exists()) {
       resultFile.delete() // 清除旧的结果文件
     }
