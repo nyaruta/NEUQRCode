@@ -116,7 +116,7 @@ fun createShortcut(
   val shortcut = ShortcutInfo.Builder(activity, "courses_shortcut") // 唯一 ID
     .setShortLabel("课程表") // 显示名称
     .setLongLabel("NEU课程表") // 长名称
-    .setIcon(AndroidIcon.createWithResource(activity, R.mipmap.ic_launcher)) // 图标
+    .setIcon(AndroidIcon.createWithResource(activity, R.mipmap.ic_courses)) // 图标
     .setIntent(intent) // 设置 Intent
     .build()
 
