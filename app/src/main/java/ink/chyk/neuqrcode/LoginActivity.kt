@@ -15,13 +15,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.tencent.mmkv.MMKV
-import ink.chyk.neuqrcode.components.AppBackground
+import ink.chyk.neuqrcode.components.*
 import kotlinx.coroutines.*
 
 class LoginActivity : ComponentActivity() {
@@ -57,6 +58,7 @@ fun LoginForm(openMainPage: () -> Unit = {}) {
   var showErrorMessage by remember { mutableStateOf(false) }
   var errorMessage by remember { mutableStateOf("") }
   var buttonEnabled by remember { mutableStateOf(true) }
+  val ctx = LocalContext.current
 
   Box(
     modifier = Modifier
@@ -73,7 +75,7 @@ fun LoginForm(openMainPage: () -> Unit = {}) {
           .fillMaxWidth()
           .padding(16.dp)
       ) {
-        UniformAuthTitle()
+        NEUTitle(ctx.getString(R.string.uniform_auth))
         StudentIdInput(studentId, onStudentIdChange = {
           studentId = it
           buttonEnabled = it.length == 8
@@ -106,41 +108,17 @@ fun LoginForm(openMainPage: () -> Unit = {}) {
 }
 
 @Composable
-fun UniformAuthTitle() {
-  // 统一身份认证标题
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .height(64.dp)
-      .padding(vertical = 16.dp, horizontal = 8.dp),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.SpaceBetween
-  ) {
-    Image(
-      painter = painterResource(
-        if (isSystemInDarkTheme()) {
-          R.drawable.logo_white
-        } else {
-          R.drawable.logo_black
-        }
-      ),
-      contentDescription = "NEU Logo",
-    )
-    Text("统一身份认证", style = MaterialTheme.typography.headlineSmall)
-  }
-}
-
-@Composable
 fun StudentIdInput(studentId: String, onStudentIdChange: (String) -> Unit) {
   // 学号输入框
+  val ctx = LocalContext.current
   OutlinedTextField(
     value = studentId,
     onValueChange = onStudentIdChange,
-    label = { Text("学号") },
+    label = { Text(ctx.getString(R.string.student_id)) },
     leadingIcon = {
       Icon(
         painter = painterResource(R.drawable.ic_fluent_person_24_filled),
-        contentDescription = "学号"
+        contentDescription = "Student ID"
       )
     },
     modifier = Modifier
@@ -157,10 +135,12 @@ fun PasswordInput(
   onPasswordVisibleChange: () -> Unit
 ) {
   // 密码输入框
+  val ctx = LocalContext.current
+
   OutlinedTextField(
     value = password,
     onValueChange = onPasswordChange,
-    label = { Text("密码") },
+    label = { Text(ctx.getString(R.string.password)) },
     modifier = Modifier
       .fillMaxWidth()
       .padding(bottom = 8.dp),
@@ -173,7 +153,7 @@ fun PasswordInput(
     leadingIcon = {
       Icon(
         painter = painterResource(R.drawable.ic_fluent_password_24_filled),
-        contentDescription = "密码"
+        contentDescription = "Password"
       )
     },
     trailingIcon = {
@@ -184,7 +164,13 @@ fun PasswordInput(
           R.drawable.ic_fluent_eye_off_24_filled
         }
       )
-      val description = if (passwordVisible) "隐藏密码" else "显示密码"
+      val description = ctx.getString(
+        if (passwordVisible) {
+          R.string.password_hide
+        } else {
+          R.string.password_show
+        }
+      )
       IconButton(onClick = onPasswordVisibleChange) {
         Icon(painter = icon, contentDescription = description)
       }
@@ -202,6 +188,7 @@ fun LoginButton(
   onClickAnd: () -> Unit
 ) {
   // 登录按钮
+  val ctx = LocalContext.current
   val coroScope = rememberCoroutineScope()
 
   Row(
@@ -226,31 +213,33 @@ fun LoginButton(
             openMainPage()
           } catch (e: PasswordIncorrectException) {
             // 密码错误
-            openErrorDialog("密码错误，请检查后重试。")
+            openErrorDialog(ctx.getString(R.string.password_error_content))
           } catch (e: RequestFailedException) {
             // 请求失败
-            openErrorDialog("请求失败，请检查网络连接。")
+            openErrorDialog(ctx.getString(R.string.request_error_content))
           }
         }
       },
       enabled = enabled
     ) {
-      Text("登录")
+      Text(ctx.getString(R.string.login))
     }
   }
 }
 
 @Composable
 fun ErrorDialog(errorMessage: String, onDismissRequest: () -> Unit = {}) {
+  val ctx = LocalContext.current
+
   AlertDialog(
     onDismissRequest = onDismissRequest,
-    title = { Text("登录失败") },
+    title = { Text(ctx.getString(R.string.login_failed)) },
     text = { Text(errorMessage) },
     confirmButton = {
       Button(
         onClick = onDismissRequest
       ) {
-        Text("确定")
+        Text(ctx.getString(R.string.confirm))
       }
     }
   )
