@@ -1,5 +1,8 @@
 package ink.chyk.neuqrcode.screens
 
+import android.app.Activity
+import android.content.*
+import android.content.pm.*
 import android.graphics.BitmapFactory
 import android.widget.Toast
 import androidx.compose.foundation.*
@@ -21,6 +24,7 @@ import androidx.navigation.*
 import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.viewmodels.*
+import android.graphics.drawable.Icon as AndroidIcon
 
 fun dataUriToImageBitmap(dataUri: String): ImageBitmap? {
   val base64 = dataUri.substringAfter("base64,")
@@ -64,6 +68,12 @@ fun ProfileScreen(
         clickable = false
       )
       RowButton(
+        iconResource = R.drawable.ic_fluent_calendar_24_filled,
+        text = "创建课程表快捷方式",
+        clickable = true,
+        onClick = { createShortcut(context) }
+      )
+      RowButton(
         iconResource = R.drawable.ic_fluent_person_swap_24_regular,
         text = "登出账号",
         clickable = true,
@@ -88,6 +98,32 @@ fun ProfileScreen(
     showDialog = showAboutDialog,
     onDismiss = { showAboutDialog.value = false }
   )
+}
+
+fun createShortcut(
+  context: Context
+) {
+  val activity = context as Activity
+  val shortcutManager = activity.getSystemService(ShortcutManager::class.java)
+
+  // 创建 Intent 指定要启动的 Activity 和携带的参数
+  val intent = Intent(activity, MainActivity::class.java).apply {
+    action = Intent.ACTION_VIEW
+    putExtra("screen", "courses") // 添加参数
+  }
+
+  // 创建快捷方式信息
+  val shortcut = ShortcutInfo.Builder(activity, "courses_shortcut") // 唯一 ID
+    .setShortLabel("课程表") // 显示名称
+    .setLongLabel("NEU课程表") // 长名称
+    .setIcon(AndroidIcon.createWithResource(activity, R.mipmap.ic_launcher)) // 图标
+    .setIntent(intent) // 设置 Intent
+    .build()
+
+  // 添加快捷方式
+  shortcutManager.requestPinShortcut(shortcut, null)
+
+  Toast.makeText(context, "已尝试创建课程表快捷方式\n若未创建请检查权限。", Toast.LENGTH_SHORT).show()
 }
 
 
@@ -195,7 +231,7 @@ fun LogoutConfirmationDialog(
         onDismiss()
       },
       title = {
-        Row (
+        Row(
           verticalAlignment = Alignment.CenterVertically
         ) {
           Icon(
@@ -255,7 +291,7 @@ fun AboutDialog(
             .padding(16.dp)
             .clip(RoundedCornerShape(8.dp))
         ) {
-          Row (
+          Row(
             verticalAlignment = Alignment.CenterVertically
           ) {
             Icon(
@@ -284,7 +320,12 @@ fun AboutDialog(
 
           Spacer(modifier = Modifier.height(8.dp))
           Text(
-            text = "${getString(context, R.string.about_copyright_1)}\n${getString(context, R.string.about_copyright_2)}",
+            text = "${getString(context, R.string.about_copyright_1)}\n${
+              getString(
+                context,
+                R.string.about_copyright_2
+              )
+            }",
             style = MaterialTheme.typography.bodyMedium
           )
 

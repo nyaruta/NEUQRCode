@@ -2,6 +2,7 @@ package ink.chyk.neuqrcode
 
 import android.content.*
 import android.os.*
+import android.util.*
 import android.widget.*
 import androidx.activity.*
 import androidx.activity.compose.*
@@ -26,6 +27,8 @@ class MainActivity : ComponentActivity() {
     MMKV.initialize(this)
 
     val mmkv = MMKV.defaultMMKV()
+    val screen = intent.getStringExtra("screen")
+    Log.d("MainActivity", "screen: $screen")
 
     // 检查是否登录？
     if (!mmkv.containsKey("student_id")) {
@@ -38,7 +41,7 @@ class MainActivity : ComponentActivity() {
 
     enableEdgeToEdge()
     setContent {
-      MainApp()
+      MainApp(screen)
     }
   }
 }
@@ -78,7 +81,7 @@ data class BottomNavigationItem(
 }
 
 @Composable
-fun MainApp() {
+fun MainApp(screen: String?) {
   val eCodeViewModel: ECodeViewModel = viewModel(factory = ECodeViewModelFactory())
   val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory())
   val coursesViewModel: CoursesViewModel = viewModel(factory = CoursesViewModelFactory())
@@ -110,7 +113,7 @@ fun MainApp() {
       }
     }
   ) {
-    NavHost(navController = navController, startDestination = "ecode") {
+    NavHost(navController = navController, startDestination = screen ?: "ecode") {
       composable("ecode") {
         ECodeScreen(viewModel = eCodeViewModel, navController = navController)
       }
