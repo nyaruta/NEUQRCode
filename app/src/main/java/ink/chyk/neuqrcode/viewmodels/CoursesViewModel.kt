@@ -9,12 +9,15 @@ import kotlinx.coroutines.flow.*
 import net.fortuna.ical4j.data.*
 import net.fortuna.ical4j.model.*
 import net.fortuna.ical4j.model.Calendar
+import net.fortuna.ical4j.model.Date
+import net.fortuna.ical4j.model.Period
 import net.fortuna.ical4j.model.Property
 import net.fortuna.ical4j.model.component.*
+import net.fortuna.ical4j.model.parameter.*
 import net.fortuna.ical4j.model.property.*
 import java.time.*
 import java.time.format.*
-import java.util.*
+import java.util.Locale
 
 
 class CoursesViewModel(
@@ -49,10 +52,18 @@ class CoursesViewModel(
   private fun getTodayEvents(__date: String, __calendar: Calendar?): List<VEvent>? {
     val todayStart = LocalDate.parse(__date, formatter).atStartOfDay()
     val todayEnd = todayStart.plusDays(1).minusSeconds(1)
+    val todayStartDateTime = DateTime(todayStart.toInstant(ZoneOffset.UTC).toEpochMilli())
+    val todayEndDateTime = DateTime(todayEnd.toInstant(ZoneOffset.UTC).toEpochMilli())
     return __calendar?.getComponents<VEvent>(Component.VEVENT)?.filter {
-      val eventStart = it.getDateTimeStart<ZonedDateTime>().get().date.toLocalDateTime()
-      val recur = it.getProperty<RRule<LocalDateTime>>(Property.RRULE).get().recur
-      val dates = recur.getDates(eventStart, todayStart, todayEnd)
+      val recur = it.getProperty<RRule>(Property.RRULE).recur
+      val dates = recur.getDates(
+        getStartDate(it),
+        Period(
+          todayStartDateTime,
+          todayEndDateTime
+        ),
+        Value.DATE_TIME
+      )
       dates.isNotEmpty()
     }?.sortedBy { getStartTime(it) }
   }
@@ -78,20 +89,16 @@ class CoursesViewModel(
   }
   */
 
-  fun getStartTime(event: VEvent): LocalTime {
-    return event.getDateTimeStart<ZonedDateTime>().get().date.toLocalTime()
-  }
-
-  fun getEndTime(event: VEvent): LocalTime {
-    return event.getDateTimeEnd<ZonedDateTime>().get().date.toLocalTime()
+  fun getStartDate(event: VEvent): Date {
+    return event.startDate.date
   }
 
   fun getCourseName(event: VEvent): String {
-    return event.getProperty<Summary>(Property.SUMMARY).get().value
+    return event.getProperty<Summary>(Property.SUMMARY).value
   }
 
   fun getCourseLocation(event: VEvent): String {
-    return event.getProperty<Location>(Property.LOCATION).get().value
+    return event.getProperty<Location>(Property.LOCATION).value
   }
 
   fun getWeekday(): String {
@@ -138,6 +145,14 @@ class CoursesViewModel(
       )?.size ?: 0
       date to dateId to courseCount
     }
+  }
+
+  fun getStartTime(event: VEvent): LocalTime {
+    return event.startDate.date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
+  }
+
+  fun getEndTime(event: VEvent): LocalTime {
+    return event.endDate.date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
   }
 
   suspend fun initQuote() {

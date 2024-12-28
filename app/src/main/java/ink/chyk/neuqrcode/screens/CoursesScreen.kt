@@ -111,7 +111,6 @@ fun TodayTitle(viewModel: CoursesViewModel) {
 @Composable
 fun CoursesCard(viewModel: CoursesViewModel) {
   val todayEvents by viewModel.todayEvents.collectAsState()
-  val dark = isSystemInDarkTheme()
   val scrollState = rememberScrollState()
 
   Card(
@@ -129,7 +128,7 @@ fun CoursesCard(viewModel: CoursesViewModel) {
       if (todayEvents.isNullOrEmpty()) {
         NoCoursesSplash(viewModel)
       } else {
-        TodayCoursesList(todayEvents, viewModel, dark)
+        TodayCoursesList(todayEvents, viewModel)
       }
     }
   }
@@ -139,7 +138,7 @@ fun CoursesCard(viewModel: CoursesViewModel) {
 fun TodayCoursesList(
   todayEvents: List<VEvent>?,
   viewModel: CoursesViewModel,
-  dark: Boolean
+  dark: Boolean = isSystemInDarkTheme()
 ) {
   val ctx = LocalContext.current
   var previousIcon = 0
@@ -174,7 +173,7 @@ fun TodayCoursesList(
           modifier = Modifier
             .height(1.dp)
             .fillMaxWidth(),
-          color = Color.DarkGray
+          color = if (dark) Color.DarkGray else Color.LightGray
         ) {}
       }
       previousIcon = icon
@@ -228,7 +227,10 @@ fun TodayCoursesList(
 }
 
 @Composable
-fun DaySelector(viewModel: CoursesViewModel) {
+fun DaySelector(
+  viewModel: CoursesViewModel,
+  dark: Boolean = isSystemInDarkTheme()
+) {
   val ctx = LocalContext.current
   val dateState by viewModel.date.collectAsState()
 
@@ -242,7 +244,9 @@ fun DaySelector(viewModel: CoursesViewModel) {
         val (pack1, courseCount) = it
         val (date, dateId) = pack1
 
-        val backgroundColor = if (dateId == dateState) Color.DarkGray else Color.Transparent
+        val backgroundColor = if (dateId == dateState) {
+          if (dark) Color.DarkGray else Color.LightGray
+        } else Color.Transparent
 
         Box(
           modifier = Modifier

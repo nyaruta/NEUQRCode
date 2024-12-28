@@ -13,29 +13,40 @@ android {
 
     defaultConfig {
         applicationId = "ink.chyk.neuqrcode"
-        minSdk = 29
-        targetSdk = 34
-        versionCode = 2
-        versionName = "2.0"
+        minSdk = 28
+        //noinspection ExpiredTargetSdkVersion
+        targetSdk = 28
+        versionCode = 3
+        versionName = "2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
+
+  compileOptions {
+    // Flag to enable support for the new language APIs
+
+    // For AGP 4.1+
+    isCoreLibraryDesugaringEnabled = true
+    // For AGP 4.0
+    // coreLibraryDesugaringEnabled = true
+
+    // Sets Java compatibility to Java 8
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+  }
+
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "1.8"
     }
     buildFeatures {
         compose = true
@@ -72,6 +83,5 @@ dependencies {
     implementation(libs.androidx.viewmodel.compose)
     implementation(libs.ical4j)
     implementation(libs.pangu)
-    implementation(libs.joda.time)
-    implementation(libs.threetenbp)
+    coreLibraryDesugaring(libs.desugar)
 }

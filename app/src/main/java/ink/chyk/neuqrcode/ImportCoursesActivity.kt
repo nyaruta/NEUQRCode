@@ -18,12 +18,17 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.*
+import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.components.*
 import ink.chyk.neuqrcode.viewmodels.*
 
 class ImportCoursesActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+
+    // 初始化 mmkv
+    MMKV.initialize(this)
+
     val lightTransparentStyle = SystemBarStyle.light(
       scrim = TRANSPARENT,
       darkScrim = TRANSPARENT
