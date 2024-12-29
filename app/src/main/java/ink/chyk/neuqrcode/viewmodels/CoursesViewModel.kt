@@ -136,7 +136,8 @@ class CoursesViewModel(
     // 计算本周日期
     // 日期对象，日期字符串，课程数量
     val today = LocalDate.parse(_date.value, formatter)
-    val weekStart = today.minusDays(today.dayOfWeek.value.toLong() - 1)
+    val dayOfWeek = today.dayOfWeek.value.toLong().let { if (it == 7L) 0L else it }
+    val weekStart = today.minusDays(dayOfWeek)
     return (0..6).map {
       val date = weekStart.plusDays(it.toLong())
       val dateId = date.format(formatter)
