@@ -1,9 +1,9 @@
 <div align="center">
-  <img src="https://imgsrc.chyk.ink/logo.webp" width="180px">
+  <img src="https://imgsrc.chyk.ink/logo.webp" width="180px" alt="project logo">
   <br>
 </div>
 
-<h1><center>NEU 一码通</center></h1>
+<h1 align="center">NEU 一码通</h1>
 
 
 
@@ -13,12 +13,13 @@
 
 校园卡充值、教务系统、校园乐跑等功能将在日后添加，如果您对这些功能有需求，或发现了软件存在的不足，欢迎提交 issue 或 pull request。
 
-<center>
+<div align="center">
     <img src="https://imgsrc.chyk.ink/1.webp" width="30%" />
     <img src="https://imgsrc.chyk.ink/2.webp" width="30%" />
     <img src="https://imgsrc.chyk.ink/3.webp" width="30%" />
-</center>
+</div>
 
+<br/>
 
 
 > 本工具以个人学习 Android 和方便日常生活为目的而开发，仅供学习交流使用。  
