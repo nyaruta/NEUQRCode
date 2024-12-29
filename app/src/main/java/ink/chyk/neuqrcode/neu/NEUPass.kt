@@ -232,6 +232,24 @@ class NEUPass {
     }
   }
 
+  private suspend inline fun <reified T> pagedAppRequest(
+    session: NEUAppSession,
+    url: String,
+    pageOffset: Int = 0,
+    pageLimit: Int = 10,
+    sort: String = "-status,-createTime",
+    otherParams: String = ""
+  ): T {
+    var url1 = "$url?page[offset]=$pageOffset&page[limit]=$pageLimit&sort=$sort"
+    if (otherParams.isNotEmpty()) {
+      url1 += "&$otherParams"
+    }
+    return basicAppRequest(
+      session,
+      url1
+    )
+  }
+
   suspend fun getQRCode(session: NEUAppSession): ListedResponse<ECodeResponse> {
     return basicAppRequest(session, "https://ecode.neu.edu.cn/ecode/api/qr-code")
   }
@@ -253,7 +271,24 @@ class NEUPass {
   }
 
   suspend fun getMobileApiCampusNetwork(session: NEUAppSession): MobileApiCampusNetwork {
-    return basicAppRequest(session, "https://portal.neu.edu.cn/mobile/api/personal/campusInfo/network")
+    return basicAppRequest(
+      session,
+      "https://portal.neu.edu.cn/mobile/api/personal/campusInfo/network"
+    )
+  }
+
+  suspend fun getMessageSources(session: NEUAppSession): MessageSourcesResponse {
+    return basicAppRequest(
+      session,
+      "https://portal.neu.edu.cn/mobile/api/message/sources/sourceList"
+    )
+  }
+
+  suspend fun getTasks(session: NEUAppSession): TaskResponse {
+    return pagedAppRequest(
+      session,
+      "https://portal.neu.edu.cn/mobile/api/workrecord/tasks"
+    )
   }
 
 }

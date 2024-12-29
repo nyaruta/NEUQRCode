@@ -40,7 +40,8 @@ fun CoursesScreen(
   Box(
     modifier = Modifier
       .fillMaxSize()
-      .padding(innerPadding),
+      .padding(innerPadding)
+      .padding(16.dp),
     contentAlignment = Alignment.Center
   ) {
     if (loadCalendar) {
@@ -57,7 +58,6 @@ val NIGHT = R.drawable.ic_fluent_weather_partly_cloudy_night_24_regular
 
 @Composable
 fun TodayCourses(viewModel: CoursesViewModel) {
-
   Column(
     modifier = Modifier.fillMaxSize(),
     verticalArrangement = Arrangement.SpaceBetween

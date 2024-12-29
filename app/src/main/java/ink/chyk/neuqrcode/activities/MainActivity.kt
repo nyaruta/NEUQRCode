@@ -90,6 +90,7 @@ fun MainApp(screen: String?) {
   val eCodeViewModel: ECodeViewModel = viewModel(factory = ECodeViewModelFactory())
   val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory())
   val coursesViewModel: CoursesViewModel = viewModel(factory = CoursesViewModelFactory())
+  val newsViewModel: NewsViewModel = viewModel(factory = NewsViewModelFactory())
 
   val navController = rememberNavController()
   var selectedItem by remember { mutableIntStateOf(0) }
@@ -111,40 +112,42 @@ fun MainApp(screen: String?) {
   AppTheme {
     Scaffold(
       bottomBar = {
-        NavigationBar(
-          modifier = Modifier.padding(horizontal = 16.dp),
-        ) {
-          BottomNavigationItem().navigationItems().forEachIndexed { index, item ->
-            NavigationBarItem(
-              selected = index == selectedItem,
-              label = { Text(item.label) },
-              icon = {
-                Icon(
-                  painter = painterResource(item.icon),
-                  contentDescription = item.label
-                )
-              },
-              onClick = {
-                if (selectedItem != index) {
-                  selectedItem = index
-                  navController.navigate(item.route) {
-                    // https://medium.com/@bharadwaj.rns/bottom-navigation-in-jetpack-compose-using-material3-c153ccbf0593
-                    popUpTo(navController.graph.findStartDestination().id) {
-                      saveState = true
+        NavigationBar {
+          Row(
+            modifier = Modifier.padding(horizontal = 8.dp)
+          ) {
+            BottomNavigationItem().navigationItems().forEachIndexed { index, item ->
+              NavigationBarItem(
+                selected = index == selectedItem,
+                label = { Text(item.label) },
+                icon = {
+                  Icon(
+                    painter = painterResource(item.icon),
+                    contentDescription = item.label
+                  )
+                },
+                onClick = {
+                  if (selectedItem != index) {
+                    selectedItem = index
+                    navController.navigate(item.route) {
+                      // https://medium.com/@bharadwaj.rns/bottom-navigation-in-jetpack-compose-using-material3-c153ccbf0593
+                      popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                      }
+                      launchSingleTop = true
+                      restoreState = true
                     }
-                    launchSingleTop = true
-                    restoreState = true
                   }
                 }
-              }
-            )
+              )
+            }
           }
         }
       }
     ) { innerPadding ->
       NavHost(navController = navController, startDestination = screen ?: "ecode") {
         composable("news") {
-          NewsScreen(navController = navController)
+          NewsScreen(viewModel = newsViewModel, navController = navController)
         }
         composable("courses") {
           CoursesScreen(
