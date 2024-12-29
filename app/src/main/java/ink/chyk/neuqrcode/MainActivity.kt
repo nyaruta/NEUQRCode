@@ -49,31 +49,24 @@ class MainActivity : ComponentActivity() {
 
 data class BottomNavigationItem(
   val label: String = "",
-  val icon: ImageVector = Icons.Default.Home,
+  val icon: Int = 0,
   val route: String = ""
 ) {
-  @Composable
   fun navigationItems(): List<BottomNavigationItem> {
     return listOf(
       BottomNavigationItem(
         "一码通",
-        ImageVector.vectorResource(
-          id = R.drawable.ic_fluent_qr_code_24_filled
-        ),
+        R.drawable.ic_fluent_qr_code_24_filled,
         "ecode"
       ),
       BottomNavigationItem(
         "课程表",
-        ImageVector.vectorResource(
-          id = R.drawable.ic_fluent_calendar_24_filled
-        ),
+        R.drawable.ic_fluent_calendar_24_filled,
         "courses"
       ),
       BottomNavigationItem(
         "个人信息",
-        ImageVector.vectorResource(
-          id = R.drawable.ic_fluent_person_24_filled
-        ),
+        R.drawable.ic_fluent_person_24_filled,
         "profile"
       )
     )
@@ -89,6 +82,18 @@ fun MainApp(screen: String?) {
   val navController = rememberNavController()
   var selectedItem by remember { mutableIntStateOf(0) }
 
+  LaunchedEffect(navController) {
+    navController.currentBackStackEntryFlow.collect { backStackEntry ->
+      // 根据当前的目的地更新底部导航栏的选中项
+      selectedItem = when (backStackEntry.destination.route) {
+        "ecode" -> 0
+        "courses" -> 1
+        "profile" -> 2
+        else -> 0
+      }
+    }
+  }
+
   AppBackground(
     bottomBar = {
       NavigationBar {
@@ -96,7 +101,7 @@ fun MainApp(screen: String?) {
           NavigationBarItem(
             selected = index == selectedItem,
             label = { Text(item.label) },
-            icon = { Icon(imageVector = item.icon, contentDescription = item.label) },
+            icon = { Icon(painter = painterResource(item.icon), contentDescription = item.label) },
             onClick = {
               selectedItem = index
               navController.navigate(item.route) {
