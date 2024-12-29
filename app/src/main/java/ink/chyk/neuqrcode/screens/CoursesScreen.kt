@@ -13,12 +13,11 @@ import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.*
-import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
 import androidx.navigation.*
 import dev.darkokoa.pangu.*
-import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.R
+import ink.chyk.neuqrcode.activities.*
 import ink.chyk.neuqrcode.viewmodels.*
 import net.fortuna.ical4j.model.component.*
 import java.time.*

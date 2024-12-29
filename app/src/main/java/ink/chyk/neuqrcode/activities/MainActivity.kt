@@ -1,4 +1,4 @@
-package ink.chyk.neuqrcode
+package ink.chyk.neuqrcode.activities
 
 import android.content.*
 import android.os.*
@@ -6,17 +6,14 @@ import android.util.*
 import android.widget.*
 import androidx.activity.*
 import androidx.activity.compose.*
-import androidx.compose.material.icons.*
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.res.*
 import androidx.lifecycle.viewmodel.compose.*
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import com.tencent.mmkv.*
-import ink.chyk.neuqrcode.components.*
+import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.screens.*
 import ink.chyk.neuqrcode.viewmodels.*
 

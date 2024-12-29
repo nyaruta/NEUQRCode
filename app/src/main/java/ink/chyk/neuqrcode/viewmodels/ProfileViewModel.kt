@@ -10,6 +10,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import okhttp3.*
 import ink.chyk.neuqrcode.R
+import ink.chyk.neuqrcode.activities.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 

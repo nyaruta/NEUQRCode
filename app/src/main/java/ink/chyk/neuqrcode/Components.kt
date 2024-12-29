@@ -1,4 +1,4 @@
-package ink.chyk.neuqrcode.components
+package ink.chyk.neuqrcode
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -9,8 +9,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
-import ink.chyk.neuqrcode.*
-import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.ui.theme.AppTheme
 
 @Composable

@@ -1,4 +1,4 @@
-package ink.chyk.neuqrcode
+package ink.chyk.neuqrcode.activities
 
 import android.content.*
 import android.graphics.Color.TRANSPARENT
@@ -7,8 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -22,7 +20,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.tencent.mmkv.MMKV
-import ink.chyk.neuqrcode.components.*
+import ink.chyk.neuqrcode.*
 import kotlinx.coroutines.*
 
 class LoginActivity : ComponentActivity() {

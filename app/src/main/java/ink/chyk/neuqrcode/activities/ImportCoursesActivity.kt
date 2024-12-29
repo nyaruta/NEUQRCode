@@ -1,4 +1,4 @@
-package ink.chyk.neuqrcode
+package ink.chyk.neuqrcode.activities
 
 import android.content.*
 import android.graphics.Color.*
@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.*
 import com.tencent.mmkv.*
-import ink.chyk.neuqrcode.components.*
+import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.viewmodels.*
 
 class ImportCoursesActivity : ComponentActivity() {
