@@ -103,14 +103,16 @@ fun MainApp(screen: String?) {
             label = { Text(item.label) },
             icon = { Icon(painter = painterResource(item.icon), contentDescription = item.label) },
             onClick = {
-              selectedItem = index
-              navController.navigate(item.route) {
-                // https://medium.com/@bharadwaj.rns/bottom-navigation-in-jetpack-compose-using-material3-c153ccbf0593
-                popUpTo(navController.graph.findStartDestination().id) {
-                  saveState = true
+              if (selectedItem != index) {
+                selectedItem = index
+                navController.navigate(item.route) {
+                  // https://medium.com/@bharadwaj.rns/bottom-navigation-in-jetpack-compose-using-material3-c153ccbf0593
+                  popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                  }
+                  launchSingleTop = true
+                  restoreState = true
                 }
-                launchSingleTop = true
-                restoreState = true
               }
             }
           )

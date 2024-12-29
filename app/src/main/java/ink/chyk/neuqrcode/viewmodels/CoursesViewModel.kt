@@ -1,5 +1,6 @@
 package ink.chyk.neuqrcode.viewmodels
 
+import android.util.*
 import androidx.core.graphics.*
 import androidx.lifecycle.*
 import com.tencent.mmkv.*
@@ -18,6 +19,7 @@ import net.fortuna.ical4j.model.property.*
 import java.time.*
 import java.time.format.*
 import java.util.Locale
+import kotlin.Pair
 
 
 class CoursesViewModel(
@@ -46,6 +48,7 @@ class CoursesViewModel(
       val calendar = mmkv.decodeString("courses")!!
       _calendar.value = CalendarBuilder().build(calendar.byteInputStream())
       _loadCalendar.value = true
+      Log.d("CoursesViewModel", "Calendar loaded.")
     }
   }
 
@@ -180,5 +183,9 @@ class CoursesViewModel(
 
   fun backToday() {
     _date.value = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+  }
+
+  init {
+    loadCalendar()
   }
 }

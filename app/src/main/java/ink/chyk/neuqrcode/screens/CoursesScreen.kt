@@ -28,13 +28,7 @@ import java.util.Locale
 
 @Composable
 fun CoursesScreen(viewModel: CoursesViewModel, navController: NavController) {
-  val context = LocalContext.current
   val loadCalendar by viewModel.loadCalendar.collectAsState()
-  val todayEvents by viewModel.todayEvents.collectAsState()
-
-  LaunchedEffect(Unit) {
-    viewModel.loadCalendar()
-  }
 
   if (!viewModel.isCalendarImported()) {
     return ImportCoursesSplash()
