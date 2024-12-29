@@ -23,17 +23,26 @@ class NewsViewModel(
     return neu.loginMobileApi(session, appTicket)
   }
 
-  private var _title = MutableStateFlow("智慧东大消息中心")
-  val title: StateFlow<String> = _title
-
   private var _rail = MutableStateFlow(false)
   val rail: StateFlow<Boolean> = _rail
 
   private var _category = MutableStateFlow(Category.UNREAD)
   val category: StateFlow<Category> = _category
 
-  private var _messageSources = MutableStateFlow(emptyList<MessageSource>())
-  private var _messages = MutableStateFlow(emptyList<Mess>())
+  private var _sources = MutableStateFlow(emptyList<MessageSource>())
+  val sources: StateFlow<List<MessageSource>> = _sources
+  private var _notifications = MutableStateFlow(emptyList<Notification>())
+  val notifications: StateFlow<List<Notification>> = _notifications
+  private var _tasks = MutableStateFlow(emptyList<Task>())
+  val tasks: StateFlow<List<Task>> = _tasks
+
+  suspend fun fetchContents() {
+    prepareSessionAnd { session ->
+      neu.getMessageSources(session).let {sources -> _sources.value = sources.data }
+      neu.getNotifications(session).let {notifications -> _notifications.value = notifications.data }
+      neu.getTasks(session).let {tasks -> _tasks.value = tasks.data }
+    }
+  }
 
   fun toggleRail() {
     _rail.value = !_rail.value

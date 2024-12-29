@@ -291,4 +291,11 @@ class NEUPass {
     )
   }
 
+  suspend fun getNotifications(session: NEUAppSession): NotificationsResponse {
+    return pagedAppRequest(
+      session,
+      "https://portal.neu.edu.cn/mobile/api/message/notifications"
+    )
+  }
+
 }
