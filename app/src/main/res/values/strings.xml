@@ -34,4 +34,10 @@
     <string name="afternoon_courses">下午课程</string>
     <string name="evening_courses">晚间课程</string>
     <string name="no_course">今日无事可做</string>
+    <string name="update_check_failed">检查更新失败！请检查网络连接。</string>
+    <string name="no_latest_release">没有找到最新版本！</string>
+    <string name="already_latest_release">已经是最新版本。</string>
+    <string name="found_latest_release">发现新版本：%1$s</string>
+    <string name="releases_url">https://file.chyk.ink/OneDrive/%E5%AE%89%E5%8D%93%E8%BD%AF%E4%BB%B6/NEU%E4%B8%80%E7%A0%81%E9%80%9A</string>
+    <string name="checking_update">正在检查更新…</string>
 </resources>

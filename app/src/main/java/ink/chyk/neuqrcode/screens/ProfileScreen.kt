@@ -85,6 +85,14 @@ fun ProfileScreen(
         clickable = true,
         onClick = { showAboutDialog.value = true }
       )
+      RowButton(
+        iconResource = R.drawable.ic_fluent_phone_update_checkmark_24_regular,
+        text = "检查更新",
+        clickable = true,
+        onClick = {
+          viewModel.checkUpdate(context)
+        }
+      )
     }
   }
 
@@ -95,6 +103,7 @@ fun ProfileScreen(
   )
 
   AboutDialog(
+    viewModel = viewModel,
     showDialog = showAboutDialog,
     onDismiss = { showAboutDialog.value = false }
   )
@@ -268,6 +277,7 @@ fun LogoutConfirmationDialog(
 
 @Composable
 fun AboutDialog(
+  viewModel: ProfileViewModel,
   showDialog: MutableState<Boolean>,
   onDismiss: () -> Unit
 ) {
@@ -335,11 +345,7 @@ fun AboutDialog(
             text = getString(context, R.string.about_content_source),
             clickable = true,
             onClick = {
-              val browserIntent = Intent(
-                Intent.ACTION_VIEW,
-                android.net.Uri.parse(getString(context, R.string.source_url))
-              )
-              context.startActivity(browserIntent)
+              viewModel.openLink(context, R.string.source_url)
             }
           )
         }
