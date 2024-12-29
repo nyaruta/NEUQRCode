@@ -36,7 +36,8 @@ fun dataUriToImageBitmap(dataUri: String): ImageBitmap? {
 @Composable
 fun ProfileScreen(
   viewModel: ProfileViewModel,
-  navController: NavController
+  navController: NavController,
+  innerPadding: PaddingValues
 ) {
   val user by viewModel.user.collectAsState()
   val userInfo by viewModel.userInfo.collectAsState()
@@ -51,6 +52,7 @@ fun ProfileScreen(
   Box(
     modifier = Modifier
       .fillMaxSize()
+      .padding(innerPadding)
       .padding(vertical = 64.dp, horizontal = 8.dp)
   ) {
     Column {

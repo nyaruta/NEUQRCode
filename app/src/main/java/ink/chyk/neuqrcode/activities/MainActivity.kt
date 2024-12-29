@@ -20,6 +20,7 @@ import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.screens.*
 import ink.chyk.neuqrcode.viewmodels.*
 import ink.chyk.neuqrcode.R
+import ink.chyk.neuqrcode.ui.theme.*
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,49 +108,64 @@ fun MainApp(screen: String?) {
     }
   }
 
-  AppBackground(
-    bottomBar = {
-      NavigationBar (
-        modifier = Modifier.padding(horizontal = 16.dp),
-      ) {
-        BottomNavigationItem().navigationItems().forEachIndexed { index, item ->
-          NavigationBarItem(
-            selected = index == selectedItem,
-            label = { Text(item.label) },
-            icon = { Icon(painter = painterResource(item.icon), contentDescription = item.label) },
-            onClick = {
-              if (selectedItem != index) {
-                selectedItem = index
-                navController.navigate(item.route) {
-                  // https://medium.com/@bharadwaj.rns/bottom-navigation-in-jetpack-compose-using-material3-c153ccbf0593
-                  popUpTo(navController.graph.findStartDestination().id) {
-                    saveState = true
+  AppTheme {
+    Scaffold(
+      bottomBar = {
+        NavigationBar(
+          modifier = Modifier.padding(horizontal = 16.dp),
+        ) {
+          BottomNavigationItem().navigationItems().forEachIndexed { index, item ->
+            NavigationBarItem(
+              selected = index == selectedItem,
+              label = { Text(item.label) },
+              icon = {
+                Icon(
+                  painter = painterResource(item.icon),
+                  contentDescription = item.label
+                )
+              },
+              onClick = {
+                if (selectedItem != index) {
+                  selectedItem = index
+                  navController.navigate(item.route) {
+                    // https://medium.com/@bharadwaj.rns/bottom-navigation-in-jetpack-compose-using-material3-c153ccbf0593
+                    popUpTo(navController.graph.findStartDestination().id) {
+                      saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
                   }
-                  launchSingleTop = true
-                  restoreState = true
                 }
               }
-            }
-          )
+            )
+          }
         }
       }
-    }
-  ) {
-    NavHost(navController = navController, startDestination = screen ?: "ecode") {
-      composable("news") {
-        NewsScreen(navController = navController)
-      }
-      composable("courses") {
-        CoursesScreen(viewModel = coursesViewModel, navController = navController)
-      }
-      composable("ecode") {
-        ECodeScreen(viewModel = eCodeViewModel, navController = navController)
-      }
-      composable("apps") {
-        AppsScreen(navController = navController)
-      }
-      composable("profile") {
-        ProfileScreen(viewModel = profileViewModel, navController = navController)
+    ) { innerPadding ->
+      NavHost(navController = navController, startDestination = screen ?: "ecode") {
+        composable("news") {
+          NewsScreen(navController = navController)
+        }
+        composable("courses") {
+          CoursesScreen(
+            viewModel = coursesViewModel,
+            navController = navController,
+            innerPadding = innerPadding
+          )
+        }
+        composable("ecode") {
+          ECodeScreen(viewModel = eCodeViewModel, navController = navController)
+        }
+        composable("apps") {
+          AppsScreen(navController = navController)
+        }
+        composable("profile") {
+          ProfileScreen(
+            viewModel = profileViewModel,
+            navController = navController,
+            innerPadding = innerPadding
+          )
+        }
       }
     }
   }

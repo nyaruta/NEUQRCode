@@ -12,41 +12,6 @@ import androidx.compose.ui.unit.*
 import ink.chyk.neuqrcode.ui.theme.AppTheme
 
 @Composable
-fun AppBackground(
-  bottomBar: @Composable () -> Unit = {},
-  darkTheme: Boolean = isSystemInDarkTheme(),
-  content: @Composable () -> Unit
-) {
-  AppTheme {
-    Scaffold(
-      modifier = Modifier
-        .fillMaxSize(),
-      bottomBar = bottomBar
-    ) { innerPadding ->
-      Box(
-        modifier = Modifier
-          .fillMaxSize()
-          .background(
-            brush = Brush.radialGradient(
-              colors = if (darkTheme) {
-                listOf(Color(0xFF1A1F1F), Color(0xFF202020))
-              } else {
-                listOf(Color(0xFFEFF4F9), Color(0xFFF3F3F3))
-              },
-            )
-          )
-      ) {
-        Box(
-          modifier = Modifier
-            .padding(innerPadding)
-        ) {
-          content()
-        }
-      }
-    }
-  }
-}
-@Composable
 fun NEUTitle(
   text: String
 ) {

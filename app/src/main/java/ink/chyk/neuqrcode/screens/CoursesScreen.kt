@@ -26,7 +26,11 @@ import java.util.Locale
 
 
 @Composable
-fun CoursesScreen(viewModel: CoursesViewModel, navController: NavController) {
+fun CoursesScreen(
+  viewModel: CoursesViewModel,
+  navController: NavController,
+  innerPadding: PaddingValues
+) {
   val loadCalendar by viewModel.loadCalendar.collectAsState()
 
   if (!viewModel.isCalendarImported()) {
@@ -36,7 +40,7 @@ fun CoursesScreen(viewModel: CoursesViewModel, navController: NavController) {
   Box(
     modifier = Modifier
       .fillMaxSize()
-      .padding(16.dp),
+      .padding(innerPadding),
     contentAlignment = Alignment.Center
   ) {
     if (loadCalendar) {

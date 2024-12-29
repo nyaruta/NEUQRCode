@@ -24,6 +24,7 @@ import ink.chyk.neuqrcode.*
 import kotlinx.coroutines.*
 import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.neu.*
+import ink.chyk.neuqrcode.ui.theme.*
 
 class LoginActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,14 +38,24 @@ class LoginActivity : ComponentActivity() {
       navigationBarStyle = lightTransparentStyle
     )
 
+    val context = this
 
     setContent {
-      AppBackground {
-        LoginForm(openMainPage = {
-          val intent = Intent(this, MainActivity::class.java)
-          startActivity(intent)
-          finish()
-        })
+      AppTheme {
+        Scaffold { innerPadding ->
+          Box(
+            modifier = Modifier
+              .padding(innerPadding)
+              .fillMaxSize(),
+            contentAlignment = Alignment.Center
+          ) {
+            LoginForm(openMainPage = {
+              val intent = Intent(context, MainActivity::class.java)
+              startActivity(intent)
+              finish()
+            })
+          }
+        }
       }
     }
   }

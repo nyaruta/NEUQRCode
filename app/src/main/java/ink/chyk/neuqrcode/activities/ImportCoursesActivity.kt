@@ -22,6 +22,7 @@ import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.viewmodels.*
 import ink.chyk.neuqrcode.R
+import ink.chyk.neuqrcode.ui.theme.*
 
 class ImportCoursesActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +42,9 @@ class ImportCoursesActivity : ComponentActivity() {
 
 
     setContent {
-      ImportCoursesScreen()
+      AppTheme {
+        ImportCoursesScreen()
+      }
     }
   }
 }
@@ -61,8 +64,14 @@ fun ImportCoursesScreen() {
     // elise 可执行文件的资源 ID
     eliseBinaryResource = viewModel.getEliseBinaryResource()
   } catch (e: Exception) {
-    return AppBackground {
-      UnsupportedArchitectureCard()
+    return Scaffold { innerPadding ->
+      Box(
+        modifier = Modifier
+          .fillMaxSize()
+          .padding(innerPadding)
+      ) {
+        UnsupportedArchitectureCard()
+      }
     }
   }
 
@@ -78,10 +87,11 @@ fun ImportCoursesScreen() {
     return
   }
 
-  AppBackground {
+  Scaffold { innerPadding ->
     Box(
       modifier = Modifier
-        .fillMaxSize(),
+        .fillMaxSize()
+        .padding(innerPadding),
       contentAlignment = Alignment.Center
     ) {
       Card(
