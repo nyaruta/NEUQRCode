@@ -5,6 +5,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -234,8 +235,13 @@ fun MessageList(viewModel: NewsViewModel) {
   val category by viewModel.category.collectAsState()
 
   var empty by remember { mutableStateOf(true) }
+  val scrollState = rememberScrollState()
 
-  Column {
+  Column(
+    modifier = Modifier
+      .padding(8.dp)
+      .verticalScroll(scrollState)
+  ) {
     notifications.filter {
       when (category) {
         Category.UNREAD -> it.attributes.status == 1
