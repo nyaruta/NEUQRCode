@@ -6,9 +6,12 @@ import android.util.*
 import android.widget.*
 import androidx.activity.*
 import androidx.activity.compose.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.*
 import androidx.compose.ui.res.*
+import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.*
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
@@ -16,6 +19,7 @@ import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.screens.*
 import ink.chyk.neuqrcode.viewmodels.*
+import ink.chyk.neuqrcode.R
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,17 +56,27 @@ data class BottomNavigationItem(
   fun navigationItems(): List<BottomNavigationItem> {
     return listOf(
       BottomNavigationItem(
+        "消息",
+        R.drawable.ic_fluent_news_24_filled,
+        "news"
+      ),
+      BottomNavigationItem(
+        "课表",
+        R.drawable.ic_fluent_calendar_24_filled,
+        "courses"
+      ),
+      BottomNavigationItem(
         "一码通",
         R.drawable.ic_fluent_qr_code_24_filled,
         "ecode"
       ),
       BottomNavigationItem(
-        "课程表",
-        R.drawable.ic_fluent_calendar_24_filled,
-        "courses"
+        "应用",
+        R.drawable.ic_fluent_apps_24_filled,
+        "apps"
       ),
       BottomNavigationItem(
-        "个人信息",
+        "个人",
         R.drawable.ic_fluent_person_24_filled,
         "profile"
       )
@@ -83,17 +97,21 @@ fun MainApp(screen: String?) {
     navController.currentBackStackEntryFlow.collect { backStackEntry ->
       // 根据当前的目的地更新底部导航栏的选中项
       selectedItem = when (backStackEntry.destination.route) {
-        "ecode" -> 0
+        "news" -> 0
         "courses" -> 1
-        "profile" -> 2
-        else -> 0
+        "ecode" -> 2
+        "apps" -> 3
+        "profile" -> 4
+        else -> 2
       }
     }
   }
 
   AppBackground(
     bottomBar = {
-      NavigationBar {
+      NavigationBar (
+        modifier = Modifier.padding(horizontal = 16.dp),
+      ) {
         BottomNavigationItem().navigationItems().forEachIndexed { index, item ->
           NavigationBarItem(
             selected = index == selectedItem,
@@ -118,11 +136,17 @@ fun MainApp(screen: String?) {
     }
   ) {
     NavHost(navController = navController, startDestination = screen ?: "ecode") {
-      composable("ecode") {
-        ECodeScreen(viewModel = eCodeViewModel, navController = navController)
+      composable("news") {
+        NewsScreen(navController = navController)
       }
       composable("courses") {
         CoursesScreen(viewModel = coursesViewModel, navController = navController)
+      }
+      composable("ecode") {
+        ECodeScreen(viewModel = eCodeViewModel, navController = navController)
+      }
+      composable("apps") {
+        AppsScreen(navController = navController)
       }
       composable("profile") {
         ProfileScreen(viewModel = profileViewModel, navController = navController)

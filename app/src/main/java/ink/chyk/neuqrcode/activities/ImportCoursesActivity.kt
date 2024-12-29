@@ -21,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.*
 import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.viewmodels.*
+import ink.chyk.neuqrcode.R
 
 class ImportCoursesActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
