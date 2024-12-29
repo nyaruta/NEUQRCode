@@ -4,6 +4,7 @@ import android.util.*
 import androidx.lifecycle.*
 import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.*
+import ink.chyk.neuqrcode.neu.*
 import kotlinx.coroutines.flow.*
 
 abstract class BasicViewModel(

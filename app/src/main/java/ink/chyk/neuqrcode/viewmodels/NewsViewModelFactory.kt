@@ -1,9 +1,8 @@
 package ink.chyk.neuqrcode.viewmodels
 
-import android.content.Context
 import androidx.lifecycle.*
 import com.tencent.mmkv.*
-import ink.chyk.neuqrcode.*
+import ink.chyk.neuqrcode.neu.*
 
 class NewsViewModelFactory() : ViewModelProvider.Factory {
   override fun <T : ViewModel> create(modelClass: Class<T>): T {

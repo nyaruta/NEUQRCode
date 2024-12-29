@@ -23,6 +23,7 @@ import com.tencent.mmkv.MMKV
 import ink.chyk.neuqrcode.*
 import kotlinx.coroutines.*
 import ink.chyk.neuqrcode.R
+import ink.chyk.neuqrcode.neu.*
 
 class LoginActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {

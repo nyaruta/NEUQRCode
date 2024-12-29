@@ -1,8 +1,7 @@
 package ink.chyk.neuqrcode.viewmodels
 
-import androidx.lifecycle.*
 import com.tencent.mmkv.*
-import ink.chyk.neuqrcode.*
+import ink.chyk.neuqrcode.neu.*
 
 class NewsViewModel(
   override val mmkv: MMKV,

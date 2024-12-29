@@ -21,9 +21,9 @@ import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.*
 import androidx.core.content.ContextCompat.*
 import androidx.navigation.*
-import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.activities.*
+import ink.chyk.neuqrcode.neu.*
 import ink.chyk.neuqrcode.viewmodels.*
 import android.graphics.drawable.Icon as AndroidIcon
 
