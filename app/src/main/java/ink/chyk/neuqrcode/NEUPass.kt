@@ -13,36 +13,25 @@ data class NEUAppSession(
 )
 
 @Serializable
-data class ECodeQRCode(
-  val data: List<ECodeData>
+data class ListedResponse<T>(
+  val data: List<ResponseData<T>>
 )
 
 @Serializable
-data class ECodeData(
+data class ResponseData<T>(
   val type: Nothing? = null,
-  val attributes: ECodeAttributes
+  val attributes: T
 )
 
 @Serializable
-data class ECodeAttributes(
+data class ECodeResponse(
   val qrCode: String,
   val createTime: Long,
   val qrInvalidTime: Long
 )
 
 @Serializable
-data class ECodeUserinfo(
-  val data: List<ECodeUserinfoData>
-)
-
-@Serializable
-data class ECodeUserinfoData(
-  val type: Nothing? = null,
-  val attributes: ECodeUserinfoAttributes
-)
-
-@Serializable
-data class ECodeUserinfoAttributes(
+data class ECodeUserInfoResponse(
   val userCode: String,
   val userName: String,
   val unitName: String,
@@ -337,11 +326,11 @@ class NEUPass {
     }
   }
 
-  suspend fun getQRCode(session:NEUAppSession): ECodeQRCode {
+  suspend fun getQRCode(session:NEUAppSession): ListedResponse<ECodeResponse> {
     return basicAppRequest(session, "https://ecode.neu.edu.cn/ecode/api/qr-code")
   }
 
-  suspend fun getECodeUserInfo(session: NEUAppSession): ECodeUserinfo {
+  suspend fun getECodeUserInfo(session: NEUAppSession): ListedResponse<ECodeUserInfoResponse> {
     return basicAppRequest(session, "https://ecode.neu.edu.cn/ecode/api/user-info")
   }
 

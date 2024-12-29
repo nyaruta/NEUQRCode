@@ -335,8 +335,8 @@ fun AboutDialog(
             text = getString(context, R.string.about_content_source),
             clickable = true,
             onClick = {
-              val browserIntent = android.content.Intent(
-                android.content.Intent.ACTION_VIEW,
+              val browserIntent = Intent(
+                Intent.ACTION_VIEW,
                 android.net.Uri.parse(getString(context, R.string.source_url))
               )
               context.startActivity(browserIntent)

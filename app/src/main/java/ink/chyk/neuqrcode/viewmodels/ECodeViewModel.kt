@@ -32,8 +32,8 @@ class ECodeViewModel(
   val code: StateFlow<String> = _code
 
   // 用户信息
-  private val _userInfo = MutableStateFlow<ECodeUserinfoAttributes?>(null)
-  val userInfo: StateFlow<ECodeUserinfoAttributes?> = _userInfo
+  private val _userInfo = MutableStateFlow<ECodeUserInfoResponse?>(null)
+  val userInfo: StateFlow<ECodeUserInfoResponse?> = _userInfo
 
   // 二维码生成时间
   private val _codeGenerateTime = MutableStateFlow(0L)
