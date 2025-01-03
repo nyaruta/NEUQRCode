@@ -5,11 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.*
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
-import ink.chyk.neuqrcode.ui.theme.AppTheme
 
 @Composable
 fun NEUTitle(
