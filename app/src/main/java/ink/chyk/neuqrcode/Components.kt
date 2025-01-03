@@ -37,3 +37,20 @@ fun NEUTitle(
     Text(text, style = MaterialTheme.typography.headlineSmall)
   }
 }
+
+@Composable
+fun DialogTitle(icon: Int, text: String) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically
+  ) {
+    Icon(
+      painter = painterResource(icon),
+      contentDescription = text
+    )
+    Text(
+      text = text,
+      style = MaterialTheme.typography.headlineSmall,
+      modifier = Modifier.padding(start = 8.dp)
+    )
+  }
+}

@@ -21,10 +21,11 @@ import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.*
 import androidx.core.content.ContextCompat.*
 import androidx.navigation.*
-import ink.chyk.neuqrcode.R
+import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.activities.*
 import ink.chyk.neuqrcode.neu.*
 import ink.chyk.neuqrcode.viewmodels.*
+import ink.chyk.neuqrcode.R
 import android.graphics.drawable.Icon as AndroidIcon
 
 fun dataUriToImageBitmap(dataUri: String): ImageBitmap? {
@@ -243,16 +244,7 @@ fun LogoutConfirmationDialog(
         onDismiss()
       },
       title = {
-        Row(
-          verticalAlignment = Alignment.CenterVertically
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.ic_fluent_person_swap_24_regular),
-            contentDescription = "登出"
-          )
-          Spacer(modifier = Modifier.width(8.dp))
-          Text(text = "登出账号")
-        }
+        DialogTitle(R.drawable.ic_fluent_person_swap_24_regular, "登出")
       },
       text = {
         Text("确定要登出当前的账号吗？")
@@ -304,19 +296,7 @@ fun AboutDialog(
             .padding(16.dp)
             .clip(RoundedCornerShape(8.dp))
         ) {
-          Row(
-            verticalAlignment = Alignment.CenterVertically
-          ) {
-            Icon(
-              painter = painterResource(R.drawable.ic_fluent_book_information_24_regular),
-              contentDescription = "关于"
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-              text = "关于",
-              style = MaterialTheme.typography.headlineMedium
-            )
-          }
+          DialogTitle(R.drawable.ic_fluent_book_information_24_regular,"关于")
 
           Spacer(modifier = Modifier.height(8.dp))
           Text(

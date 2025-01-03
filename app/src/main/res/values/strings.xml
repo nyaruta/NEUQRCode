@@ -48,4 +48,5 @@
     <string name="neu2">东大要闻</string>
     <string name="neu3">媒体东大</string>
     <string name="no_message_in_category">该分类下暂无消息…</string>
+    <string name="message_detail">消息详情</string>
 </resources>

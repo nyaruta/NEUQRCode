@@ -20,8 +20,10 @@ import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
 import androidx.navigation.*
+import dev.darkokoa.pangu.*
 import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.R
+import ink.chyk.neuqrcode.neu.*
 import ink.chyk.neuqrcode.viewmodels.*
 import kotlinx.coroutines.*
 
@@ -124,8 +126,20 @@ fun NewsScreen(viewModel: NewsViewModel, navController: NavController) {
     }
   }
 
-  WithTopBar(viewModel) { it ->
+  WithTopBar(viewModel) {
     MessageList(it)
+  }
+
+  val detailState by viewModel.detailState.collectAsState()
+
+  if (detailState.showDetail) {
+    NotificationDialog(
+      notification = detailState.detail!!,
+      source = detailState.source!!,
+      onDismiss = {
+        viewModel.hideDetail()
+      }
+    )
   }
 }
 
@@ -234,37 +248,43 @@ fun MessageList(viewModel: NewsViewModel) {
   val tasks by viewModel.tasks.collectAsState()
   val category by viewModel.category.collectAsState()
 
-  var empty by remember { mutableStateOf(true) }
   val scrollState = rememberScrollState()
+
+  val renderedNotifications = notifications.filter {
+    when (category) {
+      Category.UNREAD -> it.attributes.status == 1
+      Category.NOTICE -> true
+      else -> false
+    }
+  }
+
+  val renderedTasks = tasks.filter {
+    when (category) {
+      Category.UNREAD -> it.attributes.status == 0
+      Category.TASKS -> true
+      else -> false
+    }
+  }
+
+  val empty = renderedNotifications.isEmpty() && renderedTasks.isEmpty()
 
   Column(
     modifier = Modifier
       .padding(8.dp)
       .verticalScroll(scrollState)
   ) {
-    notifications.filter {
-      when (category) {
-        Category.UNREAD -> it.attributes.status == 1
-        Category.NOTICE -> true
-        else -> false
-      }
-    }.forEach {
-      empty = false
+    renderedNotifications.forEach {
+      val source = sources.first { source -> source.id == it.attributes.sourceId }
       MessageCard(
         message = it.attributes.data,
-        source = sources.first { source -> source.id == it.attributes.sourceId }.name,
-        onClick = {},
+        source = source.name,
+        onClick = {
+          viewModel.showDetail(it, source)
+        },
         isDone = it.attributes.status == 0
       )
     }
-    tasks.filter {
-      when (category) {
-        Category.UNREAD -> it.attributes.status == 0
-        Category.TASKS -> true
-        else -> false
-      }
-    }.forEach {
-      empty = false
+    renderedTasks.forEach {
       MessageCard(
         message = it.attributes.title,
         source = it.attributes.finishTime,
@@ -348,4 +368,47 @@ fun MessageCard(
       }
     }
   }
+}
+
+@Composable
+fun NotificationDialog(
+  notification: Notification,
+  source: MessageSource,
+  onDismiss: () -> Unit
+) {
+  AlertDialog(
+    onDismissRequest = onDismiss,
+    title = {
+      DialogTitle(
+        icon = R.drawable.ic_fluent_alert_24_regular,
+        text = stringResource(R.string.message_detail)
+      )
+    },
+    text = {
+      Column {
+        Row {
+          Icon(
+            painter = painterResource(R.drawable.ic_fluent_person_20_regular),
+            contentDescription = "Source",
+          )
+          Text(
+            text = source.name,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(start = 8.dp)
+          )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+          text = Pangu.spacingText(notification.attributes.data)
+        )
+      }
+    },
+    confirmButton = {
+      Button(
+        onClick = onDismiss
+      ) {
+        Text(stringResource(R.string.confirm))
+      }
+    }
+  )
 }
