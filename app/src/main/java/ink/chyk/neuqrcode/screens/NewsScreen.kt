@@ -13,19 +13,19 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.input.nestedscroll.*
-import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
 import androidx.navigation.*
+import androidx.paging.*
+import androidx.paging.compose.*
 import dev.darkokoa.pangu.*
 import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.neu.*
 import ink.chyk.neuqrcode.viewmodels.*
-import kotlinx.coroutines.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -151,9 +151,6 @@ data class DrawerItem(
   companion object {
     val items = listOf(
       DrawerItem(
-        R.string.unread, R.drawable.ic_fluent_channel_24_regular, Category.UNREAD
-      ),
-      DrawerItem(
         R.string.notice, R.drawable.ic_fluent_alert_24_regular, Category.NOTICE
       ),
       DrawerItem(
@@ -174,6 +171,7 @@ fun RailedDrawer(
   category: State<Category>,
   viewModel: NewsViewModel
 ) {
+  // 左侧抽屉
   Box(
     modifier = Modifier
       .padding(vertical = 8.dp)
@@ -244,65 +242,133 @@ fun RailedDrawer(
 @Composable
 fun MessageList(viewModel: NewsViewModel) {
   val sources by viewModel.sources.collectAsState()
-  val notifications by viewModel.notifications.collectAsState()
-  val tasks by viewModel.tasks.collectAsState()
+
+  val notifications = viewModel.notifications?.collectAsLazyPagingItems()
+  val tasks = viewModel.tasks?.collectAsLazyPagingItems()
+  val neu1Articles = viewModel.neu1Articles?.collectAsLazyPagingItems()
+  val neu2Articles = viewModel.neu2Articles?.collectAsLazyPagingItems()
+  val neu3Articles = viewModel.neu3Articles?.collectAsLazyPagingItems()
+
   val category by viewModel.category.collectAsState()
 
-  val scrollState = rememberScrollState()
+  val pagingItems = when (category) {
+    Category.NOTICE -> notifications
+    Category.TASKS -> tasks
+    Category.NEU1 -> neu1Articles
+    Category.NEU2 -> neu2Articles
+    Category.NEU3 -> neu3Articles
+  }!!
 
-  val renderedNotifications = notifications.filter {
-    when (category) {
-      Category.UNREAD -> it.attributes.status == 1
-      Category.NOTICE -> true
-      else -> false
+  when {
+    pagingItems.loadState.refresh is LoadState.Loading -> {
+      // 显示加载动画
+      Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+      ) {
+        CircularProgressIndicator()
+      }
+    }
+    pagingItems.loadState.refresh is LoadState.Error -> {
+      // 显示错误信息
+      val error = (pagingItems.loadState.refresh as LoadState.Error).error
+      NekoPlaceholder("加载失败: ${error.message}")
+
+    }
+    pagingItems.loadState.refresh is LoadState.NotLoading && pagingItems.itemCount == 0 -> {
+      // 显示 Placeholder
+      NekoPlaceholder(stringResource(R.string.no_message_in_category))
+    }
+    else -> {
+      // 显示列表
+      LazyColumn {
+        items(
+          pagingItems.itemCount,
+          key = pagingItems.itemKey { it.idx ?: 0 }
+        ) {
+          when (category) {
+            Category.NEU1, Category.NEU2, Category.NEU3 -> {
+              val article = pagingItems[it] as Article
+              MessageCard(
+                message = article.attributes.title,
+                source = article.attributes.indexTime,
+                onClick = {
+                  /* TODO: open in a custom tab */
+                },
+                modifier = Modifier.animateItem()
+              )
+            }
+            Category.NOTICE -> {
+              val notification = pagingItems[it] as Notification
+              val source = sources.first { source -> source.id == notification.attributes.sourceId }
+              MessageCard(
+                message = notification.attributes.data,
+                source = source.name,
+                onClick = {
+                  viewModel.showDetail(notification, source)
+                },
+                isDone = notification.attributes.status == 0,
+                modifier = Modifier.animateItem()
+              )
+            }
+            Category.TASKS -> {
+              val task = pagingItems[it] as Task
+              MessageCard(
+                message = task.attributes.title,
+                source = task.attributes.finishTime,
+                onClick = {
+                  /* TODO: webview */
+                },
+                isDone = task.attributes.status == 1,
+                modifier = Modifier.animateItem()
+              )
+            }
+          }
+        }
+
+        pagingItems.apply {
+          when (loadState.append) {
+            is LoadState.Loading -> {
+              item {
+                Row(
+                  modifier = Modifier.fillMaxWidth(),
+                  horizontalArrangement = Arrangement.Center
+                ) {
+                  CircularProgressIndicator(
+                    modifier = Modifier
+                      .fillMaxWidth()
+                      .padding(16.dp)
+                  )
+                }
+              }
+            }
+
+            is LoadState.Error -> {
+              item {
+                val error = (loadState.append as LoadState.Error).error
+                Text(
+                  text = "加载更多失败: ${error.message}",
+                  modifier = Modifier.fillMaxWidth(),
+                  textAlign = TextAlign.Center,
+                  color = Color.Red
+                )
+              }
+            }
+
+            else -> Unit
+          }
+        }
+      }
     }
   }
 
-  val renderedTasks = tasks.filter {
-    when (category) {
-      Category.UNREAD -> it.attributes.status == 0
-      Category.TASKS -> true
-      else -> false
-    }
-  }
 
-  val empty = renderedNotifications.isEmpty() && renderedTasks.isEmpty()
-
-  Column(
-    modifier = Modifier
-      .padding(8.dp)
-      .verticalScroll(scrollState)
-  ) {
-    renderedNotifications.forEach {
-      val source = sources.first { source -> source.id == it.attributes.sourceId }
-      MessageCard(
-        message = it.attributes.data,
-        source = source.name,
-        onClick = {
-          viewModel.showDetail(it, source)
-        },
-        isDone = it.attributes.status == 0
-      )
-    }
-    renderedTasks.forEach {
-      MessageCard(
-        message = it.attributes.title,
-        source = it.attributes.finishTime,
-        onClick = {},
-        // TODO: open url with session in webview
-        // will implement after embedding webview
-        isDone = it.attributes.status == 1
-      )
-    }
-  }
-
-  if (empty) {
-    NekoPlaceholder()
-  }
 }
 
 @Composable
-fun NekoPlaceholder() {
+fun NekoPlaceholder(
+  text: String
+) {
   Box(
     modifier = Modifier.fillMaxSize(),
     contentAlignment = Alignment.Center
@@ -322,7 +388,7 @@ fun NekoPlaceholder() {
       )
       Spacer(modifier = Modifier.height(16.dp))
       Text(
-        stringResource(R.string.no_message_in_category),
+        text,
         modifier = Modifier.align(Alignment.CenterHorizontally)
       )
       Spacer(modifier = Modifier.height(16.dp))
@@ -335,10 +401,11 @@ fun MessageCard(
   message: String,
   source: String,
   onClick: () -> Unit,
-  isDone: Boolean = false
+  isDone: Boolean = false,
+  modifier: Modifier = Modifier
 ) {
   Box(
-    modifier = Modifier
+    modifier = modifier
       .padding(4.dp)
       .fillMaxWidth()
       .clip(RoundedCornerShape(8.dp))

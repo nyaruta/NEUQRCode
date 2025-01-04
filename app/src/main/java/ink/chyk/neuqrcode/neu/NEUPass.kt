@@ -1,5 +1,6 @@
 package ink.chyk.neuqrcode.neu
 
+import android.util.*
 import ink.chyk.neuqrcode.*
 import kotlinx.coroutines.*
 import okhttp3.*
@@ -232,7 +233,7 @@ class NEUPass {
     }
   }
 
-  private suspend inline fun <reified T> pagedAppRequest(
+  private suspend inline fun <reified T : PagedResponse<U>, U : PagedResponseItem> pagedAppRequest(
     session: NEUAppSession,
     url: String,
     pageOffset: Int = 0,
@@ -244,10 +245,18 @@ class NEUPass {
     if (otherParams.isNotEmpty()) {
       url1 += "&$otherParams"
     }
-    return basicAppRequest(
+    val response: T = basicAppRequest(
       session,
       url1
     )
+    // 写入 idx 用于分页库计算
+    var idx = pageOffset
+    response.data.forEach {
+      it.idx = idx
+      idx++
+    }
+    Log.d("NEUPass", response.toString())
+    return response
   }
 
   suspend fun getQRCode(session: NEUAppSession): ListedResponse<ECodeResponse> {
@@ -284,18 +293,42 @@ class NEUPass {
     )
   }
 
-  suspend fun getTasks(session: NEUAppSession): TaskResponse {
+  suspend fun getTasks(session: NEUAppSession, page: Int, pageLimit: Int): PagedResponse<Task> {
     return pagedAppRequest(
       session,
-      "https://portal.neu.edu.cn/mobile/api/workrecord/tasks"
+      "https://portal.neu.edu.cn/mobile/api/workrecord/tasks",
+      pageOffset = page * 10,
+      pageLimit = pageLimit
     )
   }
 
-  suspend fun getNotifications(session: NEUAppSession): NotificationsResponse {
+  suspend fun getNotifications(
+    session: NEUAppSession,
+    page: Int,
+    pageLimit: Int
+  ): PagedResponse<Notification> {
     return pagedAppRequest(
       session,
-      "https://portal.neu.edu.cn/mobile/api/message/notifications"
+      "https://portal.neu.edu.cn/mobile/api/message/notifications",
+      pageOffset = page * 10,
+      pageLimit = pageLimit
     )
   }
 
+  suspend fun getArticles(
+    session: NEUAppSession,
+    contentId: Int,
+    page: Int,
+    pageLimit: Int
+  ): PagedResponse<Article> {
+    //Log.d("NEUPass", "获取文章 $contentId 第 $page 页，每页 $pageLimit 条")
+    return pagedAppRequest(
+      session,
+      "https://portal.neu.edu.cn/mobile/api/neunews/articles",
+      sort = "-wbdate",
+      otherParams = "filter[contentid]=$contentId",
+      pageOffset = page * 10,
+      pageLimit = pageLimit
+    )
+  }
 }

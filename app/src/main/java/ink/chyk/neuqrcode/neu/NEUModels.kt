@@ -113,22 +113,28 @@ data class MessageSource(
 )
 
 @Serializable
-data class TaskResponse(
-  val data: List<Task>,
+data class PagedResponse<T : PagedResponseItem>(
+  val data: List<T>,
   val meta: Meta
-)
-
-@Serializable
-data class Task(
-  val id: String,
-  val type: String,
-  val attributes: TaskAttributes,
 )
 
 @Serializable
 data class Meta(
   val totalResourceCount: Int,
 )
+
+interface PagedResponseItem {
+  var idx: Int?
+}
+
+@Serializable
+data class Task(
+  val id: String,
+  val type: String,
+  val attributes: TaskAttributes,
+  override var idx: Int? = 0
+) : PagedResponseItem
+
 
 @Serializable
 data class TaskAttributes(
@@ -148,18 +154,13 @@ data class TaskAttributes(
 )
 
 @Serializable
-data class NotificationsResponse(
-  val data: List<Notification>,
-  val meta: Meta
-)
-
-@Serializable
 data class Notification(
   val id: String,
   val type: String,
   val attributes: NotificationAttributes,
-  val relationships: NotificationRelationships
-)
+  val relationships: NotificationRelationships,
+  override var idx: Int? = 0
+) : PagedResponseItem
 
 @Serializable
 data class NotificationAttributes(
@@ -189,4 +190,34 @@ data class NotificationRelationshipsSource(
 data class NotificationRelationshipsSourceData(
   val id: String,
   val type: String
+)
+
+@Serializable
+data class Article(
+  val id: String,
+  val type: String,
+  val attributes: ArticleAttributes,
+  override var idx: Int? = 0
+) : PagedResponseItem
+
+@Serializable
+data class ArticleAttributes(
+  val title: String,
+  val wbnewsid: String,
+  val wbdate: String,
+  val wbcontenturl: String,
+  val ownerid: String? = null,
+  val contentid: String? = null,
+  val isDefaultRead: String,
+  val wbupdatedate: String? = null,
+  val defaultLink: String? = null,
+  val treeid: String? = null,
+  val indexStatus: String,
+  val indexTime: String,
+  val createUser: String? = null,
+  val createTime: String? = null,
+  val updateUser: String? = null,
+  val updateTime: String? = null,
+  val status: String? = null,
+  val isDeleted: Int
 )

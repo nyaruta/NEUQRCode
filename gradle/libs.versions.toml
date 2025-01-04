@@ -17,6 +17,7 @@ viewModelCompose = "2.8.7"
 ical4j = "3.2.19"
 pangu = "0.2.0"
 desugar = "2.1.4"
+paging = "3.3.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -41,7 +42,9 @@ androidx-navigation = { group = "androidx.navigation", name = "navigation-compos
 androidx-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "viewModelCompose" }
 ical4j = { group = "org.mnode.ical4j", name = "ical4j", version.ref = "ical4j" }
 pangu = { group = "io.github.darkokoa", name = "pangu-jvm", version.ref = "pangu" }
-desugar = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }
+desugar = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar"}
+paging = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }
+paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
 
 
 [plugins]

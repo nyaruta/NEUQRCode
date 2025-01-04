@@ -84,4 +84,6 @@ dependencies {
     implementation(libs.ical4j)
     implementation(libs.pangu)
     coreLibraryDesugaring(libs.desugar)
+    implementation(libs.paging)
+    implementation(libs.paging.compose)
 }
