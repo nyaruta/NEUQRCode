@@ -81,4 +81,11 @@
     <string name="tos_v220_checkbox_2">我已知晓本应用非东北大学官方出品</string>
     <string name="tos_v220_checkbox_3">我已知晓本应用不代表学校官方立场</string>
     <string name="tos_confirm">开始使用</string>
+    <string name="group_chat">加入交流群</string>
+    <string name="group_chat_welcome">欢迎加入 NEU 一码通 App 交流反馈群，提交反馈和功能建议！</string>
+    <string name="group_number_content">群号：%1$s</string>
+    <string name="group_number">117285978</string>
+    <string name="group_number_copy">复制群号</string>
+    <string name="group_number_copied">已复制。</string>
+    <string name="about">关于</string>
 </resources>

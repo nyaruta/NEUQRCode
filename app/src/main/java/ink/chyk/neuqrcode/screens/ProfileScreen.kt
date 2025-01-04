@@ -2,6 +2,7 @@ package ink.chyk.neuqrcode.screens
 
 import android.app.Activity
 import android.content.*
+import android.content.ClipboardManager
 import android.content.pm.*
 import android.graphics.BitmapFactory
 import android.widget.Toast
@@ -48,6 +49,7 @@ fun ProfileScreen(
 
   val showLogoutDialog = remember { mutableStateOf(false) }
   val showAboutDialog = remember { mutableStateOf(false) }
+  val showGroupChatDialog = remember { mutableStateOf(false) }
   val context = LocalContext.current
 
   Box(
@@ -89,14 +91,6 @@ fun ProfileScreen(
         clickable = true,
         onClick = { showAboutDialog.value = true }
       )
-      RowButton(
-        iconResource = R.drawable.ic_fluent_phone_update_checkmark_24_regular,
-        text = "检查更新",
-        clickable = true,
-        onClick = {
-          viewModel.checkUpdate(context)
-        }
-      )
     }
   }
 
@@ -109,7 +103,16 @@ fun ProfileScreen(
   AboutDialog(
     viewModel = viewModel,
     showDialog = showAboutDialog,
-    onDismiss = { showAboutDialog.value = false }
+    onDismiss = { showAboutDialog.value = false },
+    onGroupChat = {
+      showAboutDialog.value = false
+      showGroupChatDialog.value = true
+    }
+  )
+
+  GroupChatDialog(
+    showDialog = showGroupChatDialog,
+    onDismiss = { showGroupChatDialog.value = false }
   )
 }
 
@@ -136,7 +139,8 @@ fun createShortcut(
   // 添加快捷方式
   shortcutManager.requestPinShortcut(shortcut, null)
 
-  Toast.makeText(context, "已尝试创建课程表快捷方式\n若未创建请检查权限。", Toast.LENGTH_SHORT).show()
+  Toast.makeText(context, "已尝试创建课程表快捷方式\n若未创建请检查权限。", Toast.LENGTH_SHORT)
+    .show()
 }
 
 
@@ -274,12 +278,13 @@ fun LogoutConfirmationDialog(
 fun AboutDialog(
   viewModel: ProfileViewModel,
   showDialog: MutableState<Boolean>,
-  onDismiss: () -> Unit
+  onDismiss: () -> Unit,
+  onGroupChat: () -> Unit = {}
 ) {
   if (showDialog.value) {
     val packageInfo =
       LocalContext.current.packageManager.getPackageInfo(LocalContext.current.packageName, 0)
-    val versionName = packageInfo.versionName
+    val versionName = packageInfo.versionName ?: "Development Build"
     val context = LocalContext.current
 
     Dialog(
@@ -296,26 +301,28 @@ fun AboutDialog(
             .padding(16.dp)
             .clip(RoundedCornerShape(8.dp))
         ) {
-          DialogTitle(R.drawable.ic_fluent_book_information_24_regular,"关于")
+          DialogTitle(
+            R.drawable.ic_fluent_book_information_24_regular,
+            stringResource(R.string.about)
+          )
 
           Spacer(modifier = Modifier.height(8.dp))
           Text(
-            text = getString(context, R.string.about_content_1),
+            text = stringResource(R.string.about_content_1),
             style = MaterialTheme.typography.bodyMedium
           )
 
           Spacer(modifier = Modifier.height(8.dp))
           Text(
-            text = String.format(getString(context, R.string.about_version), versionName),
+            text = stringResource(R.string.about_version, versionName),
             style = MaterialTheme.typography.bodyMedium
           )
 
 
           Spacer(modifier = Modifier.height(8.dp))
           Text(
-            text = "${getString(context, R.string.about_copyright_1)}\n${
-              getString(
-                context,
+            text = "${stringResource(R.string.about_copyright_1)}\n${
+              stringResource(
                 R.string.about_copyright_2
               )
             }",
@@ -324,13 +331,91 @@ fun AboutDialog(
 
           Spacer(modifier = Modifier.height(8.dp))
           RowButton(
+            iconResource = R.drawable.ic_fluent_chat_24_regular,
+            text = stringResource(R.string.group_chat),
+            clickable = true,
+            onClick = onGroupChat
+          )
+          RowButton(
             iconResource = R.drawable.ic_fluent_code_24_regular,
-            text = getString(context, R.string.about_content_source),
+            text = stringResource(R.string.about_content_source),
             clickable = true,
             onClick = {
               viewModel.openLink(context, R.string.source_url)
+              onDismiss()
             }
           )
+          RowButton(
+            iconResource = R.drawable.ic_fluent_phone_update_checkmark_24_regular,
+            text = "检查更新",
+            clickable = true,
+            onClick = {
+              viewModel.checkUpdate(context)
+              onDismiss()
+            }
+          )
+        }
+      }
+    }
+  }
+}
+
+@Composable
+fun GroupChatDialog(
+  showDialog: MutableState<Boolean>,
+  onDismiss: () -> Unit,
+) {
+  val ctx = LocalContext.current
+  val groupNumber = stringResource(R.string.group_number)
+  val clipboardManager = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+  val copied = stringResource(R.string.group_number_copied)
+
+  if (showDialog.value) {
+    Dialog(
+      onDismissRequest = onDismiss,
+    ) {
+      Card(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(16.dp),
+        shape = RoundedCornerShape(16.dp),
+      ) {
+        Column(
+          modifier = Modifier
+            .padding(16.dp)
+            .clip(RoundedCornerShape(8.dp))
+        ) {
+          DialogTitle(
+            R.drawable.ic_fluent_chat_24_regular,
+            stringResource(R.string.group_chat)
+          )
+
+          Spacer(modifier = Modifier.height(8.dp))
+          Text(
+            stringResource(R.string.group_chat_welcome),
+            style = MaterialTheme.typography.bodyMedium
+          )
+
+          Spacer(modifier = Modifier.height(8.dp))
+          Text(
+            stringResource(R.string.group_number_content, groupNumber),
+            style = MaterialTheme.typography.bodyMedium
+          )
+
+          Spacer(modifier = Modifier.height(8.dp))
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+          ) {
+            Button(
+              onClick = {
+                clipboardManager.setPrimaryClip(ClipData.newPlainText("text", groupNumber))
+                Toast.makeText(ctx, copied, Toast.LENGTH_SHORT).show()
+              }
+            ) {
+              Text(stringResource(R.string.group_number_copy))
+            }
+          }
         }
       }
     }
