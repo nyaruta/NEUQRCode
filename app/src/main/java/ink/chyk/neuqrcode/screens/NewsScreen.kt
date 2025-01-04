@@ -1,6 +1,9 @@
 package ink.chyk.neuqrcode.screens
 
+import android.net.*
 import android.util.*
+import android.widget.*
+import androidx.browser.customtabs.*
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -13,6 +16,7 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.input.nestedscroll.*
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.*
@@ -259,6 +263,8 @@ fun MessageList(viewModel: NewsViewModel) {
     Category.NEU3 -> neu3Articles
   }!!
 
+  val ctx = LocalContext.current
+
   when {
     pagingItems.loadState.refresh is LoadState.Loading -> {
       // 显示加载动画
@@ -269,16 +275,19 @@ fun MessageList(viewModel: NewsViewModel) {
         CircularProgressIndicator()
       }
     }
+
     pagingItems.loadState.refresh is LoadState.Error -> {
       // 显示错误信息
       val error = (pagingItems.loadState.refresh as LoadState.Error).error
       NekoPlaceholder("加载失败: ${error.message}")
 
     }
+
     pagingItems.loadState.refresh is LoadState.NotLoading && pagingItems.itemCount == 0 -> {
       // 显示 Placeholder
       NekoPlaceholder(stringResource(R.string.no_message_in_category))
     }
+
     else -> {
       // 显示列表
       LazyColumn {
@@ -293,11 +302,17 @@ fun MessageList(viewModel: NewsViewModel) {
                 message = article.attributes.title,
                 source = article.attributes.indexTime,
                 onClick = {
-                  /* TODO: open in a custom tab */
+                  val intent: CustomTabsIntent = CustomTabsIntent.Builder()
+                    .setStartAnimations(ctx, R.anim.slide_in_right, R.anim.slide_out_left)
+                    .setExitAnimations(ctx, android.R.anim.slide_in_left, android.R.anim.slide_out_right)
+                    .build()
+                  val uri = Uri.parse(article.attributes.wbcontenturl)
+                  intent.launchUrl(ctx, uri)
                 },
                 modifier = Modifier.animateItem()
               )
             }
+
             Category.NOTICE -> {
               val notification = pagingItems[it] as Notification
               val source = sources.first { source -> source.id == notification.attributes.sourceId }
@@ -311,6 +326,7 @@ fun MessageList(viewModel: NewsViewModel) {
                 modifier = Modifier.animateItem()
               )
             }
+
             Category.TASKS -> {
               val task = pagingItems[it] as Task
               MessageCard(
@@ -318,6 +334,7 @@ fun MessageList(viewModel: NewsViewModel) {
                 source = task.attributes.finishTime,
                 onClick = {
                   /* TODO: webview */
+                  Toast.makeText(ctx, "当前版本尚未支持 WebView。\n请前往官方 App 使用此功能。", Toast.LENGTH_SHORT).show()
                 },
                 isDone = task.attributes.status == 1,
                 modifier = Modifier.animateItem()
@@ -334,11 +351,7 @@ fun MessageList(viewModel: NewsViewModel) {
                   modifier = Modifier.fillMaxWidth(),
                   horizontalArrangement = Arrangement.Center
                 ) {
-                  CircularProgressIndicator(
-                    modifier = Modifier
-                      .fillMaxWidth()
-                      .padding(16.dp)
-                  )
+                  CircularProgressIndicator()
                 }
               }
             }

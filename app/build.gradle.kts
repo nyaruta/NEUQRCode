@@ -86,4 +86,5 @@ dependencies {
     coreLibraryDesugaring(libs.desugar)
     implementation(libs.paging)
     implementation(libs.paging.compose)
+    implementation(libs.browser)
 }
