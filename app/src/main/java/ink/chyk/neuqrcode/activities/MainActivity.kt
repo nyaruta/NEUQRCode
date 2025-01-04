@@ -41,6 +41,14 @@ class MainActivity : ComponentActivity() {
       return
     }
 
+    // 检查是否同意服务条款？
+    if ((!mmkv.containsKey("tos")) || (mmkv.decodeInt("tos") < 220)) {
+      val intent = Intent(this, TermsOfServiceActivity::class.java)
+      startActivity(intent)
+      finish()
+      return
+    }
+
     enableEdgeToEdge()
     setContent {
       MainApp(screen)
