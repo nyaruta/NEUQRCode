@@ -3,8 +3,8 @@
     <string name="simulated_sunyt_version">2.10.1</string>
     <string name="about_content_1">NEU 一码通是一款使用 Jetpack Compose 编写的小工具，旨在作为「智慧东大」App 的一个更轻巧的替代品。</string>
     <string name="about_content_source">查看源码</string>
-    <string name="about_copyright_1">© 2024 斬風千雪 ❄️</string>
-    <string name="about_copyright_2">© 1923 – 2024 东北大学</string>
+    <string name="about_copyright_1">© 2024 – 2025 斬風千雪 ❄️</string>
+    <string name="about_copyright_2">© 1923 – 2025 东北大学</string>
     <string name="about_version">版本: v%1$s</string>
     <string name="source_url">https://github.com/chiyuki0325/NEUQRCode</string>
     <string name="unsupported_architecture">不支持的架构</string>

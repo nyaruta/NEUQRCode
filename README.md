@@ -38,6 +38,6 @@
 Logo 使用了 [玖掺零](https://space.bilibili.com/87184323) 绘制的疾旋鼬表情包  
 [5ec1cff](https://github.com/5ec1cff) 和 [purofle](https://github.com/purofle/) 提供技术支持（
 
-© 2024 斬風千雪 ❄️  
-© 1923 - 2024 东北大学
+© 2024 - 2025 斬風千雪 ❄️  
+© 1923 - 2025 东北大学
 
