@@ -109,13 +109,18 @@ class CoursesViewModel(
     return localDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
   }
 
+  private val courseColorCache = mutableMapOf<String, Int>()
+
   fun calcCourseColor(
     event: VEvent,
     darkMode: Boolean
   ): Int {
     // 根据名称的哈希值计算颜色
     val courseName = getCourseName(event)
-    return if (isCourseStopped(event)) {
+    if (courseColorCache.containsKey(courseName)) {
+      return courseColorCache[courseName]!!
+    }
+    val courseColor = if (isCourseStopped(event)) {
       0xFFB0B0B0.toInt()
     } else {
       ColorUtils.HSLToColor(
@@ -126,6 +131,8 @@ class CoursesViewModel(
         )
       )
     }
+    courseColorCache[courseName] = courseColor
+    return courseColor
   }
 
   fun thisWeek(): Int {
