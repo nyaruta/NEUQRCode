@@ -6,7 +6,30 @@ import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.R
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.*
+import net.fortuna.ical4j.data.*
+import net.fortuna.ical4j.model.*
+import net.fortuna.ical4j.model.Period
+import net.fortuna.ical4j.model.component.*
+import net.fortuna.ical4j.model.parameter.*
+import net.fortuna.ical4j.model.property.*
 import java.io.*
+import java.time.*
+import java.time.format.*
+
+@Serializable
+data class Course(
+  val name: String,
+  val location: String,
+  val start: String,
+  val end: String,
+  val period: CoursePeriod
+)
+
+enum class CoursePeriod {
+  MORNING, AFTERNOON, EVENING
+}
 
 class ImportCoursesViewModel(
   private val mmkv: MMKV,
@@ -97,7 +120,80 @@ class ImportCoursesViewModel(
     val month = matchResult?.groupValues?.get(2)
     val day = matchResult?.groupValues?.get(3)
 
-    return "$year$month$day"
+    return "$year$month$day"  // 20240901
+  }
+
+
+  private fun getStartTime(event: VEvent): LocalTime {
+    return event.startDate.date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
+  }
+
+  private fun getEndTime(event: VEvent): LocalTime {
+    return event.endDate.date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
+  }
+
+  private fun importCourses(
+    calendarString: String,
+    termStart: String
+  ) {
+    // 解析前 22 周的课表并且存入数据库
+    val calendar = CalendarBuilder().build(calendarString.byteInputStream())  // 日历对象
+    val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")  // 日期格式化器（20240901 -> 2024-09-01 对象）
+
+    val courseKeys = mutableSetOf<String>()  // 之后将存入数据库，以在下一次导入课表时删除旧数据
+    // ["course_20240901", "course_20240902", ...]
+
+    // 删除上一次导入的数据
+    mmkv.getStringSet("course_keys", emptySet())?.forEach {
+      mmkv.remove(it)
+    }
+
+    LocalDate.parse(termStart, formatter).let { termStartDate ->
+      for (daysDelta in 0..(22 * 7)) {
+        val date = termStartDate.plusDays(daysDelta.toLong())
+        val dateId = date.format(formatter)  // 20240901
+        val key = "course_$dateId"  // course_20240901
+
+        // 当天的开始和结束
+        val todayStart = date.atStartOfDay()
+        val todayEnd = todayStart.plusDays(1).minusSeconds(1)
+        val todayStartDateTime = DateTime(todayStart.toInstant(ZoneOffset.UTC).toEpochMilli())
+        val todayEndDateTime = DateTime(todayEnd.toInstant(ZoneOffset.UTC).toEpochMilli())
+
+        // 解析当日的课程
+        val todayCourses = calendar.getComponents<VEvent>(Component.VEVENT)?.filter {
+          val recur = it.getProperty<RRule>(Property.RRULE).recur
+          val dates = recur.getDates(
+            it.startDate.date,
+            Period(
+              todayStartDateTime,
+              todayEndDateTime
+            ),
+            Value.DATE_TIME
+          )
+          dates.isNotEmpty()
+        }?.sortedBy { getStartTime(it) }?.map {
+          Course(
+            it.summary.value,
+            it.location.value,
+            getStartTime(it).format(DateTimeFormatter.ofPattern("HH:mm")),
+            getEndTime(it).format(DateTimeFormatter.ofPattern("HH:mm")),
+            when (getStartTime(it)) {
+              in LocalTime.of(7, 0)..LocalTime.of(12, 30) -> CoursePeriod.MORNING
+              in LocalTime.of(12, 31)..LocalTime.of(18, 0) -> CoursePeriod.AFTERNOON
+              else -> CoursePeriod.EVENING
+            }
+          )
+        }
+
+        // 存入数据库
+        courseKeys.add(key)
+        mmkv.encode(key, Json.encodeToString(todayCourses ?: emptyList()))
+      }
+
+      // for 循环结束
+      mmkv.encode("course_keys", courseKeys)
+    }
   }
 
   fun runImport(
@@ -109,12 +205,14 @@ class ImportCoursesViewModel(
       withContext(Dispatchers.IO) {
         _runImport(context, resource)
       }.let { (output, resultContent) ->
+        val ctx = context.applicationContext
         _output.value = output
-        _resultContent.value = resultContent
-        mmkv.encode("courses", resultContent)
-        mmkv.encode("term_start", getTermStart(output))
+        _resultContent.value = resultContent ?: ctx.getString(R.string.import_failed)
         _importing.value = false
-        _importCompleted.value = true
+        if (resultContent != null) {
+          importCourses(resultContent, getTermStart(output))
+          _importCompleted.value = true
+        }
       }
     }
   }

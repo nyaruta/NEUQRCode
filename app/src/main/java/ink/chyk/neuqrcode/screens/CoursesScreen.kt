@@ -19,8 +19,6 @@ import dev.darkokoa.pangu.*
 import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.activities.*
 import ink.chyk.neuqrcode.viewmodels.*
-import net.fortuna.ical4j.model.component.*
-import java.time.*
 import java.time.format.TextStyle as TimeTextStyle
 import java.util.Locale
 
@@ -31,9 +29,7 @@ fun CoursesScreen(
   navController: NavController,
   innerPadding: PaddingValues
 ) {
-  val loadCalendar by viewModel.loadCalendar.collectAsState()
-
-  if (!viewModel.isCalendarImported()) {
+  if (!viewModel.isCourseImported()) {
     return ImportCoursesSplash()
   }
 
@@ -44,17 +40,13 @@ fun CoursesScreen(
       .padding(16.dp),
     contentAlignment = Alignment.Center
   ) {
-    if (loadCalendar) {
-      TodayCourses(viewModel)
-    } else {
-      CircularProgressIndicator()
-    }
+    TodayCourses(viewModel)
   }
 }
 
-val MORNING = R.drawable.ic_fluent_weather_sunny_24_regular
-val AFTERNOON = R.drawable.ic_fluent_weather_sunny_low_24_regular
-val NIGHT = R.drawable.ic_fluent_weather_partly_cloudy_night_24_regular
+val MORNING_ICON = R.drawable.ic_fluent_weather_sunny_24_regular
+val AFTERNOON_ICON = R.drawable.ic_fluent_weather_sunny_low_24_regular
+val EVENING_ICON = R.drawable.ic_fluent_weather_partly_cloudy_night_24_regular
 
 @Composable
 fun TodayCourses(viewModel: CoursesViewModel) {
@@ -107,7 +99,8 @@ fun TodayTitle(viewModel: CoursesViewModel) {
 
 @Composable
 fun CoursesCard(viewModel: CoursesViewModel) {
-  val todayEvents by viewModel.todayEvents.collectAsState()
+  val dateId by viewModel.date.collectAsState()
+  val todayCourses = viewModel.getTodayCourses(dateId)
   val scrollState = rememberScrollState()
 
   Card(
@@ -122,10 +115,10 @@ fun CoursesCard(viewModel: CoursesViewModel) {
         .padding(16.dp)
         .fillMaxWidth()
     ) {
-      if (todayEvents.isNullOrEmpty()) {
-        NoCoursesSplash(viewModel)
+      if (todayCourses.isEmpty()) {
+        NoCoursesSplash()
       } else {
-        TodayCoursesList(todayEvents, viewModel)
+        TodayCoursesList(todayCourses, viewModel)
       }
     }
   }
@@ -133,21 +126,17 @@ fun CoursesCard(viewModel: CoursesViewModel) {
 
 @Composable
 fun TodayCoursesList(
-  todayEvents: List<VEvent>?,
+  todayCourses: List<Course>,
   viewModel: CoursesViewModel,
   dark: Boolean = isSystemInDarkTheme()
 ) {
   val ctx = LocalContext.current
   var previousIcon = 0
-  todayEvents?.forEach {
-    val startTime = viewModel.getStartTime(it)
-    val endTime = viewModel.getEndTime(it)
-    val icon = if (endTime.isBefore(LocalTime.of(12, 30))) {
-      MORNING
-    } else if (startTime.isAfter(LocalTime.of(18, 0))) {
-      NIGHT
-    } else {
-      AFTERNOON
+  todayCourses.forEach {
+    val icon = when (it.period) {
+      CoursePeriod.MORNING -> MORNING_ICON
+      CoursePeriod.AFTERNOON -> AFTERNOON_ICON
+      CoursePeriod.EVENING -> EVENING_ICON
     }
 
     if (icon != previousIcon) {
@@ -156,11 +145,10 @@ fun TodayCoursesList(
         verticalAlignment = Alignment.CenterVertically,
       ) {
         Text(
-          when (icon) {
-            MORNING -> ctx.getString(R.string.morning_courses)
-            AFTERNOON -> ctx.getString(R.string.afternoon_courses)
-            NIGHT -> ctx.getString(R.string.evening_courses)
-            else -> ""
+          when (it.period) {
+            CoursePeriod.MORNING -> ctx.getString(R.string.morning_courses)
+            CoursePeriod.AFTERNOON -> ctx.getString(R.string.afternoon_courses)
+            CoursePeriod.EVENING -> ctx.getString(R.string.evening_courses)
           },
           style = MaterialTheme.typography.bodyMedium,
           modifier = Modifier.padding(vertical = 8.dp)
@@ -191,8 +179,8 @@ fun TodayCoursesList(
           verticalAlignment = Alignment.CenterVertically,
         ) {
           Column {
-            Text(startTime.toString())
-            Text(endTime.toString())
+            Text(it.start)
+            Text(it.end)
           }
           Spacer(modifier = Modifier.width(8.dp))
           Surface(
@@ -200,16 +188,16 @@ fun TodayCoursesList(
               .width(4.dp)
               .height(40.dp)
               .clip(RoundedCornerShape(4.dp)),
-            color = Color(viewModel.calcCourseColor(it, dark))
+            color = Color(viewModel.calcCourseColor(it.name, dark))
           ) {}
           Spacer(modifier = Modifier.width(8.dp))
           Column {
             Text(
-              Pangu.spacingText(viewModel.getCourseName(it)),
+              Pangu.spacingText(it.name),
               style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 20.sp)
             )
             Text(
-              locationToAnnotated(viewModel.getCourseLocation(it)),
+              locationToAnnotated(it.location),
               style = MaterialTheme.typography.bodyMedium
             )
           }
@@ -316,7 +304,7 @@ fun PrevNextButton(
 }
 
 @Composable
-fun NoCoursesSplash(viewModel: CoursesViewModel) {
+fun NoCoursesSplash() {
   val ctx = LocalContext.current
   Column(
     modifier = Modifier

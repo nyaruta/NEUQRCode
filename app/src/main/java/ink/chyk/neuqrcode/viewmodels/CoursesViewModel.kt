@@ -1,21 +1,12 @@
 package ink.chyk.neuqrcode.viewmodels
 
-import android.util.*
 import androidx.core.graphics.*
 import androidx.lifecycle.*
 import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import net.fortuna.ical4j.data.*
-import net.fortuna.ical4j.model.*
-import net.fortuna.ical4j.model.Calendar
-import net.fortuna.ical4j.model.Date
-import net.fortuna.ical4j.model.Period
-import net.fortuna.ical4j.model.Property
-import net.fortuna.ical4j.model.component.*
-import net.fortuna.ical4j.model.parameter.*
-import net.fortuna.ical4j.model.property.*
+import kotlinx.serialization.json.*
 import java.time.*
 import java.time.format.*
 import java.util.Locale
@@ -30,79 +21,23 @@ class CoursesViewModel(
   )
   val date: StateFlow<String> = _date
 
-  private var _calendar: MutableStateFlow<Calendar?> = MutableStateFlow(null)
-  val calendar: StateFlow<Calendar?> = _calendar
-
-  private var _loadCalendar = MutableStateFlow(false)
-  val loadCalendar: StateFlow<Boolean> = _loadCalendar
-
   private var _quote = MutableStateFlow<HitokotoQuote?>(null)
   val quote: StateFlow<HitokotoQuote?> = _quote
 
   val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
-  fun isCalendarImported(): Boolean = mmkv.containsKey("courses")
-
-  fun loadCalendar() {
-    if (mmkv.containsKey("courses")) {
-      val calendar = mmkv.decodeString("courses")!!
-      _calendar.value = CalendarBuilder().build(calendar.byteInputStream())
-      _loadCalendar.value = true
-      Log.d("CoursesViewModel", "Calendar loaded.")
-    }
+  fun isCourseImported(): Boolean {
+    return mmkv.containsKey("course_keys")
   }
 
-  private fun getTodayEvents(__date: String, __calendar: Calendar?): List<VEvent>? {
-    val todayStart = LocalDate.parse(__date, formatter).atStartOfDay()
-    val todayEnd = todayStart.plusDays(1).minusSeconds(1)
-    val todayStartDateTime = DateTime(todayStart.toInstant(ZoneOffset.UTC).toEpochMilli())
-    val todayEndDateTime = DateTime(todayEnd.toInstant(ZoneOffset.UTC).toEpochMilli())
-    return __calendar?.getComponents<VEvent>(Component.VEVENT)?.filter {
-      val recur = it.getProperty<RRule>(Property.RRULE).recur
-      val dates = recur.getDates(
-        getStartDate(it),
-        Period(
-          todayStartDateTime,
-          todayEndDateTime
-        ),
-        Value.DATE_TIME
-      )
-      dates.isNotEmpty()
-    }?.sortedBy { getStartTime(it) }
+  fun getTodayCourses(date: String): List<Course> {
+    return mmkv.decodeString("course_${date}")?.let {
+      Json.decodeFromString(it)
+    } ?: emptyList()
   }
 
-  private fun isCourseStopped(event: VEvent): Boolean =
-    getCourseLocation(event).startsWith("停课")
-
-
-  var todayEvents: StateFlow<List<VEvent>?> = combine(_date, _calendar) { __date, __calendar ->
-    getTodayEvents(__date, __calendar)
-  }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
-
-  /*
-  fun getRows(): List<Pair<LocalTime, LocalTime>> {
-    // 返回去重并排序的开始时间，只要时间不要日期
-    return _calendar.value?.getComponents<VEvent>(Component.VEVENT)?.filter {
-      !isCourseStopped(it)
-    }?.map {
-      it.getDateTimeStart<ZonedDateTime>()
-        .get().date.toLocalTime() to it.getDateTimeEnd<ZonedDateTime>().get().date.toLocalTime()
-    }?.distinct()?.sortedBy { it.first } ?: emptyList()
-  }
-  */
-
-  fun getStartDate(event: VEvent): Date {
-    return event.startDate.date
-  }
-
-  fun getCourseName(event: VEvent): String {
-    return event.getProperty<Summary>(Property.SUMMARY).value
-  }
-
-  fun getCourseLocation(event: VEvent): String {
-    return event.getProperty<Location>(Property.LOCATION).value
-  }
+  private fun isCourseStopped(courseName: String): Boolean =
+    courseName.startsWith("停课")
 
   fun getWeekday(): String {
     val localDate = LocalDate.parse(_date.value, formatter)
@@ -112,15 +47,14 @@ class CoursesViewModel(
   private val courseColorCache = mutableMapOf<String, Int>()
 
   fun calcCourseColor(
-    event: VEvent,
+    courseName: String,
     darkMode: Boolean
   ): Int {
     // 根据名称的哈希值计算颜色
-    val courseName = getCourseName(event)
     if (courseColorCache.containsKey(courseName)) {
       return courseColorCache[courseName]!!
     }
-    val courseColor = if (isCourseStopped(event)) {
+    val courseColor = if (isCourseStopped(courseName)) {
       0xFFB0B0B0.toInt()
     } else {
       ColorUtils.HSLToColor(
@@ -151,22 +85,12 @@ class CoursesViewModel(
     return (0..6).map {
       val date = weekStart.plusDays(it.toLong())
       val dateId = date.format(formatter)
-      val courseCount = getTodayEvents(
-        dateId, _calendar.value
-      )?.size ?: 0
+      val courseCount = getTodayCourses(dateId).size
       date to dateId to courseCount
     }
   }
 
-  fun getStartTime(event: VEvent): LocalTime {
-    return event.startDate.date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
-  }
-
-  fun getEndTime(event: VEvent): LocalTime {
-    return event.endDate.date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
-  }
-
-  suspend fun initQuote() {
+  private suspend fun initQuote() {
     _quote.value = Hitokoto().getQuote()
   }
 
@@ -190,9 +114,5 @@ class CoursesViewModel(
 
   fun backToday() {
     _date.value = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
-  }
-
-  init {
-    loadCalendar()
   }
 }
