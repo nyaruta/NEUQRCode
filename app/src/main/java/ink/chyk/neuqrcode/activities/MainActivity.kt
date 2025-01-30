@@ -65,11 +65,6 @@ data class BottomNavigationItem(
   fun navigationItems(): List<BottomNavigationItem> {
     return listOf(
       BottomNavigationItem(
-        "消息",
-        R.drawable.ic_fluent_news_24_filled,
-        "news"
-      ),
-      BottomNavigationItem(
         "课表",
         R.drawable.ic_fluent_calendar_24_filled,
         "courses"
@@ -98,7 +93,6 @@ fun MainApp(screen: String?) {
   val eCodeViewModel: ECodeViewModel = viewModel(factory = ECodeViewModelFactory())
   val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory())
   val coursesViewModel: CoursesViewModel = viewModel(factory = CoursesViewModelFactory())
-  val newsViewModel: NewsViewModel = viewModel(factory = NewsViewModelFactory())
 
   val navController = rememberNavController()
   var selectedItem by remember { mutableIntStateOf(0) }
@@ -107,12 +101,11 @@ fun MainApp(screen: String?) {
     navController.currentBackStackEntryFlow.collect { backStackEntry ->
       // 根据当前的目的地更新底部导航栏的选中项
       selectedItem = when (backStackEntry.destination.route) {
-        "news" -> 0
-        "courses" -> 1
-        "ecode" -> 2
-        "apps" -> 3
-        "profile" -> 4
-        else -> 2
+        "courses" -> 0
+        "ecode" -> 1
+        "apps" -> 2
+        "profile" -> 3
+        else -> 1
       }
     }
   }
@@ -154,9 +147,6 @@ fun MainApp(screen: String?) {
       }
     ) { innerPadding ->
       NavHost(navController = navController, startDestination = screen ?: "ecode") {
-        composable("news") {
-          NewsScreen(viewModel = newsViewModel, navController = navController)
-        }
         composable("courses") {
           CoursesScreen(
             viewModel = coursesViewModel,
