@@ -58,6 +58,7 @@ fun ImportCoursesScreen() {
   val importCompleted = viewModel.importCompleted.collectAsState()
   val output = viewModel.output.collectAsState()
   val resultContent = viewModel.resultContent.collectAsState()
+  val hasErrors = viewModel.hasErrors.collectAsState()
 
   val eliseBinaryResource: Int
   try {
@@ -118,7 +119,8 @@ fun ImportCoursesScreen() {
           } else {
             AfterImportContent(
               output = output,
-              resultContent = resultContent
+              resultContent = resultContent,
+              hasErrors = hasErrors
             )
           }
         }
@@ -162,7 +164,8 @@ fun ImportContent(
 @Composable
 fun AfterImportContent(
   output: State<String>,
-  resultContent: State<String?>
+  resultContent: State<String?>,
+  hasErrors: State<Boolean>
 ) {
   val scrollState = rememberScrollState()
   val ctx = LocalContext.current
@@ -183,7 +186,8 @@ fun AfterImportContent(
       val intent = Intent(ctx, MainActivity::class.java)
       ctx.startActivity(intent)
     },
-    modifier = Modifier.fillMaxWidth()
+    modifier = Modifier.fillMaxWidth(),
+    enabled = !hasErrors.value
   ) {
     Text(ctx.getString(R.string.confirm))
   }

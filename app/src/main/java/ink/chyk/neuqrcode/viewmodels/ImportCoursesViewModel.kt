@@ -1,6 +1,7 @@
 package ink.chyk.neuqrcode.viewmodels
 
 import android.content.*
+import android.util.*
 import androidx.lifecycle.*
 import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.R
@@ -11,12 +12,14 @@ import kotlinx.serialization.json.*
 import net.fortuna.ical4j.data.*
 import net.fortuna.ical4j.model.*
 import net.fortuna.ical4j.model.Period
+import net.fortuna.ical4j.model.Property
 import net.fortuna.ical4j.model.component.*
 import net.fortuna.ical4j.model.parameter.*
 import net.fortuna.ical4j.model.property.*
 import java.io.*
 import java.time.*
 import java.time.format.*
+import kotlin.Pair
 
 @Serializable
 data class Course(
@@ -43,6 +46,8 @@ class ImportCoursesViewModel(
   val output: StateFlow<String> = _output
   private var _resultContent = MutableStateFlow<String?>(null)
   val resultContent: StateFlow<String?> = _resultContent
+  private var _hasErrors = MutableStateFlow(false)
+  val hasErrors: StateFlow<Boolean> = _hasErrors
 
   fun getEliseBinaryResource(): Int {
     val arch: String = System.getProperty("os.arch") ?: "unknown"
@@ -201,19 +206,38 @@ class ImportCoursesViewModel(
     resource: Int
   ) {
     _importing.value = true
+    _importCompleted.value = false
+    _hasErrors.value = false
     viewModelScope.launch {
       withContext(Dispatchers.IO) {
         _runImport(context, resource)
       }.let { (output, resultContent) ->
         val ctx = context.applicationContext
+        Log.d("ImportCoursesViewModel", output)
         _output.value = output
         _resultContent.value = resultContent ?: ctx.getString(R.string.import_failed)
         _importing.value = false
         if (resultContent != null) {
           importCourses(resultContent, getTermStart(output))
           _importCompleted.value = true
+        } else {
+          handleErrors(output)
         }
       }
+    }
+  }
+
+  fun handleErrors(
+    output: String
+  ) {
+    _importCompleted.value = true
+    _hasErrors.value = true
+    if (output.contains("解析课表时出错")) {
+      if (output.contains("Timeout") || output.contains("Client.")) {
+        _output.value += "\n无法连接到教务系统，可能是开启了仅限内网访问。\n请连接到校园网后重试。"
+      }
+    } else {
+      _output.value += "\n未知错误，请联系开发者！"
     }
   }
 }
