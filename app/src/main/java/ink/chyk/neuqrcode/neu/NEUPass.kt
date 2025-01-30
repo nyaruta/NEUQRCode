@@ -5,6 +5,7 @@ import ink.chyk.neuqrcode.*
 import kotlinx.coroutines.*
 import okhttp3.*
 import kotlinx.serialization.json.*
+import kotlin.Pair
 
 
 class NEUPass {
@@ -16,6 +17,7 @@ class NEUPass {
       .header("X-App-Version", R.string.simulated_sunyt_version.toString())
   }
 
+  @Deprecated("Deprecated in 3.x api")
   suspend fun loginPortalTicket(studentId: String, password: String): String {
     // 登录账号（智慧东大 2.x API，已经弃用）
     Log.w("NEUPass", "loginPortalTicket deprecated, should be replaced with loginPersonalTicket")
@@ -131,6 +133,7 @@ class NEUPass {
     return loginNEUAppTicket(portalTicket, "https://ecode.neu.edu.cn/ecode/api/sso/login")
   }
 
+  @Deprecated("Deprecated in 3.x api")
   suspend fun loginMobileApiTicket(portalTicket: String): String {
     Log.w(
       "NEUPass",
@@ -179,6 +182,7 @@ class NEUPass {
     return newNEUAppSession("https://ecode.neu.edu.cn/ecode/api/sso/login")
   }
 
+  @Deprecated("Deprecated in 3.x api")
   suspend fun newMobileApiSession(): NEUAppSession {
     Log.w("NEUPass", "newMobileApiSession deprecated")
     return newNEUAppSession("https://portal.neu.edu.cn/mobile/api/sso/login")
@@ -241,6 +245,7 @@ class NEUPass {
     )
   }
 
+  @Deprecated("Deprecated in 3.x api")
   suspend fun loginMobileApi(session: NEUAppSession, mobileApiTicket: String) {
     Log.w("NEUPass", "loginMobileApi deprecated, should be replaced with loginPersonalApi")
     return loginNEUApp(
@@ -319,6 +324,59 @@ class NEUPass {
     }
   }
 
+  private suspend inline fun <reified T> basicPersonalApiRequest(
+    session: PersonalSession,
+    url: String
+  ): Pair<T, PersonalSession> {
+    // 新的 3.x api 在每次请求后都有可能更新 sess_id
+    // 返回结果和新的 session
+    val client = OkHttpClient.Builder()
+      .followRedirects(false)
+      .build()
+
+    val headers = Headers.Builder()
+      .add(
+        "Cookie",
+        "CK_LC=${session.lc}; CK_VL=${session.vl}; SESS_ID=${session.sessId}"
+      )
+      .build()
+
+    val request = useRequestedWith(
+      Request.Builder()
+        .url(url)
+        .headers(headers)
+        .get()
+    ).build()
+
+    return withContext(Dispatchers.IO) {
+      client.newCall(request).execute().use { response ->
+        if (response.code != 200) {
+          throw SessionExpiredException()
+        }
+        val body = response.body?.string()
+        val result = Json.decodeFromString<PersonalResponse<T>>(body!!)
+        // 更新 sess_id
+        val newSessId = response.headers("Set-Cookie")
+          .firstOrNull { it.startsWith("SESS_ID") }
+
+        if (newSessId == null) {
+          // 没更新
+          Pair(result.d, session)
+        } else {
+          // 更新了
+          Pair(
+            result.d,
+            PersonalSession(
+              session.lc,
+              session.vl,
+              newSessId.substringBefore(";").substringAfter("=")
+            )
+          )
+        }
+      }
+    }
+  }
+
   private suspend inline fun <reified T : PagedResponse<U>, U : PagedResponseItem> pagedAppRequest(
     session: NEUAppSession,
     url: String,
@@ -353,18 +411,48 @@ class NEUPass {
     return basicAppRequest(session, "https://ecode.neu.edu.cn/ecode/api/user-info")
   }
 
+  suspend fun getUserInfo(session: PersonalSession): Pair<UserInfoOuter, PersonalSession> {
+    return basicPersonalApiRequest(
+      session,
+      "https://personal.neu.edu.cn/portal/personal/frontend/data/info"
+    )
+  }
+
+  suspend fun getPersonalDataIds(session: PersonalSession): Pair<PersonalDataIdOuter, PersonalSession> {
+    return basicPersonalApiRequest(
+      session,
+      "https://personal.neu.edu.cn/portal/personal/frontend/data/items?type=personal_data"
+    )
+  }
+
+  suspend fun getPersonalDataItem(
+    session: PersonalSession,
+    ids: PersonalDataIdOuter,
+    key: String
+  ): Pair<PersonalDataItemOuter, PersonalSession> {
+    val id = ids.data.first { it.key == key }.id
+    return basicPersonalApiRequest(
+      session,
+      "https://personal.neu.edu.cn/portal/personal/frontend/data/detail?id=$id"
+    )
+  }
+
+  @Deprecated("Use getUserInfo instead")
   suspend fun getMobileApiUser(session: NEUAppSession): MobileApiUser {
     return basicAppRequest(session, "https://portal.neu.edu.cn/mobile/api/user")
   }
 
+  @Deprecated("Use getUserInfo instead")
   suspend fun getMobileApiUserInfo(session: NEUAppSession): MobileApiUserInfo {
     return basicAppRequest(session, "https://portal.neu.edu.cn/mobile/api/user/info")
   }
 
+  @Deprecated("Use getPersonalDataIds & getPersonalDataItem instead")
   suspend fun getMobileApiCampusCard(session: NEUAppSession): MobileApiCampusCard {
     return basicAppRequest(session, "https://portal.neu.edu.cn/mobile/api/personal/campusInfo/card")
   }
 
+  @Deprecated("Use getPersonalDataIds & getPersonalDataItem instead")
   suspend fun getMobileApiCampusNetwork(session: NEUAppSession): MobileApiCampusNetwork {
     return basicAppRequest(
       session,

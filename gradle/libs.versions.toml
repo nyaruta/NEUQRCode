@@ -9,16 +9,17 @@ lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
 composeBom = "2024.12.01"
 okhttp = "4.12.0"
-mmkv = "2.0.1"
+mmkv = "2.0.2"
 serialization = "1.8.0-RC"
 zxing = "3.5.3"
-navigationCompose = "2.8.5"
+navigationCompose = "2.8.6"
 viewModelCompose = "2.8.7"
 ical4j = "3.2.19"
 pangu = "0.2.0"
 desugar = "2.1.4"
 paging = "3.3.5"
 browser = "1.8.0"
+coil = "3.0.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -47,6 +48,8 @@ desugar = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref 
 paging = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }
 paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
 browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
+coil = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-net = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 
 
 [plugins]

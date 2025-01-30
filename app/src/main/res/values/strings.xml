@@ -90,4 +90,12 @@
     <string name="group_number_copied">已复制。</string>
     <string name="about">关于</string>
     <string name="import_failed">导入失败</string>
+    <string name="campus_card">校园卡</string>
+    <string name="campus_card_balance">账户余额</string>
+    <string name="network">网络</string>
+    <string name="network_balance">网费余额</string>
+    <string name="email">邮箱</string>
+    <string name="email_unread">未读邮件</string>
+    <string name="create_courses_shortcut">创建课程表快捷方式</string>
+    <string name="logout_account">登出账号</string>
 </resources>

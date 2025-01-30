@@ -1,5 +1,6 @@
 package ink.chyk.neuqrcode.neu
-import kotlinx.serialization.Serializable
+
+import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 
 @Serializable
@@ -58,11 +59,13 @@ data class ECodeUserInfoResponse(
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class MobileApiUser(
   val data: MobileApiUserData
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class MobileApiUserData(
   val id: String,  // 请求 id
   val type: String,
@@ -70,6 +73,7 @@ data class MobileApiUserData(
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class MobileApiUserAttributes(
   val code: String,  // 学号
   val name: String,  // 姓名
@@ -82,6 +86,7 @@ data class MobileApiUserAttributes(
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class MobileApiUserInfo(
   val DH: String,  // 学号
   val XM: String,  // 姓名
@@ -93,6 +98,7 @@ data class MobileApiUserInfo(
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class MobileApiCampusCard(
   val createUser: Int,
   val createTime: String,
@@ -106,6 +112,7 @@ data class MobileApiCampusCard(
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class MobileApiCampusNetwork(
   val createUser: Int,
   val createTime: String,
@@ -119,6 +126,7 @@ data class MobileApiCampusNetwork(
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class MessageSourcesResponse(
   val code: Int,
   val success: Boolean,
@@ -127,6 +135,7 @@ data class MessageSourcesResponse(
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class MessageSource(
   val id: String,
   val name: String,
@@ -134,21 +143,25 @@ data class MessageSource(
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class PagedResponse<T : PagedResponseItem>(
   val data: List<T>,
   val meta: Meta
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class Meta(
   val totalResourceCount: Int,
 )
 
+@Deprecated("Deprecated in 3.x api")
 interface PagedResponseItem {
   var idx: Int?
 }
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class Task(
   val id: String,
   val type: String,
@@ -158,6 +171,7 @@ data class Task(
 
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class TaskAttributes(
   val sourceId: String,
   val source: String? = null,
@@ -175,6 +189,7 @@ data class TaskAttributes(
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class Notification(
   val id: String,
   val type: String,
@@ -184,6 +199,7 @@ data class Notification(
 ) : PagedResponseItem
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class NotificationAttributes(
   val sourceId: String,
   val userCode: String,
@@ -198,22 +214,26 @@ data class NotificationAttributes(
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class NotificationRelationships(
   val source: NotificationRelationshipsSource
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class NotificationRelationshipsSource(
   val data: NotificationRelationshipsSourceData
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class NotificationRelationshipsSourceData(
   val id: String,
   val type: String
 )
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class Article(
   val id: String,
   val type: String,
@@ -222,6 +242,7 @@ data class Article(
 ) : PagedResponseItem
 
 @Serializable
+@Deprecated("Deprecated in 3.x api")
 data class ArticleAttributes(
   val title: String,
   val wbnewsid: String,
@@ -242,3 +263,69 @@ data class ArticleAttributes(
   val status: String? = null,
   val isDeleted: Int
 )
+
+@Serializable
+data class PersonalResponse<T>(
+  val e: Int,  // code
+  val m: String,  // message
+  val d: T  // data
+)
+
+@Serializable
+data class UserInfoOuter(
+  val info: UserInfo
+)
+
+@Serializable
+data class UserInfo(
+  val uid: String,
+  val name: String,
+  val xgh: String, // 学工号
+  val identity: String,
+  val identity_id: String,
+  val sex: Int,
+  val depart: String,
+  val mobile: String,
+  val email: String,
+  val organ: JsonElement,  // 不明
+  val organs: JsonElement,  // 不明
+  val avatar: String,  // 其实这个才是真正的 avatar_url
+  val avatar_url: String,  // 这个是空字符串，意义不明
+  val time: String,
+  val is_manager: Boolean
+)
+
+@Serializable
+data class PersonalDataIdOuter(
+  val data: List<PersonalDataId>
+)
+
+@Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonIgnoreUnknownKeys
+data class PersonalDataId(
+  val key: String,
+  val id: String,
+  // 只需要这两个字段
+)
+
+@Serializable
+data class PersonalDataItemOuter(
+  val data: PersonalDataItem
+)
+
+@Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonIgnoreUnknownKeys
+data class PersonalDataItem(
+  val value: JsonElement,
+  val unit: String?,
+  val url: String?,
+) {
+  val valueString: String? by lazy {
+    value.jsonPrimitive.content
+  }
+  val valueInt: Int? by lazy {
+    value.jsonPrimitive.intOrNull
+  }
+}

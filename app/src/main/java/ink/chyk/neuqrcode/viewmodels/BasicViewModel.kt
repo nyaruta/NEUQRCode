@@ -102,7 +102,7 @@ abstract class BasicViewModel(
   }
 
 
-    suspend fun <T> prepareSessionAnd(action: suspend (NEUAppSession) -> T) {
+  suspend fun <T> prepareSessionAnd(action: suspend (NEUAppSession) -> T) {
     try {
       val session = getAppSession(neu, mmkv)
       try {

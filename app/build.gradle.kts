@@ -87,4 +87,6 @@ dependencies {
     implementation(libs.paging)
     implementation(libs.paging.compose)
     implementation(libs.browser)
+    implementation(libs.coil)
+    implementation(libs.coil.net)
 }

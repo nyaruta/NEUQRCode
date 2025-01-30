@@ -5,16 +5,19 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.lifecycle.*
 import com.tencent.mmkv.*
+import ink.chyk.neuqrcode.*
+import ink.chyk.neuqrcode.R
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import okhttp3.*
-import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.activities.*
 import ink.chyk.neuqrcode.neu.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
+import kotlin.Pair
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
 @JsonIgnoreUnknownKeys
 data class GitHubRelease(
   @SerialName("tag_name")
@@ -23,38 +26,104 @@ data class GitHubRelease(
 )
 
 class ProfileViewModel(
-  override val mmkv: MMKV,
-  override val neu: NEUPass
-) : BasicViewModel(mmkv, neu) {
-  override val appName: String = "mobile"
+  val mmkv: MMKV,
+  val neu: NEUPass
+) : ViewModel() {
+  private val _userInfo = MutableStateFlow<UserInfo?>(null)
+  val userInfo: StateFlow<UserInfo?> = _userInfo
+  private val _mailUnread = MutableStateFlow<PersonalDataItem?>(null)
+  val mailUnread: StateFlow<PersonalDataItem?> = _mailUnread
+  private val _cardBalance = MutableStateFlow<PersonalDataItem?>(null)
+  val cardBalance: StateFlow<PersonalDataItem?> = _cardBalance
+  private val _netBalance = MutableStateFlow<PersonalDataItem?>(null)
+  val netBalance: StateFlow<PersonalDataItem?> = _netBalance
+  private val _loadComplete = MutableStateFlow(false)
+  val loadComplete: StateFlow<Boolean> = _loadComplete
 
-  override suspend fun newAppTicket(portalTicket: String): String {
-    return neu.loginMobileApiTicket(portalTicket)
+
+  /**
+   * 获取智慧东大 统一身份认证 的 ticket
+   * 如果 mmkv 中没有记录，或者 reLogin 为 true，则重新登录。
+   *
+   * @param reLogin 是否强制重新登录
+   *
+   * @return ticket（TGT-xxxx-tpass）
+   */
+  private suspend fun getPortalTicket(reLogin: Boolean = false): String {
+    val studentId = mmkv.decodeString("student_id")!!
+    val password = mmkv.decodeString("password")!!
+
+    var portalTicket: String? = mmkv.decodeString("portal_ticket")
+    if (portalTicket == null || reLogin) {
+      portalTicket = neu.loginPersonalTicket(studentId, password)
+      mmkv.encode("portal_ticket", portalTicket)
+    }
+
+    return portalTicket
   }
 
-  override suspend fun newAppSession(): NEUAppSession {
-    return neu.newMobileApiSession()
+  private fun updateSession(session: PersonalSession) {
+    mmkv.encode("personal_lc", session.lc)
+    mmkv.encode("personal_vl", session.vl)
+    mmkv.encode("personal_sess_id", session.sessId)
   }
 
-  override suspend fun loginApp(session: NEUAppSession, appTicket: String) {
-    return neu.loginMobileApi(session, appTicket)
+  suspend fun <T> prepareSessionAnd(action: suspend (PersonalSession) -> T) {
+    try {
+      val lc = mmkv.decodeString("personal_lc")
+      val vl = mmkv.decodeString("personal_vl")
+      val sessId = mmkv.decodeString("personal_sess_id")
+      if (lc == null || vl == null || sessId == null) {
+        // 登录
+        val ticket = getPortalTicket()
+        val personal_ticket = neu.loginPersonalApiTicket(ticket)
+        mmkv.encode("personal_ticket", personal_ticket)
+        val session = neu.loginPersonalApi(personal_ticket)
+        updateSession(session)
+        action(session)
+      } else {
+        val session = PersonalSession(lc, vl, sessId)
+        try {
+          action(session)
+        } catch (e: SessionExpiredException) {
+          // 重新登录
+          val ticket = getPortalTicket(true)
+          val personal_ticket = neu.loginPersonalApiTicket(ticket)
+          mmkv.encode("personal_ticket", personal_ticket)
+          val newSession = neu.loginPersonalApi(personal_ticket)
+          updateSession(newSession)
+          action(newSession)
+        }
+      }
+    } catch (e: Exception) {
+      // 错误处理逻辑
+      e.printStackTrace()
+    }
   }
-
-  private val _user = MutableStateFlow<MobileApiUserAttributes?>(null)
-  val user: StateFlow<MobileApiUserAttributes?> = _user
-  private val _userInfo = MutableStateFlow<MobileApiUserInfo?>(null)
-  val userInfo: StateFlow<MobileApiUserInfo?> = _userInfo
-  private val _campusCard = MutableStateFlow<MobileApiCampusCard?>(null)
-  val campusCard: StateFlow<MobileApiCampusCard?> = _campusCard
-  private val _campusNetwork = MutableStateFlow<MobileApiCampusNetwork?>(null)
-  val campusNetwork: StateFlow<MobileApiCampusNetwork?> = _campusNetwork
 
   private suspend fun refreshUserInfo() {
     prepareSessionAnd { session ->
-      _user.value = neu.getMobileApiUser(session).data.attributes
-      _userInfo.value = neu.getMobileApiUserInfo(session)
-      _campusCard.value = neu.getMobileApiCampusCard(session)
-      _campusNetwork.value = neu.getMobileApiCampusNetwork(session)
+      val userInfoResponse = neu.getUserInfo(session)
+      _userInfo.value = userInfoResponse.first.info
+      updateSession(userInfoResponse.second)
+
+      val idsResponse = neu.getPersonalDataIds(session)
+      val ids = idsResponse.first
+      updateSession(idsResponse.second)
+
+      val mailUnreadResponse = neu.getPersonalDataItem(session, ids, "mail.coremailStudent")
+      _mailUnread.value = mailUnreadResponse.first.data
+      updateSession(mailUnreadResponse.second)
+
+      val cardBalanceResponse = neu.getPersonalDataItem(session, ids, "card.balance")
+      _cardBalance.value = cardBalanceResponse.first.data
+      updateSession(cardBalanceResponse.second)
+
+      val netBalanceResponse = neu.getPersonalDataItem(session, ids, "net.balance")
+      _netBalance.value = netBalanceResponse.first.data
+      updateSession(netBalanceResponse.second)
+
+      _loadComplete.value = true
     }
   }
 

@@ -28,6 +28,7 @@ import ink.chyk.neuqrcode.neu.*
 import ink.chyk.neuqrcode.viewmodels.*
 import ink.chyk.neuqrcode.R
 import android.graphics.drawable.Icon as AndroidIcon
+import coil3.compose.AsyncImage
 
 fun dataUriToImageBitmap(dataUri: String): ImageBitmap? {
   val base64 = dataUri.substringAfter("base64,")
@@ -41,10 +42,10 @@ fun ProfileScreen(
   navController: NavController,
   innerPadding: PaddingValues
 ) {
-  val user by viewModel.user.collectAsState()
   val userInfo by viewModel.userInfo.collectAsState()
-  val campusCard by viewModel.campusCard.collectAsState()
-  val campusNetwork by viewModel.campusNetwork.collectAsState()
+  val cardBalance by viewModel.cardBalance.collectAsState()
+  val netBalance by viewModel.netBalance.collectAsState()
+  val mailUnread by viewModel.mailUnread.collectAsState()
   val loadComplete by viewModel.loadComplete.collectAsState()
 
   val showLogoutDialog = remember { mutableStateOf(false) }
@@ -59,35 +60,43 @@ fun ProfileScreen(
       .padding(vertical = 64.dp, horizontal = 8.dp)
   ) {
     Column {
-      ProfileHeader(user, userInfo, loadComplete)
+      ProfileHeader(userInfo, loadComplete)
       Spacer(modifier = Modifier.height(64.dp))
       RowButton(
         iconResource = R.drawable.ic_fluent_contact_card_24_regular,
-        text = "校园卡",
-        content = if (loadComplete) "账户余额 ${campusCard?.balance} 元" else null,
+        text = stringResource(R.string.campus_card),
+        content = if (loadComplete) "${stringResource(R.string.campus_card_balance)} ${cardBalance?.valueString} ${cardBalance?.unit}" else null,
         clickable = false
       )
       RowButton(
         iconResource = R.drawable.ic_fluent_desktop_signal_24_regular,
-        text = "网络",
-        content = if (loadComplete) "已用流量 ${campusNetwork?.usedData}" else null,
+        text = stringResource(R.string.network),
+        content = if (loadComplete) "${stringResource(R.string.network_balance)} ${netBalance?.valueString} ${netBalance?.unit}" else null,
         clickable = false
       )
       RowButton(
+        iconResource = R.drawable.ic_fluent_mail_24_regular,
+        text = stringResource(R.string.email),
+        content = if (loadComplete) "${stringResource(R.string.email_unread)} ${mailUnread?.valueString} ${mailUnread?.unit}" else null,
+        clickable = true,
+        // TODO: 电子邮箱
+        onClick = { Toast.makeText(context, "暂未开放", Toast.LENGTH_SHORT).show() }
+      )
+      RowButton(
         iconResource = R.drawable.ic_fluent_calendar_24_filled,
-        text = "创建课程表快捷方式",
+        text =stringResource(R.string.create_courses_shortcut),
         clickable = true,
         onClick = { createShortcut(context) }
       )
       RowButton(
         iconResource = R.drawable.ic_fluent_person_swap_24_regular,
-        text = "登出账号",
+        text = stringResource(R.string.logout_account),
         clickable = true,
         onClick = { showLogoutDialog.value = true }
       )
       RowButton(
         iconResource = R.drawable.ic_fluent_book_information_24_regular,
-        text = "关于",
+        text = stringResource(R.string.about),
         clickable = true,
         onClick = { showAboutDialog.value = true }
       )
@@ -146,8 +155,7 @@ fun createShortcut(
 
 @Composable
 fun ProfileHeader(
-  user: MobileApiUserAttributes?,
-  userInfo: MobileApiUserInfo?,
+  userInfo: UserInfo?,
   loadComplete: Boolean
 ) {
   val clipboardManager = LocalClipboardManager.current
@@ -160,8 +168,8 @@ fun ProfileHeader(
   ) {
     if (loadComplete) {
       // 头像
-      Image(
-        bitmap = dataUriToImageBitmap(user?.avatar ?: "")!!,
+      AsyncImage(
+        model = "https://personal.neu.edu.cn/portal" + userInfo?.avatar,
         contentDescription = "Avatar",
         modifier = Modifier
           .height(96.dp)
@@ -171,15 +179,15 @@ fun ProfileHeader(
       // 文字
       Column {
         Text(
-          text = user?.name ?: "",
+          text = userInfo?.name ?: "",
           style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-          text = "${userInfo?.ZZJG} ${userInfo?.RYLX}\n学号: ${user?.code}\n邮箱: ${userInfo?.EMAIL}",
+          text = "${userInfo?.depart} ${userInfo?.identity}\n学号: ${userInfo?.xgh}\n邮箱: ${userInfo?.email}",
           style = MaterialTheme.typography.bodyMedium,
           modifier = Modifier.clickable {
-            clipboardManager.setText(buildAnnotatedString { user?.code })
+            clipboardManager.setText(buildAnnotatedString { userInfo?.xgh })
             Toast.makeText(context, "已复制学号", Toast.LENGTH_SHORT).show()
           }
         )
