@@ -6,6 +6,8 @@ import android.util.*
 import android.widget.*
 import androidx.activity.*
 import androidx.activity.compose.*
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,6 +15,7 @@ import androidx.compose.ui.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.*
+import androidx.navigation.*
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import com.tencent.mmkv.*
@@ -21,6 +24,7 @@ import ink.chyk.neuqrcode.screens.*
 import ink.chyk.neuqrcode.viewmodels.*
 import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.ui.theme.*
+import kotlin.math.*
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,6 +92,52 @@ data class BottomNavigationItem(
   }
 }
 
+fun routeToIndex(route: String): Int {
+  return when (route) {
+    "courses" -> 0
+    "ecode" -> 1
+    "apps" -> 2
+    "profile" -> 3
+    else -> 1
+  }
+}
+
+fun enter(
+  previousItem: Int = 0,
+  selectedItem: Int = 0
+): EnterTransition {
+  val time = log2((abs(previousItem - selectedItem) + 1).toFloat()).toInt() * 300
+  return if (previousItem < selectedItem) {
+    slideInHorizontally(
+      initialOffsetX = { it },
+      animationSpec = tween(durationMillis = time)
+    )
+  } else {
+    slideInHorizontally(
+      initialOffsetX = { -it },
+      animationSpec = tween(durationMillis = time)
+    )
+  }
+}
+
+fun exit(
+  previousItem: Int = 0,
+  selectedItem: Int = 0
+): ExitTransition {
+  val time = log2((abs(previousItem - selectedItem) + 1).toFloat()).toInt() * 300
+  return if (previousItem < selectedItem) {
+    slideOutHorizontally(
+      targetOffsetX = { -it },
+      animationSpec = tween(durationMillis = time)
+    )
+  } else {
+    slideOutHorizontally(
+      targetOffsetX = { it },
+      animationSpec = tween(durationMillis = time)
+    )
+  }
+}
+
 @Composable
 fun MainApp(screen: String?) {
   val eCodeViewModel: ECodeViewModel = viewModel(factory = ECodeViewModelFactory())
@@ -95,18 +145,13 @@ fun MainApp(screen: String?) {
   val coursesViewModel: CoursesViewModel = viewModel(factory = CoursesViewModelFactory())
 
   val navController = rememberNavController()
+  var previousSelectedItem by remember { mutableStateOf(0) }
   var selectedItem by remember { mutableIntStateOf(0) }
 
   LaunchedEffect(navController) {
     navController.currentBackStackEntryFlow.collect { backStackEntry ->
       // 根据当前的目的地更新底部导航栏的选中项
-      selectedItem = when (backStackEntry.destination.route) {
-        "courses" -> 0
-        "ecode" -> 1
-        "apps" -> 2
-        "profile" -> 3
-        else -> 1
-      }
+      selectedItem = routeToIndex(backStackEntry.destination.route ?: "ecode")
     }
   }
 
@@ -129,6 +174,7 @@ fun MainApp(screen: String?) {
                 },
                 onClick = {
                   if (selectedItem != index) {
+                    previousSelectedItem = selectedItem
                     selectedItem = index
                     navController.navigate(item.route) {
                       // https://medium.com/@bharadwaj.rns/bottom-navigation-in-jetpack-compose-using-material3-c153ccbf0593
@@ -147,20 +193,36 @@ fun MainApp(screen: String?) {
       }
     ) { innerPadding ->
       NavHost(navController = navController, startDestination = screen ?: "ecode") {
-        composable("courses") {
+        composable(
+          "courses",
+          enterTransition = { enter(previousSelectedItem, selectedItem) },
+          exitTransition = { exit(previousSelectedItem, selectedItem) }
+        ) {
           CoursesScreen(
             viewModel = coursesViewModel,
             navController = navController,
             innerPadding = innerPadding
           )
         }
-        composable("ecode") {
+        composable(
+          "ecode",
+          enterTransition = { enter(previousSelectedItem, selectedItem) },
+          exitTransition = { exit(previousSelectedItem, selectedItem) }
+        ) {
           ECodeScreen(viewModel = eCodeViewModel, navController = navController)
         }
-        composable("apps") {
+        composable(
+          "apps",
+          enterTransition = { enter(previousSelectedItem, selectedItem) },
+          exitTransition = { exit(previousSelectedItem, selectedItem) }
+        ) {
           AppsScreen(navController = navController)
         }
-        composable("profile") {
+        composable(
+          "profile",
+          enterTransition = { enter(previousSelectedItem, selectedItem) },
+          exitTransition = { exit(previousSelectedItem, selectedItem) }
+        ) {
           ProfileScreen(
             viewModel = profileViewModel,
             navController = navController,
