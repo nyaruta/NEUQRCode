@@ -29,6 +29,8 @@ import ink.chyk.neuqrcode.viewmodels.*
 import ink.chyk.neuqrcode.R
 import android.graphics.drawable.Icon as AndroidIcon
 import coil3.compose.AsyncImage
+import coil3.network.*
+import coil3.request.*
 
 fun dataUriToImageBitmap(dataUri: String): ImageBitmap? {
   val base64 = dataUri.substringAfter("base64,")
@@ -46,6 +48,7 @@ fun ProfileScreen(
   val cardBalance by viewModel.cardBalance.collectAsState()
   val netBalance by viewModel.netBalance.collectAsState()
   val mailUnread by viewModel.mailUnread.collectAsState()
+  val headers by viewModel.headers.collectAsState()
   val loadComplete by viewModel.loadComplete.collectAsState()
 
   val showLogoutDialog = remember { mutableStateOf(false) }
@@ -60,7 +63,7 @@ fun ProfileScreen(
       .padding(vertical = 64.dp, horizontal = 8.dp)
   ) {
     Column {
-      ProfileHeader(userInfo, loadComplete)
+      ProfileHeader(userInfo, headers, loadComplete)
       Spacer(modifier = Modifier.height(64.dp))
       RowButton(
         iconResource = R.drawable.ic_fluent_contact_card_24_regular,
@@ -77,7 +80,7 @@ fun ProfileScreen(
       RowButton(
         iconResource = R.drawable.ic_fluent_mail_24_regular,
         text = stringResource(R.string.email),
-        content = if (loadComplete) "${stringResource(R.string.email_unread)} ${mailUnread?.valueString} ${mailUnread?.unit}" else null,
+        content = if (loadComplete) "${stringResource(R.string.email_unread)} ${mailUnread?.valueString}" else null,
         clickable = true,
         // TODO: 电子邮箱
         onClick = { Toast.makeText(context, "暂未开放", Toast.LENGTH_SHORT).show() }
@@ -156,6 +159,7 @@ fun createShortcut(
 @Composable
 fun ProfileHeader(
   userInfo: UserInfo?,
+  headers: NetworkHeaders?,
   loadComplete: Boolean
 ) {
   val clipboardManager = LocalClipboardManager.current
@@ -169,7 +173,15 @@ fun ProfileHeader(
     if (loadComplete) {
       // 头像
       AsyncImage(
-        model = "https://personal.neu.edu.cn/portal" + userInfo?.avatar,
+        model = ImageRequest.Builder(context)
+          .data("https://personal.neu.edu.cn/portal" + userInfo?.avatar)
+          .crossfade(true)
+          .apply {
+            if (headers != null) {
+              httpHeaders(headers)
+            }
+          }
+          .build(),
         contentDescription = "Avatar",
         modifier = Modifier
           .height(96.dp)

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.lifecycle.*
+import coil3.network.*
 import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.R
@@ -38,6 +39,8 @@ class ProfileViewModel(
   private val _netBalance = MutableStateFlow<PersonalDataItem?>(null)
   val netBalance: StateFlow<PersonalDataItem?> = _netBalance
   private val _loadComplete = MutableStateFlow(false)
+  private val _headers = MutableStateFlow<NetworkHeaders?>(null)
+  val headers: StateFlow<NetworkHeaders?> = _headers
   val loadComplete: StateFlow<Boolean> = _loadComplete
 
 
@@ -103,6 +106,7 @@ class ProfileViewModel(
 
   private suspend fun refreshUserInfo() {
     prepareSessionAnd { session ->
+
       val userInfoResponse = neu.getUserInfo(session)
       _userInfo.value = userInfoResponse.first.info
       updateSession(userInfoResponse.second)
@@ -122,6 +126,11 @@ class ProfileViewModel(
       val netBalanceResponse = neu.getPersonalDataItem(session, ids, "net.balance")
       _netBalance.value = netBalanceResponse.first.data
       updateSession(netBalanceResponse.second)
+
+      _headers.value = NetworkHeaders.Builder()
+        .add("Cookie", "SESS_ID=${session.sessId}; CK_LC=${session.lc}; CK_VL=${session.vl}")
+        .add("Referer", "https://personal.neu.edu.cn/portal/")
+        .build()
 
       _loadComplete.value = true
     }

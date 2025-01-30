@@ -116,9 +116,9 @@ class NEUPass {
         val code = response.code
         if (code == 302) {
           val location = response.header("Location")
-          if (location != null && location.contains("?ticket=")) {
+          if (location != null && location.contains("ticket=")) {
             // 提取新的 ticket 参数
-            location.substringAfter("?ticket=")
+            location.substringAfter("ticket=")
           } else {
             throw TicketFailedException()
           }

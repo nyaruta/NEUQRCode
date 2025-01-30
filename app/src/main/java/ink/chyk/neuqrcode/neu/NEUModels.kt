@@ -319,13 +319,10 @@ data class PersonalDataItemOuter(
 @JsonIgnoreUnknownKeys
 data class PersonalDataItem(
   val value: JsonElement,
-  val unit: String?,
-  val url: String?,
+  val unit: String? = null,
+  val url: String? = null,
 ) {
   val valueString: String? by lazy {
     value.jsonPrimitive.content
-  }
-  val valueInt: Int? by lazy {
-    value.jsonPrimitive.intOrNull
   }
 }
