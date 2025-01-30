@@ -86,7 +86,7 @@ fun ProfileScreen(
         onClick = { Toast.makeText(context, "暂未开放", Toast.LENGTH_SHORT).show() }
       )
       RowButton(
-        iconResource = R.drawable.ic_fluent_calendar_24_filled,
+        iconResource = R.drawable.ic_fluent_calendar_24_regular,
         text =stringResource(R.string.create_courses_shortcut),
         clickable = true,
         onClick = { createShortcut(context) }
