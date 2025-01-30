@@ -17,7 +17,9 @@ class NEUPass {
   }
 
   suspend fun loginPortalTicket(studentId: String, password: String): String {
-    // 登录账号
+    // 登录账号（智慧东大 2.x API，已经弃用）
+    Log.w("NEUPass", "loginPortalTicket deprecated, should be replaced with loginPersonalTicket")
+
     val url = "https://portal.neu.edu.cn/mobile/api/auth/tickets"
 
     val client = OkHttpClient.Builder()
@@ -47,6 +49,43 @@ class NEUPass {
           }
         } else {
           throw PasswordIncorrectException()
+        }
+      }
+    }
+  }
+
+  suspend fun loginPersonalTicket(studentId: String, password: String) : String {
+    // 登录账号（智慧东大 3.x API）
+    val url = "https://personal.neu.edu.cn/prize/Front/Oauth/User/sso"
+
+    val client = OkHttpClient.Builder()
+      .followRedirects(false)
+      .build()
+
+    val requestBody = FormBody.Builder()
+      .add("username", studentId)
+      .add("password", password)
+      .build()
+
+    val request = useRequestedWith(
+      Request.Builder()
+        .url(url)
+        .post(requestBody)
+    ).build()
+
+    return withContext(Dispatchers.IO) {
+      client.newCall(request).execute().use { response ->
+        if (response.isSuccessful) {
+          val body = response.body?.string()
+          val resp = Json.decodeFromString<UserSSOLoginResponse>(body!!)
+          if (resp.code == 1) {
+            // 登录成功
+            resp.tgt ?: throw PasswordIncorrectException()
+          } else {
+            throw PasswordIncorrectException()
+          }
+        } else {
+          throw RequestFailedException()
         }
       }
     }

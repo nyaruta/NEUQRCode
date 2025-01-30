@@ -1,7 +1,21 @@
 package ink.chyk.neuqrcode.neu
-
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.*
 
+@Serializable
+data class UserSSOLoginResponse(
+  val code: Int,
+  val result: JsonElement, // 直接接收原始 JSON 元素
+  val msg: String
+) {
+  val tgt: String? by lazy {
+    when {
+      result is JsonObject -> result.jsonObject["tgt"]?.jsonPrimitive?.content
+      result is JsonArray && result.isEmpty() -> null
+      else -> throw IllegalStateException("Unexpected result format")
+    }
+  }
+}
 
 @Serializable
 data class NEUAppSession(

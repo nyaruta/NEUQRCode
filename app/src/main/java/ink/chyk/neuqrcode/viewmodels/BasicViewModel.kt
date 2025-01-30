@@ -44,7 +44,7 @@ abstract class BasicViewModel(
 
     var portalTicket: String? = mmkv.decodeString("portal_ticket")
     if (portalTicket == null || reLogin) {
-      portalTicket = neu.loginPortalTicket(studentId, password)
+      portalTicket = neu.loginPersonalTicket(studentId, password)
       mmkv.encode("portal_ticket", portalTicket)
     }
 
