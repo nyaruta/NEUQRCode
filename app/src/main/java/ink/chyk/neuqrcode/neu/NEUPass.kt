@@ -54,7 +54,7 @@ class NEUPass {
     }
   }
 
-  suspend fun loginPersonalTicket(studentId: String, password: String) : String {
+  suspend fun loginPersonalTicket(studentId: String, password: String): String {
     // 登录账号（智慧东大 3.x API）
     val url = "https://personal.neu.edu.cn/prize/Front/Oauth/User/sso"
 
@@ -132,7 +132,18 @@ class NEUPass {
   }
 
   suspend fun loginMobileApiTicket(portalTicket: String): String {
+    Log.w(
+      "NEUPass",
+      "loginMobileApiTicket deprecated, should be replaced with loginPersonalApiTicket"
+    )
     return loginNEUAppTicket(portalTicket, "https://portal.neu.edu.cn/mobile/api/sso/login")
+  }
+
+  suspend fun loginPersonalApiTicket(portalTicket: String): String {
+    return loginNEUAppTicket(
+      portalTicket,
+      "https://personal.neu.edu.cn/portal/manage/common/cas_login/1?redirect=https%3A%2F%2Fpersonal.neu.edu.cn%2Fportal"
+    )
   }
 
   private suspend fun newNEUAppSession(callbackUrl: String): NEUAppSession {
@@ -169,6 +180,7 @@ class NEUPass {
   }
 
   suspend fun newMobileApiSession(): NEUAppSession {
+    Log.w("NEUPass", "newMobileApiSession deprecated")
     return newNEUAppSession("https://portal.neu.edu.cn/mobile/api/sso/login")
   }
 
@@ -230,12 +242,47 @@ class NEUPass {
   }
 
   suspend fun loginMobileApi(session: NEUAppSession, mobileApiTicket: String) {
+    Log.w("NEUPass", "loginMobileApi deprecated, should be replaced with loginPersonalApi")
     return loginNEUApp(
       session = session,
       appTicket = mobileApiTicket,
       loginUrl = "https://portal.neu.edu.cn/mobile/api/sso/login",
       redirectUrl = "https://portal.neu.edu.cn/mobile/api"
     )
+  }
+
+  suspend fun loginPersonalApi(personalApiTicket: String): PersonalSession {
+    val client = OkHttpClient.Builder()
+      .followRedirects(false)
+      .build()
+
+    val loginRequest = useRequestedWith(
+      Request.Builder()
+        .url("https://personal.neu.edu.cn/portal/manage/common/cas_login/1?redirect=https://personal.neu.edu.cn/portal&ticket=$personalApiTicket")
+        .get()
+    ).build()
+
+    return withContext(Dispatchers.IO) {
+      client.newCall(loginRequest).execute().use { response ->
+        if (response.code == 302) {
+          // 登录成功，提取 cookie
+          val setCookieHeaders = response.headers("Set-Cookie")
+          val getCookie = { name: String ->
+            setCookieHeaders
+              .first({ it.startsWith(name) })
+              .substringBefore(";")
+              .substringAfter("=")
+          }
+          PersonalSession(
+            getCookie("CK_LC"),
+            getCookie("CK_VL"),
+            getCookie("SESS_ID")
+          )
+        } else {
+          throw TicketExpiredException()
+        }
+      }
+    }
   }
 
   private suspend inline fun <reified T> basicAppRequest(

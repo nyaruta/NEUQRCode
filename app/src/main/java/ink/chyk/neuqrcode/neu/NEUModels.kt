@@ -18,6 +18,13 @@ data class UserSSOLoginResponse(
 }
 
 @Serializable
+data class PersonalSession(
+  val lc: String,
+  val vl: String,
+  val sessId: String,
+)
+
+@Serializable
 data class NEUAppSession(
   val session: String,
   val xsrfToken: String,
