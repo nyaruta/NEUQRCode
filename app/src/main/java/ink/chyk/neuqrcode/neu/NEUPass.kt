@@ -1,10 +1,13 @@
 package ink.chyk.neuqrcode.neu
 
+import android.util.*
 import ink.chyk.neuqrcode.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
 import okhttp3.*
 import kotlinx.serialization.json.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import kotlin.Pair
 
 
@@ -262,7 +265,9 @@ class NEUPass {
   @OptIn(ExperimentalSerializationApi::class)
   private suspend inline fun <reified T> basicPersonalApiRequest(
     session: PersonalSession,
-    url: String
+    url: String,
+    postBody: MultipartBody? = null,
+    putBody: MultipartBody? = null
   ): Pair<T, PersonalSession> {
     // 新的 3.x api 在每次请求后都有可能更新 sess_id
     // 返回结果和新的 session
@@ -275,18 +280,34 @@ class NEUPass {
         "Cookie",
         "CK_LC=${session.lc}; CK_VL=${session.vl}; SESS_ID=${session.sessId}"
       )
+      .apply {
+        if (postBody != null) {
+          add("Content-Type", "multipart/form-data; boundary=${postBody.boundary}")
+        } else if (putBody != null) {
+          add("Content-Type", "multipart/form-data; boundary=${putBody.boundary}")
+        }
+      }
       .build()
 
     val request = useRequestedWith(
       Request.Builder()
         .url(url)
         .headers(headers)
-        .get()
+        .apply {
+          if (postBody != null) {
+            post(postBody)
+          } else if (putBody != null) {
+            put(putBody)
+          } else {
+            get()
+          }
+        }
     ).build()
 
     return withContext(Dispatchers.IO) {
       client.newCall(request).execute().use { response ->
         if (response.code != 200) {
+          Log.d("NEUPass", "Error: ${response.body?.string()}")
           throw SessionExpiredException()
         }
         val body = response.body?.string()
@@ -297,6 +318,7 @@ class NEUPass {
           throw SessionExpiredException()
         }
         if (result.e > 10000) {
+          Log.d("NEUPass", "Error: ${result.e}, ${result.m}")
           throw SessionExpiredException()
         }
         // 更新 sess_id
@@ -356,4 +378,41 @@ class NEUPass {
   }
 
   public val eams by lazy { EAMS(this) }
+
+  suspend fun uploadImage(
+    session: PersonalSession,
+    image: ByteArray,
+    mimeType: String,
+    fileName: String
+  ): Pair<UploadImageResponse, PersonalSession> {
+    val requestBody = MultipartBody.Builder()
+      .setType(MultipartBody.FORM)
+      .addFormDataPart("category", "image")
+      .addFormDataPart(
+        "upfile",
+        fileName,
+        image.toRequestBody(mimeType.toMediaTypeOrNull())
+      )
+      .build()
+    return basicPersonalApiRequest(
+      session,
+      "https://personal.neu.edu.cn/portal/frontend/upload/image",
+      postBody = requestBody
+    )
+  }
+
+  suspend fun updateAvatar(
+    session: PersonalSession,
+    imageUrl: String
+  ): Pair<List<String>, PersonalSession> {
+    val requestBody = MultipartBody.Builder()
+      .setType(MultipartBody.FORM)
+      .addFormDataPart("avatar", imageUrl)
+      .build()
+    return basicPersonalApiRequest(
+      session,
+      "https://personal.neu.edu.cn/portal/frontend/user/update-avatar",
+      putBody = requestBody
+    )
+  }
 }

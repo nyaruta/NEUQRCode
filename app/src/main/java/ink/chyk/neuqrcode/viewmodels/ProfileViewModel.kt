@@ -225,4 +225,26 @@ class ProfileViewModel(
       refreshUserInfo()
     }
   }
+
+  fun uploadAvatar(
+    byteArray: ByteArray,
+    mimeType: String,
+    fileName: String,
+    onUploadComplete: () -> Unit
+  ) {
+    Log.d("uploadAvatar", "Uploading avatar file $fileName")
+    viewModelScope.launch {
+      prepareSessionAnd { session ->
+        val response = neu.uploadImage(session, byteArray, mimeType, fileName)
+        updateSession(response.second)
+        Log.d("uploadAvatar", "Response: ${response.first}")
+        Log.d("uploadAvatar", "Uploaded url: ${response.first.url}")
+        _userInfo.value = _userInfo.value?.copy(avatar = response.first.url)
+        val response2 = neu.updateAvatar(session, response.first.url)
+        Log.d("uploadAvatar", "Update avatar response: ${response2.first}")
+        updateSession(response2.second)
+        onUploadComplete()
+      }
+    }
+  }
 }

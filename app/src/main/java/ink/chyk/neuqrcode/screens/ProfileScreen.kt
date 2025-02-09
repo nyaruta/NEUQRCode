@@ -5,7 +5,11 @@ import android.content.*
 import android.content.ClipboardManager
 import android.content.pm.*
 import android.graphics.BitmapFactory
+import android.util.*
 import android.widget.Toast
+import androidx.activity.compose.*
+import androidx.activity.result.*
+import androidx.activity.result.contract.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
@@ -54,6 +58,10 @@ fun ProfileScreen(
   val showLogoutDialog = remember { mutableStateOf(false) }
   val showAboutDialog = remember { mutableStateOf(false) }
   val showGroupChatDialog = remember { mutableStateOf(false) }
+  val showUploadAvatarDialog = remember { mutableStateOf(false) }
+  val byteArray = remember { mutableStateOf<ByteArray?>(null) }
+  val mimeType = remember { mutableStateOf<String?>(null) }
+  val fileName = remember { mutableStateOf<String?>(null) }
   val context = LocalContext.current
 
   Box(
@@ -63,7 +71,15 @@ fun ProfileScreen(
       .padding(vertical = 64.dp, horizontal = 8.dp)
   ) {
     Column {
-      ProfileHeader(userInfo, headers, loadComplete)
+      ProfileHeader(
+        userInfo, headers, loadComplete,
+        onUploadImage = { _byteArray: ByteArray, _mimeType: String, _fileName: String ->
+          showUploadAvatarDialog.value = true
+          byteArray.value = _byteArray
+          mimeType.value = _mimeType
+          fileName.value = _fileName
+        }
+      )
       Spacer(modifier = Modifier.height(64.dp))
       RowButton(
         iconResource = R.drawable.ic_fluent_contact_card_24_regular,
@@ -87,7 +103,7 @@ fun ProfileScreen(
       )
       RowButton(
         iconResource = R.drawable.ic_fluent_calendar_24_regular,
-        text =stringResource(R.string.create_courses_shortcut),
+        text = stringResource(R.string.create_courses_shortcut),
         clickable = true,
         onClick = { createShortcut(context) }
       )
@@ -126,6 +142,17 @@ fun ProfileScreen(
     showDialog = showGroupChatDialog,
     onDismiss = { showGroupChatDialog.value = false }
   )
+
+  UploadAvatarConfirmDialog(
+    showDialog = showUploadAvatarDialog,
+    onDismiss = { showUploadAvatarDialog.value = false },
+    onConfirm = {
+      Toast.makeText(context, context.getString(R.string.uploading), Toast.LENGTH_SHORT).show()
+      showUploadAvatarDialog.value = false
+      viewModel.uploadAvatar(byteArray.value!!, mimeType.value!!, fileName.value!!, {
+      Toast.makeText(context, context.getString(R.string.upload_finished), Toast.LENGTH_LONG).show()
+    }) }
+  )
 }
 
 fun createShortcut(
@@ -160,10 +187,40 @@ fun createShortcut(
 fun ProfileHeader(
   userInfo: UserInfo?,
   headers: NetworkHeaders?,
-  loadComplete: Boolean
+  loadComplete: Boolean,
+  onUploadImage: (ByteArray, String, String) -> Unit
 ) {
   val clipboardManager = LocalClipboardManager.current
   val context = LocalContext.current
+  val resolver = context.contentResolver
+  // 上传头像选择器
+  val pickMedia =
+    rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+      if (uri != null) {
+        Log.d("PhotoPicker", "Selected URI: $uri")
+        // 上传头像
+        resolver.openInputStream(uri).use { stream ->
+          val byteArray = stream?.readBytes()
+          if (byteArray != null) {
+            val mimeType = resolver.getType(uri)!!
+            // 生成文件名
+            val fileName =
+              "avatar${uri.pathSegments.last()}.${mimeType.substringAfter("/")}".replace(
+                "jpeg",
+                "jpg"
+              )
+            onUploadImage(byteArray, mimeType, fileName)
+          } else {
+            Toast.makeText(
+              context,
+              context.getString(R.string.cannot_read_selected_image),
+              Toast.LENGTH_SHORT
+            ).show()
+          }
+        }
+      }
+    }
+
   // 大头，学号等
   Row(
     modifier = Modifier
@@ -186,6 +243,7 @@ fun ProfileHeader(
         modifier = Modifier
           .height(96.dp)
           .clip(RoundedCornerShape(8.dp))
+          .clickable { pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
       )
       Spacer(modifier = Modifier.width(16.dp))
       // 文字
@@ -439,5 +497,43 @@ fun GroupChatDialog(
         }
       }
     }
+  }
+}
+
+@Composable
+fun UploadAvatarConfirmDialog(
+  showDialog: MutableState<Boolean>,
+  onDismiss: () -> Unit,
+  onConfirm: () -> Unit
+) {
+  if (showDialog.value) {
+    AlertDialog(
+      onDismissRequest = onDismiss,
+      title = {
+        DialogTitle(
+          R.drawable.ic_fluent_person_swap_24_regular,
+          stringResource(R.string.upload_avatar)
+        )
+      },
+      text = {
+        Text(stringResource(R.string.upload_avatar_confirm))
+      },
+      confirmButton = {
+        Button(onClick = {
+          onConfirm()
+          showDialog.value = false // 关闭对话框
+        }) {
+          Text(stringResource(R.string.confirm))
+        }
+      },
+      dismissButton = {
+        Button(onClick = {
+          onDismiss()
+          showDialog.value = false // 关闭对话框
+        }) {
+          Text(stringResource(R.string.cancel))
+        }
+      }
+    )
   }
 }

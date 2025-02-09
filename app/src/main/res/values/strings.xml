@@ -98,4 +98,10 @@
     <string name="email_unread">未读邮件</string>
     <string name="create_courses_shortcut">创建课程表快捷方式</string>
     <string name="logout_account">登出账号</string>
+    <string name="cannot_read_selected_image">无法读取选中的图片</string>
+    <string name="upload_avatar">上传头像</string>
+    <string name="upload_avatar_confirm">确定要上传这张图片作为头像吗？</string>
+    <string name="cancel">取消</string>
+    <string name="uploading">上传中…</string>
+    <string name="upload_finished">上传完成，请等待审核通过。</string>
 </resources>

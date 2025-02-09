@@ -124,3 +124,12 @@ data class PersonalDataItem(
     value.jsonPrimitive.content
   }
 }
+
+@Serializable
+data class UploadImageResponse(
+  val url: String,
+  val name: String,
+  val type: String,
+  val size: Int,
+  val id: String
+)
