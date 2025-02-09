@@ -15,7 +15,7 @@ class EAMS(
   private val eamsHomeExtUrl = "$eamsRootUrl/homeExt.action"
   private val debugMode = true  // 是否记录请求日志
 
-  private suspend fun newSession(): Pair<String, String> {
+  suspend fun newSession(): Pair<String, String> {
     // 请求一次教务系统主页，获取一个新的 jsessionid 在登录时使用
     val client = OkHttpClient.Builder()
       .followRedirects(false)
@@ -57,10 +57,10 @@ class EAMS(
   }
 
   suspend fun loginEAMSTicket(
+    session: Pair<String, String>,
     portalTicket: String
   ): String {
     // 登录教务系统，获取教务系统的 ticket
-    val session = newSession()
     val sessionId = session.first
     val eamsTicket =
       neu.loginNEUAppTicket(portalTicket, "$eamsHomeExtUrl;jsessionid=$sessionId")
@@ -69,7 +69,7 @@ class EAMS(
     return eamsTicket
   }
 
-  private suspend fun buildEAMSRequest(
+  private fun buildEAMSRequest(
     session: Pair<String, String>,
     url: String
   ): Request.Builder {
@@ -82,10 +82,10 @@ class EAMS(
       )
   }
 
-  private suspend fun loginEAMS(
+  suspend fun loginEAMS(
     session: Pair<String, String>,
     eamsTicket: String
-  ) {
+  ): String {
     // 获取完 ticket 之后，对这个 session 进行登录
     val client = OkHttpClient.Builder()
       .followRedirects(false)
@@ -97,7 +97,7 @@ class EAMS(
     val afterLoginRequest =
       buildEAMSRequest(session, "$eamsHomeExtUrl;jsessionid=${session.first}").build()
 
-    withContext(Dispatchers.IO) {
+    return withContext(Dispatchers.IO) {
       client.newCall(loginRequest).execute().use { response ->
         if (response.code == 302) {
           client.newCall(afterLoginRequest).execute().use { response2 ->
@@ -105,6 +105,8 @@ class EAMS(
               throw TicketExpiredException()
             }
             // 否则登录成功
+            Log.d("EAMS", "Login success")
+            return@withContext response2.body?.string() ?: ""
           }
         } else {
           throw TicketExpiredException()
@@ -125,10 +127,22 @@ class EAMS(
     val request = buildEAMSRequest(session, url).build()
     return withContext(Dispatchers.IO) {
       client.newCall(request).execute().use { response ->
-        if (response.isSuccessful && response.code == 200)
-          return@withContext response.body?.string() ?: ""
+        if (response.isSuccessful && response.code == 200) {
+          val body = response.body?.string() ?: ""
+          if (debugMode)
+            Log.d("EAMS", "Request to $url: $body")
+          return@withContext body
+        } else {
+          throw RequestFailedException()
+        }
       }
-      throw RequestFailedException()
     }
+  }
+
+  suspend fun getLeftMenuHtml(
+    session: Pair<String, String>
+  ): String {
+    // 获取左侧菜单
+    return eamsRequest(session, "$eamsRootUrl/homeExt!submenus.action")
   }
 }
