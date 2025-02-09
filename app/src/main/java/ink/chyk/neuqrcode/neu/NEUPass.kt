@@ -2,6 +2,7 @@ package ink.chyk.neuqrcode.neu
 
 import ink.chyk.neuqrcode.*
 import kotlinx.coroutines.*
+import kotlinx.serialization.*
 import okhttp3.*
 import kotlinx.serialization.json.*
 import kotlin.Pair
@@ -258,6 +259,7 @@ class NEUPass {
     }
   }
 
+  @OptIn(ExperimentalSerializationApi::class)
   private suspend inline fun <reified T> basicPersonalApiRequest(
     session: PersonalSession,
     url: String
@@ -288,7 +290,15 @@ class NEUPass {
           throw SessionExpiredException()
         }
         val body = response.body?.string()
-        val result = Json.decodeFromString<PersonalResponse<T>>(body!!)
+        val result: PersonalResponse<T>
+        try {
+          result = Json.decodeFromString<PersonalResponse<T>>(body!!)
+        } catch (e: MissingFieldException) {
+          throw SessionExpiredException()
+        }
+        if (result.e > 10000) {
+          throw SessionExpiredException()
+        }
         // 更新 sess_id
         val newSessId = response.headers("Set-Cookie")
           .firstOrNull { it.startsWith("SESS_ID") }

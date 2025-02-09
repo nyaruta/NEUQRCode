@@ -2,6 +2,7 @@ package ink.chyk.neuqrcode.viewmodels
 
 import android.content.Context
 import android.content.Intent
+import android.util.*
 import android.widget.Toast
 import androidx.lifecycle.*
 import coil3.network.*
@@ -53,6 +54,7 @@ class ProfileViewModel(
    * @return ticket（TGT-xxxx-tpass）
    */
   private suspend fun getPortalTicket(reLogin: Boolean = false): String {
+    Log.d("getPortalTicket", "reLogin: $reLogin")
     val studentId = mmkv.decodeString("student_id")!!
     val password = mmkv.decodeString("password")!!
 
@@ -78,10 +80,17 @@ class ProfileViewModel(
       val sessId = mmkv.decodeString("personal_sess_id")
       if (lc == null || vl == null || sessId == null) {
         // 登录
+        Log.d("prepareSessionAnd", "No session found, logging in")
         val ticket = getPortalTicket()
-        val personal_ticket = neu.loginPersonalApiTicket(ticket)
-        mmkv.encode("personal_ticket", personal_ticket)
-        val session = neu.loginPersonalApi(personal_ticket)
+        var personalTicket: String
+        try {
+          personalTicket = neu.loginPersonalApiTicket(ticket)
+        } catch (e: TicketFailedException) {
+          val newTicket = getPortalTicket(true)
+          personalTicket = neu.loginPersonalApiTicket(newTicket)
+        }
+        mmkv.encode("personal_ticket", personalTicket)
+        val session = neu.loginPersonalApi(personalTicket)
         updateSession(session)
         action(session)
       } else {
@@ -106,33 +115,40 @@ class ProfileViewModel(
 
   private suspend fun refreshUserInfo() {
     prepareSessionAnd { session ->
+      try {
+        val userInfoResponse = neu.getUserInfo(session)
+        _userInfo.value = userInfoResponse.first.info
+        updateSession(userInfoResponse.second)
 
-      val userInfoResponse = neu.getUserInfo(session)
-      _userInfo.value = userInfoResponse.first.info
-      updateSession(userInfoResponse.second)
+        val idsResponse = neu.getPersonalDataIds(session)
+        val ids = idsResponse.first
+        updateSession(idsResponse.second)
 
-      val idsResponse = neu.getPersonalDataIds(session)
-      val ids = idsResponse.first
-      updateSession(idsResponse.second)
+        val mailUnreadResponse = neu.getPersonalDataItem(session, ids, "mail.coremailStudent")
+        _mailUnread.value = mailUnreadResponse.first.data
+        updateSession(mailUnreadResponse.second)
 
-      val mailUnreadResponse = neu.getPersonalDataItem(session, ids, "mail.coremailStudent")
-      _mailUnread.value = mailUnreadResponse.first.data
-      updateSession(mailUnreadResponse.second)
+        val cardBalanceResponse = neu.getPersonalDataItem(session, ids, "card.balance")
+        _cardBalance.value = cardBalanceResponse.first.data
+        updateSession(cardBalanceResponse.second)
 
-      val cardBalanceResponse = neu.getPersonalDataItem(session, ids, "card.balance")
-      _cardBalance.value = cardBalanceResponse.first.data
-      updateSession(cardBalanceResponse.second)
+        val netBalanceResponse = neu.getPersonalDataItem(session, ids, "net.balance")
+        _netBalance.value = netBalanceResponse.first.data
+        updateSession(netBalanceResponse.second)
 
-      val netBalanceResponse = neu.getPersonalDataItem(session, ids, "net.balance")
-      _netBalance.value = netBalanceResponse.first.data
-      updateSession(netBalanceResponse.second)
+        _headers.value = NetworkHeaders.Builder()
+          .add("Cookie", "SESS_ID=${session.sessId}; CK_LC=${session.lc}; CK_VL=${session.vl}")
+          .add("Referer", "https://personal.neu.edu.cn/portal/")
+          .build()
 
-      _headers.value = NetworkHeaders.Builder()
-        .add("Cookie", "SESS_ID=${session.sessId}; CK_LC=${session.lc}; CK_VL=${session.vl}")
-        .add("Referer", "https://personal.neu.edu.cn/portal/")
-        .build()
-
-      _loadComplete.value = true
+        _loadComplete.value = true
+      } catch (e: SessionExpiredException) {
+        // 重新登录
+        mmkv.remove("personal_lc")
+        mmkv.remove("personal_vl")
+        mmkv.remove("personal_sess_id")
+        refreshUserInfo()
+      }
     }
   }
 

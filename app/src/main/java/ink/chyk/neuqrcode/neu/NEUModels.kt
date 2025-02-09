@@ -58,14 +58,18 @@ data class ECodeUserInfoResponse(
   val idType: String,
 )
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
+@JsonIgnoreUnknownKeys
 data class PersonalResponse<T>(
   val e: Int,  // code
   val m: String,  // message
   val d: T  // data
 )
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
+@JsonIgnoreUnknownKeys
 data class UserInfoOuter(
   val info: UserInfo
 )
