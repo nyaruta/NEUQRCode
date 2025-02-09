@@ -53,7 +53,7 @@ class NEUPass {
     }
   }
 
-  private suspend fun loginNEUAppTicket(
+  suspend fun loginNEUAppTicket(
     portalTicket: String,
     callbackUrl: String
   ): String {
@@ -344,4 +344,6 @@ class NEUPass {
       "https://personal.neu.edu.cn/portal/personal/frontend/data/detail?id=$id"
     )
   }
+
+  public val eams by lazy { EAMS(this) }
 }
