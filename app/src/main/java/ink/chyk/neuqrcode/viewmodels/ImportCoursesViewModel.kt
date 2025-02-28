@@ -125,7 +125,9 @@ class ImportCoursesViewModel(
     val month = matchResult?.groupValues?.get(2)
     val day = matchResult?.groupValues?.get(3)
 
-    return "$year$month$day"  // 20240901
+    val ret= "$year$month$day"  // 20240901
+    Log.d("ImportCoursesViewModel", "Term start: $ret")
+    return ret
   }
 
 
@@ -152,6 +154,7 @@ class ImportCoursesViewModel(
     mmkv.getStringSet("course_keys", emptySet())?.forEach {
       mmkv.remove(it)
     }
+    mmkv.remove("term_start")
 
     LocalDate.parse(termStart, formatter).let { termStartDate ->
       for (daysDelta in 0..(22 * 7)) {
@@ -198,6 +201,7 @@ class ImportCoursesViewModel(
 
       // for 循环结束
       mmkv.encode("course_keys", courseKeys)
+      mmkv.encode("term_start", termStart)
     }
   }
 
