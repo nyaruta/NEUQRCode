@@ -139,10 +139,10 @@ class ImportCoursesViewModel(
     return event.endDate.date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
   }
 
-  private fun importCourses(
+  private suspend fun importCourses(
     calendarString: String,
     termStart: String
-  ) {
+  ) = withContext(Dispatchers.IO) {
     // 解析前 22 周的课表并且存入数据库
     val calendar = CalendarBuilder().build(calendarString.byteInputStream())  // 日历对象
     val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")  // 日期格式化器（20240901 -> 2024-09-01 对象）
@@ -220,13 +220,15 @@ class ImportCoursesViewModel(
         Log.d("ImportCoursesViewModel", output)
         _output.value = output
         _resultContent.value = resultContent ?: ctx.getString(R.string.import_failed)
-        _importing.value = false
         if (resultContent != null) {
-          importCourses(resultContent, getTermStart(output))
+          withContext(Dispatchers.IO) {
+            importCourses(resultContent, getTermStart(output))
+          }
           _importCompleted.value = true
         } else {
           handleErrors(output)
         }
+        _importing.value = false
       }
     }
   }
