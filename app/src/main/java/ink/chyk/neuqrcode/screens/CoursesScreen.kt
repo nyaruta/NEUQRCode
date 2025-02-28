@@ -274,8 +274,11 @@ fun DaySelector(
         icon = R.drawable.ic_fluent_chevron_left_20_filled,
         onClick = { viewModel.prevWeek() }
       )
+      val thisWeekNum = viewModel.thisWeek()
       Text(
-        ctx.getString(R.string.current_week).format(viewModel.thisWeek()),
+        if (thisWeekNum == -1) ctx.getString(R.string.in_vacation)
+        else
+          ctx.getString(R.string.current_week).format(thisWeekNum),
         modifier = Modifier.clickable {
           viewModel.backToday()
         }

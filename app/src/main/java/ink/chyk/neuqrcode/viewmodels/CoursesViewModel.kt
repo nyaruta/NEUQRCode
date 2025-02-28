@@ -72,7 +72,8 @@ class CoursesViewModel(
   fun thisWeek(): Int {
     // 计算当前周数
     val today = LocalDate.parse(_date.value, formatter)
-    val termStart = LocalDate.parse(mmkv.decodeString("term_start")!!, formatter)
+    val termStartString = mmkv.decodeString("term_start") ?: return -1
+    val termStart = LocalDate.parse(termStartString, formatter)
     return (today.toEpochDay() - termStart.toEpochDay()).toInt() / 7 + 1
   }
 
