@@ -240,6 +240,7 @@ fun ProfileHeader(
           }
           .build(),
         contentDescription = "Avatar",
+        placeholder = painterResource(R.drawable.neko3),
         modifier = Modifier
           .height(96.dp)
           .clip(RoundedCornerShape(8.dp))
