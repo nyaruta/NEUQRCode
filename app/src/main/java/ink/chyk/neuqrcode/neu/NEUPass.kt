@@ -415,4 +415,34 @@ class NEUPass {
       putBody = requestBody
     )
   }
+
+  suspend fun getCoreMailUrl(
+    session: PersonalSession,
+    redirector: String
+  ): Pair<String, PersonalSession> {
+    val client = OkHttpClient.Builder()
+      .followRedirects(false)
+      .build()
+    val headers = Headers.Builder()
+      .add(
+        "Cookie",
+        "CK_LC=${session.lc}; CK_VL=${session.vl}; SESS_ID=${session.sessId}"
+      )
+      .build()
+    val request = useRequestedWith(
+      Request.Builder()
+        .url(redirector)
+        .headers(headers)
+        .get()
+    ).build()
+    return withContext(Dispatchers.IO) {
+      client.newCall(request).execute().use { response ->
+        if (response.code != 302) {
+          throw SessionExpiredException()
+        }
+        val coreMailUrl = response.header("Location")!!
+        return@withContext Pair(coreMailUrl, session)
+      }
+    }
+  }
 }

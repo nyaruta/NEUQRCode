@@ -98,8 +98,7 @@ fun ProfileScreen(
         text = stringResource(R.string.email),
         content = if (loadComplete) "${stringResource(R.string.email_unread)} ${mailUnread?.valueString}" else null,
         clickable = true,
-        // TODO: 电子邮箱
-        onClick = { Toast.makeText(context, "暂未开放", Toast.LENGTH_SHORT).show() }
+        onClick = { viewModel.openCoreMail(context) }
       )
       RowButton(
         iconResource = R.drawable.ic_fluent_calendar_24_regular,
