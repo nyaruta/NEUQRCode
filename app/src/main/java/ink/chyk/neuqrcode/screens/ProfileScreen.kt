@@ -1,5 +1,6 @@
 package ink.chyk.neuqrcode.screens
 
+import android.annotation.*
 import android.app.Activity
 import android.content.*
 import android.content.ClipboardManager
@@ -42,6 +43,7 @@ fun dataUriToImageBitmap(dataUri: String): ImageBitmap? {
   return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)?.asImageBitmap()
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun ProfileScreen(
   viewModel: ProfileViewModel,
@@ -87,10 +89,17 @@ fun ProfileScreen(
         content = if (loadComplete) "${stringResource(R.string.campus_card_balance)} ${cardBalance?.valueString} ${cardBalance?.unit}" else null,
         clickable = false
       )
+      val netBalanceFloat = netBalance?.valueString?.toFloatOrNull()
+
       RowButton(
         iconResource = R.drawable.ic_fluent_desktop_signal_24_regular,
         text = stringResource(R.string.network),
-        content = if (loadComplete) "${stringResource(R.string.network_balance)} ${netBalance?.valueString} ${netBalance?.unit}" else null,
+        content = if (loadComplete) "${stringResource(R.string.network_balance)} ${
+          netBalanceFloat?.let {
+            // 保留两位小数
+            if (it < 0) stringResource(R.string.lack_balance) else String.format("%.2f", it)
+          }
+        } ${netBalance?.unit}" else null,
         clickable = false
       )
       RowButton(
