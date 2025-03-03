@@ -105,13 +105,18 @@ class CoursesViewModel(
     _date.value = date
   }
 
+  fun isDateInTerm(date: String): Boolean {
+    val termStart = mmkv.decodeString("term_start") ?: return false
+    return termStart.toInt() <= date.toInt()
+  }
+
   fun prevWeek() {
-    val newDate = LocalDate.parse(_date.value, formatter).minusWeeks(1)
+    val newDate = LocalDate.parse(_date.value, formatter).minusWeeks(1).format(formatter)
     // 边界检查
-    if (newDate.isBefore(LocalDate.parse(mmkv.decodeString("term_start"), formatter))) {
+    if (!isDateInTerm(newDate)) {
       return
     }
-    _date.value = newDate.format(formatter)
+    _date.value = newDate
   }
 
   fun nextWeek() {

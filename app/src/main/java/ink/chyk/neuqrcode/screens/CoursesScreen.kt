@@ -14,13 +14,15 @@ import androidx.compose.ui.res.*
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
+import androidx.compose.ui.window.*
 import androidx.navigation.*
 import dev.darkokoa.pangu.*
-import ink.chyk.neuqrcode.R
+import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.activities.*
 import ink.chyk.neuqrcode.viewmodels.*
 import java.time.format.TextStyle as TimeTextStyle
 import java.util.Locale
+import ink.chyk.neuqrcode.R
 
 
 @Composable
@@ -50,6 +52,9 @@ val EVENING_ICON = R.drawable.ic_fluent_weather_partly_cloudy_night_24_regular
 
 @Composable
 fun TodayCourses(viewModel: CoursesViewModel) {
+  // 课表主组件
+  val showWeekJumpDialog = remember { mutableStateOf(false) }
+
   Column(
     modifier = Modifier.fillMaxSize(),
     verticalArrangement = Arrangement.SpaceBetween
@@ -59,7 +64,14 @@ fun TodayCourses(viewModel: CoursesViewModel) {
       Spacer(modifier = Modifier.height(32.dp))
       CoursesCard(viewModel)
     }
-    DaySelector(viewModel)
+    DaySelector(viewModel, showJumpDialog = { showWeekJumpDialog.value = true })
+  }
+
+  if (showWeekJumpDialog.value) {
+    WeekJumpDialog(
+      viewModel = viewModel,
+      onDismissRequest = { showWeekJumpDialog.value = false }
+    )
   }
 }
 
@@ -214,6 +226,7 @@ fun TodayCoursesList(
 @Composable
 fun DaySelector(
   viewModel: CoursesViewModel,
+  showJumpDialog: () -> Unit,
   dark: Boolean = isSystemInDarkTheme()
 ) {
   val ctx = LocalContext.current
@@ -279,8 +292,9 @@ fun DaySelector(
         if (thisWeekNum == -1) ctx.getString(R.string.in_vacation)
         else
           ctx.getString(R.string.current_week).format(thisWeekNum),
+
         modifier = Modifier.clickable {
-          viewModel.backToday()
+          showJumpDialog()
         }
       )
       PrevNextButton(
@@ -387,6 +401,96 @@ fun ImportCoursesButton(modifier: Modifier = Modifier) {
     }) { Text(context.getString(R.string.import_courses)) }
 }
 
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WeekJumpDialog(
+  viewModel: CoursesViewModel,
+  onDismissRequest: () -> Unit,
+) {
+  val datePickerState = rememberDatePickerState(
+    selectableDates = object: SelectableDates {
+      override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+        val selectedDate = java.time.LocalDate.ofEpochDay(utcTimeMillis / 86400000)
+          .format(viewModel.formatter)
+        return viewModel.isDateInTerm(selectedDate)
+      }
+    }
+  )
+  val selectedDate = datePickerState.selectedDateMillis?.let {
+    val date = java.time.LocalDate.ofEpochDay(it / 86400000)
+    date.format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"))
+  } ?: ""
+
+  // 切换至第几周的对话框
+  Dialog(
+    properties = DialogProperties(usePlatformDefaultWidth=false),
+    onDismissRequest = onDismissRequest
+  ) {
+    Card(
+      modifier = Modifier
+        .fillMaxWidth(),
+      shape = RoundedCornerShape(16.dp),
+    ) {
+      Column(
+        modifier = Modifier
+          .padding(16.dp)
+          .clip(RoundedCornerShape(8.dp))
+      ) {
+        DialogTitle(
+          R.drawable.ic_fluent_calendar_24_regular,
+          stringResource(R.string.week_jump)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        DatePicker(
+          state=datePickerState,
+          showModeToggle=false,
+          modifier=Modifier
+            .fillMaxWidth()
+            .background(Color.Transparent)
+        )
+
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.End
+        ) {
+          TextButton(
+            onClick = {
+              viewModel.backToday()
+              onDismissRequest()
+            }
+          ) {
+            Text(stringResource(R.string.week_jump_today))
+          }
+          Spacer(modifier = Modifier.width(8.dp))
+          TextButton(
+            onClick = {
+              onDismissRequest()
+            }
+          ) {
+            Text(stringResource(R.string.cancel))
+          }
+          Spacer(modifier = Modifier.width(8.dp))
+          TextButton(
+            onClick = {
+              if (viewModel.isDateInTerm(selectedDate)) {
+                viewModel.setDate(selectedDate)
+                onDismissRequest()
+              }
+            }
+          ) {
+            Text(stringResource(R.string.confirm))
+          }
+        }
+      }
+    }
+  }
+}
 
 fun locationToAnnotated(text: String): AnnotatedString {
   return if (text.endsWith("校区)")) {

@@ -107,4 +107,8 @@
     <string name="in_vacation">当前是假期</string>
     <string name="error_open_coremail">打开邮箱系统失败。</string>
     <string name="lack_balance">欠费</string>
+    <string name="week_jump">日期跳转</string>
+    <string name="week_jump_today">回到今天</string>
+    <string name="week_jump_confirm">跳转</string>
+    <string name="failed_qr">生成二维码失败</string>
 </resources>
