@@ -400,8 +400,6 @@ class NEUPass {
     )
   }
 
-  public val eams by lazy { EAMS(this) }
-
   suspend fun uploadImage(
     session: PersonalSession,
     image: ByteArray,

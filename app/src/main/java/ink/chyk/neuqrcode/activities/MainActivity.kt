@@ -84,7 +84,7 @@ data class BottomNavigationItem(
         "apps"
       ),
       BottomNavigationItem(
-        "个人",
+        "我的",
         R.drawable.ic_fluent_person_24_filled,
         "profile"
       )

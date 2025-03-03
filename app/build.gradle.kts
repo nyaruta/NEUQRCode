@@ -16,8 +16,8 @@ android {
         minSdk = 28
         //noinspection ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 12
-        versionName = "3.0-pre4"
+        versionCode = 13
+        versionName = "3.0-pre5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -89,6 +89,5 @@ dependencies {
     implementation(libs.browser)
     implementation(libs.coil)
     implementation(libs.coil.net)
-    implementation(libs.ksoup)
     implementation(libs.webview)
 }

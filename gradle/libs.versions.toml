@@ -6,21 +6,20 @@ junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.7"
-activityCompose = "1.9.3"
-composeBom = "2024.12.01"
+activityCompose = "1.10.1"
+composeBom = "2025.02.00"
 okhttp = "4.12.0"
 mmkv = "2.0.2"
 serialization = "1.8.0-RC"
 zxing = "3.5.3"
-navigationCompose = "2.8.6"
+navigationCompose = "2.8.8"
 viewModelCompose = "2.8.7"
 ical4j = "3.2.19"
 pangu = "0.2.0"
-desugar = "2.1.4"
-paging = "3.3.5"
+desugar = "2.1.5"
+paging = "3.3.6"
 browser = "1.8.0"
 coil = "3.0.4"
-ksoup = "0.2.2"
 webview = "0.33.6"
 
 [libraries]
@@ -52,7 +51,6 @@ paging-compose = { group = "androidx.paging", name = "paging-compose", version.r
 browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 coil = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-net = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
-ksoup = { group = "com.fleeksoft.ksoup", name = "ksoup", version.ref = "ksoup" }
 webview = { group = "io.github.kevinnzou", name = "compose-webview", version.ref = "webview" }
 
 
