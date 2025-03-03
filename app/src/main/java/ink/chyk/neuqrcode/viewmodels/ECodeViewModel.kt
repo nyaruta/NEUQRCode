@@ -1,7 +1,9 @@
 package ink.chyk.neuqrcode.viewmodels
 
+import android.util.*
 import androidx.lifecycle.*
 import com.tencent.mmkv.*
+import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.neu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -47,15 +49,21 @@ class ECodeViewModel(
    * 获取二维码
    */
   private suspend fun _refreshECode() {
-    prepareSessionAnd { session ->
-      // 重新获取二维码
-      val eCode = neu.getQRCode(session)
-      if (_userInfo.value == null) {
-        _userInfo.value = neu.getECodeUserInfo(session).data[0].attributes
+    try {
+      prepareSessionAnd { session ->
+        // 重新获取二维码
+        val eCode = neu.getQRCode(session)
+        if (_userInfo.value == null) {
+          _userInfo.value = neu.getECodeUserInfo(session).data[0].attributes
+        }
+        _code.value = eCode.data[0].attributes.qrCode
+        _codeGenerateTime.value = eCode.data[0].attributes.createTime
+        _codeExpiredAt.value = eCode.data[0].attributes.qrInvalidTime
       }
-      _code.value = eCode.data[0].attributes.qrCode
-      _codeGenerateTime.value = eCode.data[0].attributes.createTime
-      _codeExpiredAt.value = eCode.data[0].attributes.qrInvalidTime
+    } catch (e: Exception) {
+      // 网络问题
+      Log.e("ECode", "Failed to refresh ECode: ${e.message}")
+      _code.value = ""
     }
   }
 

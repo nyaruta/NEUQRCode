@@ -131,7 +131,9 @@ abstract class BasicViewModel(
       _loadComplete.value = true
     } catch (e: Exception) {
       // 错误处理逻辑
+      Log.e("BasicViewModel", "Error: ${e.message}")
       e.printStackTrace()
+      throw e
     }
   }
 

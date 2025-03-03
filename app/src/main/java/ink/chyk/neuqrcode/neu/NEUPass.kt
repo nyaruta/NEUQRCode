@@ -252,12 +252,16 @@ class NEUPass {
     ).build()
 
     return withContext(Dispatchers.IO) {
-      client.newCall(request).execute().use { response ->
-        if (response.code != 200) {
-          throw SessionExpiredException()
+      try {
+        client.newCall(request).execute().use { response ->
+          if (response.code != 200) {
+            throw SessionExpiredException()
+          }
+          val body = response.body?.string()
+          Json.decodeFromString<T>(body!!)
         }
-        val body = response.body?.string()
-        Json.decodeFromString<T>(body!!)
+      } catch (e: Exception) {
+        throw RequestFailedException()
       }
     }
   }
@@ -305,40 +309,44 @@ class NEUPass {
     ).build()
 
     return withContext(Dispatchers.IO) {
-      client.newCall(request).execute().use { response ->
-        if (response.code != 200) {
-          Log.d("NEUPass", "Error: ${response.body?.string()}")
-          throw SessionExpiredException()
-        }
-        val body = response.body?.string()
-        val result: PersonalResponse<T>
-        try {
-          result = Json.decodeFromString<PersonalResponse<T>>(body!!)
-        } catch (e: MissingFieldException) {
-          throw SessionExpiredException()
-        }
-        if (result.e > 10000) {
-          Log.d("NEUPass", "Error: ${result.e}, ${result.m}")
-          throw SessionExpiredException()
-        }
-        // 更新 sess_id
-        val newSessId = response.headers("Set-Cookie")
-          .firstOrNull { it.startsWith("SESS_ID") }
+      try {
+        client.newCall(request).execute().use { response ->
+          if (response.code != 200) {
+            Log.d("NEUPass", "Error: ${response.body?.string()}")
+            throw SessionExpiredException()
+          }
+          val body = response.body?.string()
+          val result: PersonalResponse<T>
+          try {
+            result = Json.decodeFromString<PersonalResponse<T>>(body!!)
+          } catch (e: MissingFieldException) {
+            throw SessionExpiredException()
+          }
+          if (result.e > 10000) {
+            Log.d("NEUPass", "Error: ${result.e}, ${result.m}")
+            throw SessionExpiredException()
+          }
+          // 更新 sess_id
+          val newSessId = response.headers("Set-Cookie")
+            .firstOrNull { it.startsWith("SESS_ID") }
 
-        if (newSessId == null) {
-          // 没更新
-          Pair(result.d, session)
-        } else {
-          // 更新了
-          Pair(
-            result.d,
-            PersonalSession(
-              session.lc,
-              session.vl,
-              newSessId.substringBefore(";").substringAfter("=")
+          if (newSessId == null) {
+            // 没更新
+            Pair(result.d, session)
+          } else {
+            // 更新了
+            Pair(
+              result.d,
+              PersonalSession(
+                session.lc,
+                session.vl,
+                newSessId.substringBefore(";").substringAfter("=")
+              )
             )
-          )
+          }
         }
+      } catch (e: Exception) {
+        throw RequestFailedException()
       }
     }
   }

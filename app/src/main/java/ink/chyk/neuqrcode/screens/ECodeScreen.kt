@@ -31,6 +31,7 @@ import java.time.format.*
 fun ECodeScreen(viewModel: ECodeViewModel, navController: NavController) {
   val loadComplete by viewModel.loadComplete.collectAsState()
   val code by viewModel.code.collectAsState()
+  val hasCode = code.isNotEmpty()
   val userInfo by viewModel.userInfo.collectAsState()
   val codeGenerateTime by viewModel.codeGenerateTime.collectAsState()
 
@@ -84,7 +85,7 @@ fun ECodeScreen(viewModel: ECodeViewModel, navController: NavController) {
 
       Spacer(modifier = Modifier.height(32.dp))
 
-      if (loadComplete) {
+      if (loadComplete && hasCode) {
         ECodeImage(code) {
           viewModel.refreshECode()
         }
@@ -105,11 +106,15 @@ fun ECodeScreen(viewModel: ECodeViewModel, navController: NavController) {
 
       Text(
         text = if (loadComplete) {
-          val instant = Instant.ofEpochMilli(codeGenerateTime)
-          val localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime()
-          val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-          val generateTime = localDateTime.format(formatter)
-          "生成时间: $generateTime"
+          if (hasCode) {
+            val instant = Instant.ofEpochMilli(codeGenerateTime)
+            val localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime()
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            val generateTime = localDateTime.format(formatter)
+            "生成时间: $generateTime"
+          } else {
+            "加载失败，可能是网络问题"
+          }
         } else {
           ""
         },
@@ -153,7 +158,7 @@ fun ECodeImage(code: String, onClick: () -> Unit) {
       backgroundColor.toArgb()
     ).let {
       Image(
-        bitmap = it!!.asImageBitmap(),
+        bitmap = it?.asImageBitmap() ?: return@let Text(stringResource(R.string.failed_qr)),
         contentDescription = "ECode",
         modifier = Modifier
           .size(210.dp)
@@ -187,6 +192,7 @@ fun dpToPx(dp: Dp): Int {
   return with(density) { dp.toPx().toInt() }
 }
 
+@Composable
 fun generateColoredQRCode(
   text: String,
   size: Int,
