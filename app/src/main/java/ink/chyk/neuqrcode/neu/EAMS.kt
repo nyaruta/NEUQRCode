@@ -47,11 +47,11 @@ class EAMS(
                 Log.d("EAMS", "New session id: $sessionId, server name: $serverName")
               return@withContext Pair(sessionId, serverName)
             } else {
-              throw RequestFailedException()
+              throw RequestFailedException("EAMS")
             }
           }
         }
-        throw RequestFailedException()
+        throw RequestFailedException("EAMS")
       }
     }
   }
@@ -133,7 +133,7 @@ class EAMS(
             Log.d("EAMS", "Request to $url: $body")
           return@withContext body
         } else {
-          throw RequestFailedException()
+          throw RequestFailedException(url)
         }
       }
     }

@@ -61,7 +61,7 @@ class NEUPass {
             throw PasswordIncorrectException()
           }
         } else {
-          throw RequestFailedException()
+          throw RequestFailedException(url)
         }
       }
     }
@@ -271,7 +271,7 @@ class NEUPass {
           Json.decodeFromString<T>(body!!)
         }
       } catch (e: Exception) {
-        throw RequestFailedException()
+        throw RequestFailedException(url)
       }
     }
   }
@@ -356,7 +356,12 @@ class NEUPass {
           }
         }
       } catch (e: Exception) {
-        throw RequestFailedException()
+        if (e is SessionExpiredException) {
+          throw e
+        } else {
+          e.printStackTrace()
+          throw RequestFailedException(url)
+        }
       }
     }
   }
