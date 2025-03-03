@@ -99,8 +99,13 @@ fun LoginForm(openMainPage: () -> Unit = {}) {
         )
         LoginButton(
           studentId, password, openErrorDialog = {
+            // 错误处理：打开报错对话框，删除本地存储的密码
+            password = ""
+            val mmkv = MMKV.defaultMMKV()
+            mmkv.remove("password")
             errorMessage = it
             showErrorMessage = true
+            buttonEnabled = true
           },
           openMainPage = openMainPage,
           enabled = buttonEnabled,
