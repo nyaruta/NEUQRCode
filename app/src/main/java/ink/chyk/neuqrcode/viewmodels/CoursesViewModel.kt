@@ -106,7 +106,12 @@ class CoursesViewModel(
   }
 
   fun prevWeek() {
-    _date.value = LocalDate.parse(_date.value, formatter).minusWeeks(1).format(formatter)
+    val newDate = LocalDate.parse(_date.value, formatter).minusWeeks(1)
+    // 边界检查
+    if (newDate.isBefore(LocalDate.parse(mmkv.decodeString("term_start"), formatter))) {
+      return
+    }
+    _date.value = newDate.format(formatter)
   }
 
   fun nextWeek() {
