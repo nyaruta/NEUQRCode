@@ -21,6 +21,7 @@ paging = "3.3.5"
 browser = "1.8.0"
 coil = "3.0.4"
 ksoup = "0.2.2"
+webview = "0.33.6"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -52,6 +53,7 @@ browser = { group = "androidx.browser", name = "browser", version.ref = "browser
 coil = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-net = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 ksoup = { group = "com.fleeksoft.ksoup", name = "ksoup", version.ref = "ksoup" }
+webview = { group = "io.github.kevinnzou", name = "compose-webview", version.ref = "webview" }
 
 
 [plugins]
