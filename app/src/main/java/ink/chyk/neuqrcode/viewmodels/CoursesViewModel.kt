@@ -1,5 +1,6 @@
 package ink.chyk.neuqrcode.viewmodels
 
+import android.util.*
 import androidx.core.graphics.*
 import androidx.lifecycle.*
 import com.tencent.mmkv.*
@@ -11,6 +12,7 @@ import java.time.*
 import java.time.format.*
 import java.util.Locale
 import kotlin.Pair
+import kotlin.math.*
 
 
 class CoursesViewModel(
@@ -57,13 +59,10 @@ class CoursesViewModel(
     val courseColor = if (isCourseStopped(courseName)) {
       0xFFB0B0B0.toInt()
     } else {
-      ColorUtils.HSLToColor(
-        floatArrayOf(
-          courseName.hashCode().toFloat() % 360,
-          0.5f,
-          if (darkMode) 0.5f else 0.8f
-        )
-      )
+      val hue = Math.floorMod(courseName.hashCode(), 360).toFloat()
+      val saturation = 0.6f
+      val lightness = if (darkMode) 0.6f else 0.85f
+      ColorUtils.HSLToColor(floatArrayOf(hue, saturation, lightness))
     }
     courseColorCache[courseName] = courseColor
     return courseColor
