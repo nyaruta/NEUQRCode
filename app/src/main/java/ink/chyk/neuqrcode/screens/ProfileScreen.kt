@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.*
 import android.content.ClipboardManager
 import android.content.pm.*
-import android.graphics.BitmapFactory
 import android.util.*
 import android.widget.Toast
 import androidx.activity.compose.*
@@ -18,14 +17,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.*
-import androidx.core.content.ContextCompat.*
 import androidx.navigation.*
 import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.activities.*
@@ -36,12 +33,6 @@ import android.graphics.drawable.Icon as AndroidIcon
 import coil3.compose.AsyncImage
 import coil3.network.*
 import coil3.request.*
-
-fun dataUriToImageBitmap(dataUri: String): ImageBitmap? {
-  val base64 = dataUri.substringAfter("base64,")
-  val byteArray = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
-  return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)?.asImageBitmap()
-}
 
 @SuppressLint("DefaultLocale")
 @Composable
@@ -236,10 +227,14 @@ fun ProfileHeader(
       .padding(horizontal = 16.dp)
   ) {
     if (loadComplete) {
+      var avatarUrl = userInfo?.avatar
       // 头像
+      if (avatarUrl?.startsWith("/") == true) {
+        avatarUrl = "https://personal.neu.edu.cn/portal" + avatarUrl
+      }
       AsyncImage(
         model = ImageRequest.Builder(context)
-          .data("https://personal.neu.edu.cn/portal" + userInfo?.avatar)
+          .data(avatarUrl)
           .crossfade(true)
           .apply {
             if (headers != null) {
@@ -248,7 +243,6 @@ fun ProfileHeader(
           }
           .build(),
         contentDescription = "Avatar",
-        placeholder = painterResource(R.drawable.neko3),
         modifier = Modifier
           .height(96.dp)
           .clip(RoundedCornerShape(8.dp))
