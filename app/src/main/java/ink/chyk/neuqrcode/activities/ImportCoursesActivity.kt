@@ -189,9 +189,9 @@ fun AfterImportContent(
     modifier = Modifier.fillMaxWidth(),
   ) {
     if (hasErrors.value) {
-      Text(stringResource(R.string.cancel)
+      Text(stringResource(R.string.cancel))
     } else {
-      Text(stringResource(R.string.confirm)
+      Text(stringResource(R.string.confirm))
     }
   }
 }
