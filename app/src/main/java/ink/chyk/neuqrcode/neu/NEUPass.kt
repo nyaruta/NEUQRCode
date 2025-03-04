@@ -11,7 +11,9 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import kotlin.Pair
 
 
-class NEUPass {
+class NEUPass(
+  val onFailed: () -> Boolean
+) {
   // 智慧东大 API
 
   private var userAgent: String? = null
@@ -242,6 +244,7 @@ class NEUPass {
     session: NEUAppSession,
     url: String
   ): T {
+    Log.d("NEUPass", "Request: $url")
     val client = OkHttpClient.Builder()
       .followRedirects(false)
       .build()
@@ -268,10 +271,18 @@ class NEUPass {
             throw SessionExpiredException()
           }
           val body = response.body?.string()
+          Log.d("NEUPass", "Response: $body")
           Json.decodeFromString<T>(body!!)
         }
       } catch (e: Exception) {
-        throw RequestFailedException(url)
+        // 请求失败
+        if (e is SessionExpiredException) {
+          throw e
+        }
+        if (!onFailed()) {
+          throw RequestFailedException(url)
+        }
+        return@withContext Json.decodeFromString("{}")
       }
     }
   }
@@ -359,8 +370,11 @@ class NEUPass {
         if (e is SessionExpiredException) {
           throw e
         } else {
-          e.printStackTrace()
-          throw RequestFailedException(url)
+          // 请求失败
+          if (!onFailed()) {
+            throw RequestFailedException(url)
+          }
+          return@withContext Pair(Json.decodeFromString("{}"), session)
         }
       }
     }

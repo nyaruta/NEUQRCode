@@ -222,7 +222,9 @@ fun LoginButton(
 
         coroScope.launch {
           try {
-            val neu = NEUPass()
+            val neu = NEUPass({
+              throw RequestFailedException("请求失败")
+            })
             val ticket = neu.loginPersonalTicket(studentId, password)
             // 登录成功
             mmkv.encode("portal_ticket", ticket)

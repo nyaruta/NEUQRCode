@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.*
@@ -140,8 +141,15 @@ fun exit(
 
 @Composable
 fun MainApp(screen: String?) {
-  val eCodeViewModel: ECodeViewModel = viewModel(factory = ECodeViewModelFactory())
-  val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory())
+  val ctx = LocalContext.current
+  val onFailed = {
+    // TODO: jump to error screen
+    val intent = Intent(ctx, ErrorActivity::class.java)
+    ctx.startActivity(intent)
+    true
+  }
+  val eCodeViewModel: ECodeViewModel = viewModel(factory = ECodeViewModelFactory(onFailed))
+  val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(onFailed))
   val coursesViewModel: CoursesViewModel = viewModel(factory = CoursesViewModelFactory())
 
   val navController = rememberNavController()

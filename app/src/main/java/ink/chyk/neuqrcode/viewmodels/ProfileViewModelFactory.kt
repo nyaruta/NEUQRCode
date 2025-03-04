@@ -4,12 +4,14 @@ import androidx.lifecycle.*
 import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.neu.*
 
-class ProfileViewModelFactory : ViewModelProvider.Factory {
+class ProfileViewModelFactory(
+  private val onFailed: () -> Boolean
+) : ViewModelProvider.Factory {
   override fun <T : ViewModel> create(modelClass: Class<T>): T {
     if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
       return ProfileViewModel(
         MMKV.defaultMMKV(),
-        NEUPass()
+        NEUPass(onFailed)
       ) as T
     }
     throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

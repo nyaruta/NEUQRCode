@@ -29,6 +29,7 @@
         <activity android:name=".activities.LoginActivity" />
         <activity android:name=".activities.ImportCoursesActivity" />
         <activity android:name=".activities.TermsOfServiceActivity" />
+        <activity android:name=".activities.ErrorActivity" />
     </application>
 
 </manifest>
