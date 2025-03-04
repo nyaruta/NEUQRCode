@@ -187,9 +187,12 @@ fun AfterImportContent(
       ctx.startActivity(intent)
     },
     modifier = Modifier.fillMaxWidth(),
-    enabled = !hasErrors.value
   ) {
-    Text(ctx.getString(R.string.confirm))
+    if (hasErrors.value) {
+      Text(stringResource(R.string.cancel)
+    } else {
+      Text(stringResource(R.string.confirm)
+    }
   }
 }
 
