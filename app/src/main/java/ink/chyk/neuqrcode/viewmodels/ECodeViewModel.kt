@@ -92,4 +92,8 @@ class ECodeViewModel(
   init {
     startRefreshECode()
   }
+
+  fun isAntiFlashlight(): Boolean {
+    return mmkv.decodeBool("anti_flashlight", false)
+  }
 }

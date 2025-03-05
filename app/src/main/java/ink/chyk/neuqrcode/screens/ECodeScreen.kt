@@ -41,17 +41,19 @@ fun ECodeScreen(viewModel: ECodeViewModel, navController: NavController) {
 
   // 调整亮度为最大值
   LaunchedEffect(Unit) {
-    activity?.let {
-      setScreenBrightness(it.window, 1.0f)
-    }
+    if (!viewModel.isAntiFlashlight())
+      activity?.let {
+        setScreenBrightness(it.window, 1.0f)
+      }
   }
 
   // 恢复亮度
   DisposableEffect(Unit) {
     onDispose {
-      activity?.let {
-        setScreenBrightness(it.window, WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE)
-      }
+      if (!viewModel.isAntiFlashlight())
+        activity?.let {
+          setScreenBrightness(it.window, WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE)
+        }
     }
   }
 
@@ -124,7 +126,6 @@ fun ECodeScreen(viewModel: ECodeViewModel, navController: NavController) {
     }
   }
 }
-
 
 
 @Composable

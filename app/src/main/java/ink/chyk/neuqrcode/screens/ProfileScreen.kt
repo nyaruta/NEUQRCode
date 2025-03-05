@@ -101,16 +101,20 @@ fun ProfileScreen(
         onClick = { viewModel.openCoreMail(context) }
       )
       RowButton(
-        iconResource = R.drawable.ic_fluent_calendar_24_regular,
-        text = stringResource(R.string.create_courses_shortcut),
-        clickable = true,
-        onClick = { createShortcut(context) }
-      )
-      RowButton(
         iconResource = R.drawable.ic_fluent_person_swap_24_regular,
         text = stringResource(R.string.logout_account),
         clickable = true,
         onClick = { showLogoutDialog.value = true }
+      )
+      RowButton(
+        iconResource = R.drawable.ic_fluent_settings_24_regular,
+        text= stringResource(R.string.settings),
+        clickable = true,
+        onClick = {
+          // 跳转到设置页面
+          val intent = Intent(context, SettingsActivity::class.java)
+          context.startActivity(intent)
+        }
       )
       RowButton(
         iconResource = R.drawable.ic_fluent_book_information_24_regular,
@@ -153,34 +157,6 @@ fun ProfileScreen(
     }) }
   )
 }
-
-fun createShortcut(
-  context: Context
-) {
-  val activity = context as Activity
-  val shortcutManager = activity.getSystemService(ShortcutManager::class.java)
-
-  // 创建 Intent 指定要启动的 Activity 和携带的参数
-  val intent = Intent(activity, MainActivity::class.java).apply {
-    action = Intent.ACTION_VIEW
-    putExtra("screen", "courses") // 添加参数
-  }
-
-  // 创建快捷方式信息
-  val shortcut = ShortcutInfo.Builder(activity, "courses_shortcut") // 唯一 ID
-    .setShortLabel("课程表") // 显示名称
-    .setLongLabel("NEU课程表") // 长名称
-    .setIcon(AndroidIcon.createWithResource(activity, R.mipmap.ic_courses)) // 图标
-    .setIntent(intent) // 设置 Intent
-    .build()
-
-  // 添加快捷方式
-  shortcutManager.requestPinShortcut(shortcut, null)
-
-  Toast.makeText(context, "已尝试创建课程表快捷方式\n若未创建请检查权限。", Toast.LENGTH_SHORT)
-    .show()
-}
-
 
 @Composable
 fun ProfileHeader(
