@@ -306,6 +306,13 @@ fun DaySelector(
           showJumpDialog()
         }
       )
+
+      if (!viewModel.isToday()) {
+        TextButton(onClick = {viewModel.backToday()}) {
+          Text(ctx.getString(R.string.week_jump_today))
+        }
+      }
+
       PrevNextButton(
         icon = R.drawable.ic_fluent_chevron_right_20_filled,
         onClick = { viewModel.nextWeek() }

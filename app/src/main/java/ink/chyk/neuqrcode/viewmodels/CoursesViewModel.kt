@@ -26,7 +26,9 @@ class CoursesViewModel(
   private var _quote = MutableStateFlow<HitokotoQuote?>(null)
   val quote: StateFlow<HitokotoQuote?> = _quote
 
-  val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+  val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+
+  private var today: String? = null
 
   fun isCourseImported(): Boolean {
     return mmkv.containsKey("course_keys")
@@ -95,6 +97,7 @@ class CoursesViewModel(
   }
 
   init {
+    today = _date.value
     viewModelScope.launch {
       initQuote()
     }
@@ -123,6 +126,10 @@ class CoursesViewModel(
   }
 
   fun backToday() {
-    _date.value = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+    _date.value = today?: LocalDate.now().format(formatter)
+  }
+
+  fun isToday(): Boolean {
+    return _date.value == today
   }
 }
