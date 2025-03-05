@@ -7,9 +7,11 @@ import androidx.activity.*
 import androidx.activity.compose.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.draw.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
 import com.tencent.mmkv.*
@@ -94,15 +96,23 @@ fun TermsOfServiceScreen(
             text = stringResource(R.string.tos_read_carefully),
           )
           Spacer(modifier = Modifier.height(16.dp))
-          OutlinedTextField(
-            value = stringResource(R.string.tos_v220),
-            onValueChange = {},
-            readOnly = true,
+          Box(
             modifier = Modifier
               .fillMaxWidth()
-              .verticalScroll(scrollState)
-              .height(400.dp)
-          )
+              .weight(1f)
+              .clipToBounds()
+              .border(1.dp, MaterialTheme.colorScheme.secondary, RoundedCornerShape(8.dp))
+              .clip(RoundedCornerShape(8.dp))
+          ) {
+            TextField(
+              value = stringResource(R.string.tos_v220),
+              onValueChange = {},
+              readOnly = true,
+              modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+            )
+          }
           Spacer(modifier = Modifier.height(16.dp))
           Check(
             checked = check1,
