@@ -35,13 +35,16 @@ fun ECodeScreen(viewModel: ECodeViewModel, navController: NavController) {
   val userInfo by viewModel.userInfo.collectAsState()
   val codeGenerateTime by viewModel.codeGenerateTime.collectAsState()
 
-
   val context = LocalContext.current
   val activity = context as? Activity
 
   // 调整亮度为最大值
   LaunchedEffect(Unit) {
-    if (!viewModel.isAntiFlashlight())
+    val now = LocalTime.now()
+    val isAnti = viewModel.isAntiFlashlight()
+      || now.isBefore(LocalTime.of(7, 0))
+      || now.isAfter(LocalTime.of(22, 0))
+    if (!isAnti)
       activity?.let {
         setScreenBrightness(it.window, 1.0f)
       }
@@ -50,10 +53,9 @@ fun ECodeScreen(viewModel: ECodeViewModel, navController: NavController) {
   // 恢复亮度
   DisposableEffect(Unit) {
     onDispose {
-      if (!viewModel.isAntiFlashlight())
-        activity?.let {
-          setScreenBrightness(it.window, WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE)
-        }
+      activity?.let {
+        setScreenBrightness(it.window, WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE)
+      }
     }
   }
 

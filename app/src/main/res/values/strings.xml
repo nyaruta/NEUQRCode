@@ -112,6 +112,6 @@
     <string name="create_courses_shortcut">创建课程表快捷方式</string>
     <string name="create_courses_shortcut_description">将课程表页面的快捷方式添加到桌面。</string>
     <string name="anti_flashlight">防止闪光弹</string>
-    <string name="anti_flashlight_description">在打开一码通时，不调高手机亮度。</string>
+    <string name="anti_flashlight_description">在任何时间打开一码通时，都不调高手机亮度。</string>
     <string name="retry">重试</string>
 </resources>
