@@ -244,7 +244,7 @@ class NEUPass(
     session: NEUAppSession,
     url: String
   ): T {
-    Log.d("NEUPass", "Request: $url")
+    //Log.d("NEUPass", "Request: $url")
     val client = OkHttpClient.Builder()
       .followRedirects(false)
       .build()
@@ -271,7 +271,7 @@ class NEUPass(
             throw SessionExpiredException()
           }
           val body = response.body?.string()
-          Log.d("NEUPass", "Response: $body")
+          //Log.d("NEUPass", "Response: $body")
           Json.decodeFromString<T>(body!!)
         }
       } catch (e: Exception) {

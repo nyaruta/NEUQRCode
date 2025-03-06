@@ -5,9 +5,9 @@ import android.util.*
 import androidx.lifecycle.*
 import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.R
+import ink.chyk.neuqrcode.neu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 import net.fortuna.ical4j.data.*
 import net.fortuna.ical4j.model.*
@@ -21,20 +21,9 @@ import java.time.*
 import java.time.format.*
 import kotlin.Pair
 
-@Serializable
-data class Course(
-  val name: String,
-  val location: String,
-  val start: String,
-  val end: String,
-  val period: CoursePeriod
-)
-
-enum class CoursePeriod {
-  MORNING, AFTERNOON, EVENING
-}
 
 class ImportCoursesViewModel(
+  private val neu: NEUPass,
   private val mmkv: MMKV,
 ) : ViewModel() {
 
@@ -48,6 +37,9 @@ class ImportCoursesViewModel(
   val resultContent: StateFlow<String?> = _resultContent
   private var _hasErrors = MutableStateFlow(false)
   val hasErrors: StateFlow<Boolean> = _hasErrors
+
+  val fetcher = CourseFetcher(neu, mmkv)
+
 
   fun getEliseBinaryResource(): Int {
     val arch: String = System.getProperty("os.arch") ?: "unknown"
@@ -79,10 +71,15 @@ class ImportCoursesViewModel(
     mmkv.decodeString("password")!!
   )
 
-  private fun _runImport(
+  private suspend fun _runImport(
     context: Context,
     resource: Int,
   ): Pair<String, String?> {
+    val result = fetcher.testFetchCourses()
+    return Pair(result.output, null)
+
+
+    /*
     val executable = extractExecutable(context, resource)
     val (studentId, password) = getStudentIdAndPassword()
     val resultFile = File(context.cacheDir, "courses.ics")
@@ -113,6 +110,7 @@ class ImportCoursesViewModel(
     }
 
     return output to resultContent
+    */
   }
 
   private fun getTermStart(text: String): String {
@@ -216,6 +214,11 @@ class ImportCoursesViewModel(
       withContext(Dispatchers.IO) {
         _runImport(context, resource)
       }.let { (output, resultContent) ->
+        _importing.value = false
+        _hasErrors.value = true
+        _importCompleted.value = true
+        _output.value = output
+        return@let
         val ctx = context.applicationContext
         Log.d("ImportCoursesViewModel", output)
         _output.value = output

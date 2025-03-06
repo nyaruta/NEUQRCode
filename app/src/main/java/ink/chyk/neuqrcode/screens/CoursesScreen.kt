@@ -24,6 +24,7 @@ import ink.chyk.neuqrcode.viewmodels.*
 import java.time.format.TextStyle as TimeTextStyle
 import java.util.Locale
 import ink.chyk.neuqrcode.R
+import ink.chyk.neuqrcode.neu.*
 
 
 @Composable

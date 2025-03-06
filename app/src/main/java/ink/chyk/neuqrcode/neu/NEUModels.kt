@@ -133,3 +133,34 @@ data class UploadImageResponse(
   val size: Int,
   val id: String
 )
+
+
+// 课程信息（在 CourseFetcher 中用）
+data class ImportCourse(
+  val id: String,
+  val name: String,
+  val roomId: String,
+  val roomName: String,
+  val weeks: String,
+  val courseTimes: MutableList<CourseTime> = mutableListOf(),
+)
+
+// 课程具体时间，周几第几节
+data class CourseTime(
+  val dayOfTheWeek: Int,
+  val timeOfTheDay: Int
+)
+
+// 解析好的每一天的课程信息（转为 JSON 存到数据库中）
+@Serializable
+data class Course(
+  val name: String,
+  val location: String,
+  val start: String,
+  val end: String,
+  val period: CoursePeriod
+)
+
+enum class CoursePeriod {
+  MORNING, AFTERNOON, EVENING
+}

@@ -22,6 +22,7 @@ import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.viewmodels.*
 import ink.chyk.neuqrcode.R
+import ink.chyk.neuqrcode.neu.*
 import ink.chyk.neuqrcode.ui.theme.*
 
 class ImportCoursesActivity : ComponentActivity() {
@@ -53,7 +54,10 @@ class ImportCoursesActivity : ComponentActivity() {
 @Composable
 fun ImportCoursesScreen() {
   val ctx = LocalContext.current
-  val viewModel = viewModel<ImportCoursesViewModel>(factory = ImportCoursesViewModelFactory())
+  val viewModel = viewModel<ImportCoursesViewModel>(factory = ImportCoursesViewModelFactory(NEUPass( {
+    // 导入失败
+    false
+  })))
   val importing = viewModel.importing.collectAsState()
   val importCompleted = viewModel.importCompleted.collectAsState()
   val output = viewModel.output.collectAsState()
