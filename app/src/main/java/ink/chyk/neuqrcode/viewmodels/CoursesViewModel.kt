@@ -27,7 +27,7 @@ class CoursesViewModel(
 
   val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
-  private var today: String? = null
+  private val today get() = LocalDate.now().format(formatter)
 
   fun isCourseImported(): Boolean {
     return mmkv.containsKey("course_keys")
@@ -71,18 +71,18 @@ class CoursesViewModel(
 
   fun thisWeek(): Int {
     // 计算当前周数
-    val today = LocalDate.parse(_date.value, formatter)
+    val currentDate = LocalDate.parse(_date.value, formatter)
     val termStartString = mmkv.decodeString("term_start") ?: return -1
     val termStart = LocalDate.parse(termStartString, formatter)
-    return (today.toEpochDay() - termStart.toEpochDay()).toInt() / 7 + 1
+    return (currentDate.toEpochDay() - termStart.toEpochDay()).toInt() / 7 + 1
   }
 
   fun thisWeekDates(): List<Pair<Pair<LocalDate, String>, Int>> {
     // 计算本周日期
     // 日期对象，日期字符串，课程数量
-    val today = LocalDate.parse(_date.value, formatter)
-    val dayOfWeek = today.dayOfWeek.value.toLong().let { if (it == 7L) 0L else it }
-    val weekStart = today.minusDays(dayOfWeek)
+    val currentDate = LocalDate.parse(_date.value, formatter)
+    val dayOfWeek = currentDate.dayOfWeek.value.toLong().let { if (it == 7L) 0L else it }
+    val weekStart = currentDate.minusDays(dayOfWeek)
     return (0..6).map {
       val date = weekStart.plusDays(it.toLong())
       val dateId = date.format(formatter)
@@ -96,7 +96,6 @@ class CoursesViewModel(
   }
 
   init {
-    today = _date.value
     viewModelScope.launch {
       initQuote()
     }
