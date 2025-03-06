@@ -20,6 +20,12 @@ android {
         versionName = "3.0-pre8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            // 只包含 arm64-v8a 和 armeabi-v7a
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("armeabi-v7a")
+        }
     }
 
     buildTypes {
