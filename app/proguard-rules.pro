@@ -19,11 +19,3 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
-
-# 保留 java.time.zone.ZoneRulesProvider 类
--keep class java.time.zone.ZoneRulesProvider { *; }
--keep interface java.time.zone.ZoneRulesProvider { *; }
-
-# 保留与时区相关的所有类
--keep class java.time.zone.** { *; }
--keep class java.time.** { *; }

@@ -14,7 +14,6 @@ serialization = "1.8.0-RC"
 zxing = "3.5.3"
 navigationCompose = "2.8.8"
 viewModelCompose = "2.8.7"
-ical4j = "3.2.19"
 pangu = "0.2.0"
 desugar = "2.1.5"
 paging = "3.3.6"
@@ -43,7 +42,6 @@ serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serializ
 zxing = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 androidx-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "viewModelCompose" }
-ical4j = { group = "org.mnode.ical4j", name = "ical4j", version.ref = "ical4j" }
 pangu = { group = "io.github.darkokoa", name = "pangu-jvm", version.ref = "pangu" }
 desugar = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }
 paging = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }

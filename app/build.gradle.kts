@@ -81,7 +81,6 @@ dependencies {
     implementation(libs.zxing)
     implementation(libs.androidx.navigation)
     implementation(libs.androidx.viewmodel.compose)
-    implementation(libs.ical4j)
     implementation(libs.pangu)
     coreLibraryDesugaring(libs.desugar)
     implementation(libs.paging)
