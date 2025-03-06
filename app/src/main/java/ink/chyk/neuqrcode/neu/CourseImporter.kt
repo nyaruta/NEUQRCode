@@ -151,6 +151,10 @@ class CourseImporter {
           roomName = Pangu.spacingText(course.roomName).replace("校区", "")
         )
 
+        if (pre.roomName.isBlank()) {
+          pre.roomName = "暂未安排，请在安排后重新导入课表"
+        }
+
         // 上下课时间数组索引
         var st = 12
         var en = -1
