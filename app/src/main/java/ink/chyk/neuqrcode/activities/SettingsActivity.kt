@@ -109,22 +109,35 @@ fun SettingsCard(
   ) {
     Row(
       verticalAlignment = Alignment.CenterVertically,
-      modifier = Modifier.padding(16.dp).height(48.dp),
+      modifier = Modifier
+        .padding(16.dp)
+        .defaultMinSize(minHeight = 48.dp),
+      horizontalArrangement = Arrangement.SpaceBetween // 将内容分布到两端
     ) {
-      Icon(
-        painter = painterResource(icon),
-        contentDescription = name,
-        modifier = Modifier.size(32.dp),
-      )
-      Spacer(modifier = Modifier.width(16.dp))
-      Column {
-        Text(
-          text = name,
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.weight(1f) // 占据剩余空间
+      ) {
+        Icon(
+          painter = painterResource(icon),
+          contentDescription = name,
+          modifier = Modifier.size(32.dp),
         )
-        Text(
-          text = description,
-          style = MaterialTheme.typography.bodySmall,
-        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(
+          modifier = Modifier.weight(1f) // 使文本区域可以自动换行
+        ) {
+          Text(
+            text = name,
+            style = MaterialTheme.typography.bodyMedium,
+          )
+          Text(
+            text = description,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.fillMaxWidth(), // 确保文本占满宽度
+            softWrap = true // 允许文本自动换行
+          )
+        }
       }
 
       if (state != null) {
