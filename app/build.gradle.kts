@@ -1,4 +1,4 @@
-import com.android.build.gradle.internal.tasks.*
+// import com.android.build.gradle.internal.tasks.*
 
 plugins {
     alias(libs.plugins.android.application)
@@ -52,9 +52,11 @@ android {
         compose = true
     }
 
+    /*
     tasks.withType<L8DexDesugarLibTask> {
         keepRulesConfigurations.set(listOf("-keep class java.time.zone.** { *; }", "-keep interface java.time.zone.** { *; }"))
     }
+    */
 }
 
 dependencies {
