@@ -25,6 +25,7 @@
     <string name="import_courses_splash_1">尚未导入本学期的课表数据。</string>
     <string name="import_courses_splash_2">请点击按钮，开始从教务系统导入课表。</string>
     <string name="current_week">当前是第 %1$d 周</string>
+    <string name="current_week_navigated">第 %1$d 周</string>
     <string name="date">%1$d 月 %2$d 日 | %3$s</string>
     <string name="morning_courses">早间课程</string>
     <string name="afternoon_courses">下午课程</string>

@@ -126,7 +126,6 @@ fun CoursesCard(viewModel: CoursesViewModel) {
 }
 
 
-
 @Composable
 fun FoldInTextAnimation(quote: HitokotoQuote?) {
   var isVisible by remember { mutableStateOf(false) }
@@ -329,7 +328,10 @@ fun DaySelector(
       Text(
         if (thisWeekNum == -1) ctx.getString(R.string.in_vacation)
         else
-          ctx.getString(R.string.current_week).format(thisWeekNum),
+          ctx.getString(
+            if (viewModel.isToday()) R.string.current_week
+            else R.string.current_week_navigated
+          ).format(thisWeekNum),
 
         modifier = Modifier.clickable {
           showJumpDialog()
@@ -337,9 +339,14 @@ fun DaySelector(
       )
 
       if (!viewModel.isToday()) {
-        TextButton(onClick = { viewModel.backToday() }) {
-          Text(ctx.getString(R.string.week_jump_today))
-        }
+        Text(
+          modifier = Modifier.clickable {
+            viewModel.backToday()
+          },
+          text = ctx.getString(R.string.week_jump_today),
+          color = MaterialTheme.colorScheme.secondary,
+          fontWeight = FontWeight.Bold
+        )
       }
 
       PrevNextButton(
