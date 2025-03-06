@@ -1,6 +1,7 @@
 package ink.chyk.neuqrcode.screens
 
 import android.content.*
+import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
@@ -30,6 +31,7 @@ import ink.chyk.neuqrcode.neu.*
 @Composable
 fun CoursesScreen(
   viewModel: CoursesViewModel,
+  @Suppress("UNUSED_PARAMETER")
   navController: NavController,
   innerPadding: PaddingValues
 ) {
@@ -93,22 +95,7 @@ fun TodayTitle(viewModel: CoursesViewModel) {
     modifier = Modifier.fillMaxWidth(),
   )
   Spacer(modifier = Modifier.height(8.dp))
-  Column(
-    modifier = Modifier.fillMaxWidth()
-  ) {
-    if (quote != null) {
-      val quote = quote!!
-      Text(
-        quote.hitokoto,
-        style = MaterialTheme.typography.bodyMedium,
-      )
-      Text(
-        "—— ${quote.from}",
-        style = MaterialTheme.typography.bodyMedium,
-        color = Color.Gray,
-      )
-    }
-  }
+  FoldInTextAnimation(quote)
 }
 
 @Composable
@@ -134,6 +121,47 @@ fun CoursesCard(viewModel: CoursesViewModel) {
       } else {
         TodayCoursesList(todayCourses, viewModel)
       }
+    }
+  }
+}
+
+
+
+@Composable
+fun FoldInTextAnimation(quote: HitokotoQuote?) {
+  var isVisible by remember { mutableStateOf(false) }
+
+  // 触发动画
+  LaunchedEffect(Unit) {
+    isVisible = true
+  }
+
+  Column(
+    modifier = Modifier.fillMaxWidth()
+  ) {
+    AnimatedVisibility(
+      visible = isVisible,
+      enter = fadeIn() + expandHorizontally(expandFrom = Alignment.Start), // 从左往右展开
+      exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start) // 从右往左折叠
+    ) {
+      Text(
+        text = quote?.hitokoto ?: "",
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.animateContentSize() // 内容大小变化的动画
+      )
+    }
+
+    AnimatedVisibility(
+      visible = isVisible,
+      enter = fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
+      exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
+    ) {
+      Text(
+        text = quote?.from?.let { "—— $it" } ?: "",
+        style = MaterialTheme.typography.bodyMedium,
+        color = Color.Gray,
+        modifier = Modifier.animateContentSize()
+      )
     }
   }
 }
@@ -226,7 +254,7 @@ fun TodayCoursesList(
         Spacer(modifier = Modifier.width(8.dp))
         Icon(
           painter = painterResource(icon),
-          contentDescription = "Time Delimeter",
+          contentDescription = "Time Delimiter",
         )
       }
     }
@@ -281,7 +309,7 @@ fun DaySelector(
                   TimeTextStyle.SHORT,
                   Locale.getDefault()
                 )
-              } ${courseCount}",
+              } $courseCount",
               style = TextStyle(fontSize = 8.sp)
             )
           }
@@ -309,7 +337,7 @@ fun DaySelector(
       )
 
       if (!viewModel.isToday()) {
-        TextButton(onClick = {viewModel.backToday()}) {
+        TextButton(onClick = { viewModel.backToday() }) {
           Text(ctx.getString(R.string.week_jump_today))
         }
       }
@@ -426,7 +454,7 @@ fun WeekJumpDialog(
   onDismissRequest: () -> Unit,
 ) {
   val datePickerState = rememberDatePickerState(
-    selectableDates = object: SelectableDates {
+    selectableDates = object : SelectableDates {
       override fun isSelectableDate(utcTimeMillis: Long): Boolean {
         val selectedDate = java.time.LocalDate.ofEpochDay(utcTimeMillis / 86400000)
           .format(viewModel.formatter)
@@ -441,7 +469,7 @@ fun WeekJumpDialog(
 
   // 切换至第几周的对话框
   Dialog(
-    properties = DialogProperties(usePlatformDefaultWidth=false),
+    properties = DialogProperties(usePlatformDefaultWidth = false),
     onDismissRequest = onDismissRequest
   ) {
     Card(
@@ -462,9 +490,9 @@ fun WeekJumpDialog(
         Spacer(modifier = Modifier.height(8.dp))
 
         DatePicker(
-          state=datePickerState,
-          showModeToggle=false,
-          modifier=Modifier
+          state = datePickerState,
+          showModeToggle = false,
+          modifier = Modifier
             .fillMaxWidth()
             .background(Color.Transparent)
         )
