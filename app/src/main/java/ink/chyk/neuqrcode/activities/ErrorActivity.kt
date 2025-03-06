@@ -59,6 +59,15 @@ class ErrorActivity : ComponentActivity() {
                   .clip(RoundedCornerShape(8.dp))
                   .border(1.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(8.dp))
               )
+              Spacer(modifier = Modifier.height(32.dp))
+              Button(
+                onClick = {
+                  finish()
+                },
+                modifier = Modifier.width(96.dp)
+              ) {
+                Text(stringResource(R.string.retry))
+              }
             }
           }
         }
