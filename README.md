@@ -33,8 +33,6 @@
 
 [Jetpack Compose](https://developer.android.com/compose) 实现软件界面  
 [Zxing](https://github.com/zxing/zxing) 提供生成二维码功能  
-[Elise](https://github.com/neucn/elise) 提供导入课表功能  
-[iCal4j](https://www.ical4j.org/) 解析 ICS 格式日历  
 [Fluent UI](https://github.com/microsoft/fluentui) 提供界面图标  
 Logo 使用了 [玖掺零](https://space.bilibili.com/87184323) 绘制的疾旋鼬表情包  
 [5ec1cff](https://github.com/5ec1cff) 和 [purofle](https://github.com/purofle/) 提供技术支持（
