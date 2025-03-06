@@ -31,7 +31,7 @@ class CourseFetcher(
   private var session: Pair<String, String>? = null  // 在此 class 内全局可用
   private val sb: StringBuilder = StringBuilder()
 
-  suspend fun testFetchCourses(): CourseFetcherResult {
+  suspend fun fetchCourses(): CourseFetcherResult {
     // 登录教务系统
     val html: String
     try {
@@ -117,7 +117,7 @@ class CourseFetcher(
 
     sb.delete(sb.length - 2, sb.length)
 
-    sb.append("\n======开始解析课程表======\n")
+    sb.append("\n======课程表获取完毕======\n")
 
     return CourseFetcherResult(
       result = courses,

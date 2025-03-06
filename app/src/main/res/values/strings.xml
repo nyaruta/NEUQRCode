@@ -6,9 +6,6 @@
     <string name="about_copyright_2">© 1923 – 2025 东北大学</string>
     <string name="about_version">版本: v%1$s</string>
     <string name="source_url">https://github.com/chiyuki0325/NEUQRCode</string>
-    <string name="unsupported_architecture">不支持的架构</string>
-    <string name="unsupported_architecture_content_1">抱歉，您的设备可能太过老旧，无法运行「导入课表」功能。</string>
-    <string name="unsupported_architecture_content_2">请尝试联系开发者解决，或在其它设备上使用该功能。</string>
     <string name="uniform_auth">统一身份认证</string>
     <string name="student_id">学号</string>
     <string name="password">密码</string>

@@ -138,17 +138,27 @@ data class UploadImageResponse(
 // 课程信息（在 CourseFetcher 中用）
 data class ImportCourse(
   val id: String,
-  val name: String,
+  var name: String,
   val roomId: String,
-  val roomName: String,
+  var roomName: String,
   val weeks: String,
+
+  // 一节课的时长可能是 2 节或 4 节
+  // 所以 courseTimes 里可能有多个时间
   val courseTimes: MutableList<CourseTime> = mutableListOf(),
+
+  // 在 CourseImporter 预处理步骤中赋值
+  // 合并为一整个时间段
+  var startTime: String? = null,
+  var endTime: String? = null,
+  var weekDayDelta: Int? = null,
+  var period: CoursePeriod? = null,
 )
 
 // 课程具体时间，周几第几节
 data class CourseTime(
   val dayOfTheWeek: Int,
-  val timeOfTheDay: Int
+  val timeOfTheDay: Int,
 )
 
 // 解析好的每一天的课程信息（转为 JSON 存到数据库中）

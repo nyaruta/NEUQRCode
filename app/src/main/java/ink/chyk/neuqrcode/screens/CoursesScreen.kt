@@ -510,12 +510,12 @@ fun WeekJumpDialog(
 }
 
 fun locationToAnnotated(text: String): AnnotatedString {
-  return if (text.endsWith("校区)")) {
-    val location = text.substringBefore("(")
-    val campus = text.substringAfter("(").substringBefore("校区")
+  return if (text.endsWith("浑南)") || text.endsWith("南湖)")) {
+    val location = text.substringBefore(" (")
+    val campus = text.substringAfter("(").substringBefore(")")
     buildAnnotatedString {
       withStyle(style = SpanStyle(fontSize = 14.sp)) {
-        append(Pangu.spacingText(location))
+        append(location)
       }
       withStyle(
         style = SpanStyle(
@@ -525,13 +525,13 @@ fun locationToAnnotated(text: String): AnnotatedString {
       ) {
         append("（")
         append(campus)
-        append("校区）")
+        append("）")
       }
     }
   } else {
     buildAnnotatedString {
       withStyle(style = SpanStyle(fontSize = 14.sp)) {
-        append(Pangu.spacingText(text))
+        append(text)
       }
     }
   }
