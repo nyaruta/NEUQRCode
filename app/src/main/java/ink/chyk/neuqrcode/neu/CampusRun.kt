@@ -3,6 +3,8 @@ package ink.chyk.neuqrcode.neu
 import android.util.*
 import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.*
+import kotlinx.coroutines.*
+import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 import okhttp3.*
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -30,7 +32,8 @@ class CampusRun(
   }
 
   // 统一身份认证 callback URL
-  private val callbackUrl = "https://tybzhtypt.neu.edu.cn/bdlp_h5_fitness_test/public/index.php/index/login/neuLogin"
+  private val callbackUrl =
+    "https://tybzhtypt.neu.edu.cn/bdlp_h5_fitness_test/public/index.php/index/login/neuLogin"
 
   // Referer
   private val referer = "https://tybzhtypt.neu.edu.cn/bdlp_h5_fitness_test/view/db/"
@@ -104,10 +107,11 @@ class CampusRun(
     }
   }
 
-  suspend fun loginCampusRun() {
+  suspend fun loginCampusRun() = withContext(Dispatchers.IO) {
     // 登录步道乐跑
 
     val portalTicket = getPortalTicket()
+
     val campusRunTicket = neu.loginNEUAppTicket(portalTicket, callbackUrl)
 
     //Log.d("CampusRun", "CampusRun Ticket: $campusRunTicket")
@@ -118,7 +122,7 @@ class CampusRun(
 
     val req1 = Request.Builder()
       .url("$callbackUrl?ticket=$campusRunTicket")
-      .header("User-Agent", neu.userAgent?: "NEUQRCode")
+      .header("User-Agent", neu.userAgent ?: "NEUQRCode")
       .build()
 
     val res1 = executeRequest(client, req1, "登录步道乐跑失败")
@@ -135,7 +139,8 @@ class CampusRun(
 
     val res2 = executeRequest(client, req2, "登录步道乐跑失败")
 
-    val location = res2.header("Location")?: throw RequestFailedException("登录步道乐跑失败: 无法获取 Location")
+    val location =
+      res2.header("Location") ?: throw RequestFailedException("登录步道乐跑失败: 无法获取 Location")
     val query = location.split("?")[1].split("&").associate {
       val (key, value) = it.split("=")
       key to value
@@ -158,7 +163,7 @@ class CampusRun(
     // Log.d("CampusRun", "CampusRun Args: $args")
   }
 
-  fun random6(): String {
+  private fun random6(): String {
     // 随机六位数当作 nonce
     return (100000..999999).random().toString()
   }
@@ -205,14 +210,15 @@ class CampusRun(
 
     val request = Request.Builder()
       .url(url)
-      .header("User-Agent", neu.userAgent?: "NEUQRCode")
+      .header("User-Agent", neu.userAgent ?: "NEUQRCode")
       .header("Referer", referer)
       .post(requestBody)
       .build()
 
     val response = executeRequest(client, request, "请求步道乐跑 API 失败")
 
-    val responseBody = response.body?.string()?: throw RequestFailedException("请求步道乐跑 API 失败: 无法获取响应体")
+    val responseBody = response.body?.string()
+      ?: throw RequestFailedException("请求步道乐跑 API 失败: 无法获取响应体")
     val responseDecrypted = encryption.aesDecrypt(
       Json.decodeFromString<CampusRunResponse>(responseBody).data
     )
@@ -222,5 +228,14 @@ class CampusRun(
 
   suspend fun getIndex(): WpIndexResponse? {
     return campusRunApiRequest(api.index, args!!)
+  }
+
+  @ExperimentalSerializationApi
+  suspend fun getBeforeRun(): BeforeRunResponse? {
+    return campusRunApiRequest(api.beforeRun, args!!)
+  }
+
+  suspend fun getTermRunRecord(): GetTermRunRecordResponse? {
+    return campusRunApiRequest(api.getTermRunRecord, args!!)
   }
 }

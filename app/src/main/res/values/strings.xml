@@ -119,5 +119,22 @@
     <string name="apps_center">应用中心</string>
     <string name="campus_run">校园乐跑</string>
     <string name="loading">加载中…</string>
-    <string name="no_network">加载失败，请检查网络连接。</string>
+    <string name="no_network">加载失败，请连接校园网。</string>
+    <string name="run_t1_1">跑步的旅程从第一步开始，你已经走在路上了！</string>
+    <string name="run_t1_2">迈出第一步，你已经比昨天更强大！</string>
+    <string name="run_t1_3">每一次起跑，都是对未来的承诺。</string>
+    <string name="run_t2_1">每一步都在塑造更好的自己，加油！</string>
+    <string name="run_t2_2">跑过的路不会骗你，汗水终将化为力量！</string>
+    <string name="run_t2_3">你已经超越了很多人，继续突破自己！</string>
+    <string name="run_t3_1">每一次呼吸都在证明你的毅力，继续前行！</string>
+    <string name="run_t3_2">跑下去，胜利的曙光就在不远处！</string>
+    <string name="run_t3_3">坚持到现在，你已经是自己的英雄！</string>
+    <string name="run_t4_1">最后的坚持，将成就最闪耀的自己！</string>
+    <string name="run_t4_2">胜利就在眼前，跑出你的辉煌！</string>
+    <string name="run_t4_3">终点触手可及，全力以赴吧！</string>
+    <string name="run_t5_1">跑过的每一段路，都是你努力的见证！</string>
+    <string name="run_t5_2">你已经超越了极限，为自己喝彩吧！</string>
+    <string name="run_t5_3">你已经证明了，没有什么能阻挡你！</string>
+    <string name="run_t5_4">"跑完的不是终点，而是新的起点！</string>
+    <string name="run_t5_5">你的坚持，让梦想照进了现实！</string>
 </resources>

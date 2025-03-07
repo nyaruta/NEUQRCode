@@ -24,6 +24,7 @@ import ink.chyk.neuqrcode.screens.*
 import ink.chyk.neuqrcode.viewmodels.*
 import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.ui.theme.*
+import kotlinx.serialization.*
 import kotlin.math.*
 
 class MainActivity : ComponentActivity() {
@@ -139,6 +140,7 @@ fun exit(
 }
 
 @Composable
+@ExperimentalSerializationApi
 fun MainApp(screen: String?) {
   val ctx = LocalContext.current
   val onFailed = {
@@ -147,7 +149,7 @@ fun MainApp(screen: String?) {
     val appProcesses = activityManager.runningAppProcesses ?: emptyList()
     val isAppInForeground = appProcesses.any {
       it.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND &&
-              it.processName == ctx.packageName
+        it.processName == ctx.packageName
     }
 
     // 只有在前台时才显示错误，防止锁屏或者后台
@@ -156,13 +158,13 @@ fun MainApp(screen: String?) {
       intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
       ctx.startActivity(intent)
     }
-    
+
     true
   }
   val eCodeViewModel: ECodeViewModel = viewModel(factory = ECodeViewModelFactory(onFailed))
   val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(onFailed))
   val coursesViewModel: CoursesViewModel = viewModel(factory = CoursesViewModelFactory())
-  val appsViewModel: AppsViewModel = viewModel(factory = AppsViewModelFactory(onFailed))
+  val appsViewModel: AppsViewModel = viewModel(factory = AppsViewModelFactory({ false }))
 
   val navController = rememberNavController()
   var previousSelectedItem by remember { mutableStateOf(0) }

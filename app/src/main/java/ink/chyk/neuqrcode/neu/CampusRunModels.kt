@@ -1,6 +1,6 @@
 package ink.chyk.neuqrcode.neu
 
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 
 @Serializable
@@ -24,4 +24,35 @@ data class WpIndexResponse(
   val school_notice: JsonObject,
   val reading_list: List<JsonObject>,
   val whiteNavs: List<String>,
+)
+
+@Serializable
+@ExperimentalSerializationApi
+@JsonIgnoreUnknownKeys  // 别的一律用不到
+data class BeforeRunResponse(
+  val run_zone_name: String,
+  val run_notes: List<String>,
+  val weekData: WeekData,
+  val today_run_user_num: Int,
+)
+
+@Serializable
+data class WeekData(
+  val total: String,
+  val list: List<WeekDataSingle>,
+)
+
+@Serializable
+data class WeekDataSingle(
+  val date: String,
+  val distance: String,
+)
+
+@Serializable
+data class GetTermRunRecordResponse(
+  val total_num: String,
+  val total_score_num: String,
+  val total_distance: String,
+  val total_score_distance: String,
+  val list: List<JsonObject> = emptyList(),
 )
