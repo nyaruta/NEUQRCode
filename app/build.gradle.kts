@@ -1,10 +1,60 @@
 // import com.android.build.gradle.internal.tasks.*
+import java.io.ByteArrayOutputStream
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.lsplugin.apksign)
+    alias(libs.plugins.lsplugin.apktransform)
+}
+
+
+val VersionCode by extra(getAppVersionCode())
+val VersionName by extra(getAppVersionName())
+
+fun getGitCommitCount(): Int {
+    val out = ByteArrayOutputStream()
+    exec {
+        commandLine("git", "rev-list", "--count", "HEAD")
+        standardOutput = out
+    }
+    return out.toString().trim().toInt()
+}
+
+fun getGitDescribe(): String {
+    val out = ByteArrayOutputStream()
+    exec {
+        commandLine("git", "describe", "--tags", "--always")
+        standardOutput = out
+    }
+    return out.toString().trim()
+}
+
+fun getAppVersionCode(): Int {
+    val commitCount = getGitCommitCount()
+    return commitCount
+}
+
+fun getAppVersionName(): String {
+    return getGitDescribe()
+}
+
+apksign {
+    storeFileProperty = "releaseStoreFile"
+    storePasswordProperty = "releaseStorePassword"
+    keyAliasProperty = "releaseKeyAlias"
+    keyPasswordProperty = "releaseKeyPassword"
+}
+
+apktransform {
+    copy {
+        when (it.buildType) {
+            "release" -> file("${it.name}/ink.chyk.neuqrcode.${VersionName}.apk")
+            else -> null
+        }
+    }
 }
 
 android {
@@ -16,8 +66,8 @@ android {
         minSdk = 28
         //noinspection ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 17
-        versionName = "3.0-pre8"
+        versionCode = VersionCode
+        versionName = VersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
