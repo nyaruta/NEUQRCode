@@ -116,4 +116,5 @@
     <string name="anti_flashlight_description">在任何时间打开一码通时，都不调高手机亮度。</string>
     <string name="retry">重试</string>
     <string name="upload_failed">上传失败。</string>
+    <string name="apps_center">应用中心</string>
 </resources>

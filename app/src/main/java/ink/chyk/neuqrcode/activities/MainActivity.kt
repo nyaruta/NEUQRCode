@@ -17,11 +17,9 @@ import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.*
-import androidx.navigation.*
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import com.tencent.mmkv.*
-import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.screens.*
 import ink.chyk.neuqrcode.viewmodels.*
 import ink.chyk.neuqrcode.R
@@ -164,6 +162,7 @@ fun MainApp(screen: String?) {
   val eCodeViewModel: ECodeViewModel = viewModel(factory = ECodeViewModelFactory(onFailed))
   val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(onFailed))
   val coursesViewModel: CoursesViewModel = viewModel(factory = CoursesViewModelFactory())
+  val appsViewModel: AppsViewModel = viewModel(factory = AppsViewModelFactory(onFailed))
 
   val navController = rememberNavController()
   var previousSelectedItem by remember { mutableStateOf(0) }
@@ -237,7 +236,11 @@ fun MainApp(screen: String?) {
           enterTransition = { enter(previousSelectedItem, selectedItem) },
           exitTransition = { exit(previousSelectedItem, selectedItem) }
         ) {
-          AppsScreen(navController = navController)
+          AppsScreen(
+            viewModel = appsViewModel,
+            navController = navController,
+            innerPadding = innerPadding
+          )
         }
         composable(
           "profile",

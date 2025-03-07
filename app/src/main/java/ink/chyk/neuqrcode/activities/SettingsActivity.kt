@@ -47,7 +47,9 @@ fun Settings() {
     mutableStateOf(mmkv.decodeBool("anti_flashlight", false))
   }
 
-  Column {
+  Column(
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+  ) {
     Spacer(modifier = Modifier.height(32.dp))
     Row(
       verticalAlignment = Alignment.CenterVertically,
@@ -70,7 +72,7 @@ fun Settings() {
         style = MaterialTheme.typography.headlineLarge,
       )
     }
-    Spacer(modifier = Modifier.height(16.dp))
+    Box {}
     SettingsCard(
       name = stringResource(R.string.create_courses_shortcut),
       description = stringResource(R.string.create_courses_shortcut_description),
@@ -79,7 +81,6 @@ fun Settings() {
         createShortcut(ctx)
       }
     )
-    Spacer(modifier = Modifier.height(16.dp))
     SettingsCard(
       name = stringResource(R.string.anti_flashlight),
       description = stringResource(R.string.anti_flashlight_description),
