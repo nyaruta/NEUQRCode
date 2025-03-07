@@ -16,16 +16,20 @@ class NEUPass(
 ) {
   // 智慧东大 API
 
-  private var userAgent: String? = null
+  var userAgent: String? = null
+    get() {
+      if (field == null) {
+        field = System.getProperty("http.agent")
+          ?.replace(Regex("Dalvik/\\d+(\\.\\d+)*"), "Mozilla/5.0")
+          ?.replace(")", "; NEUQRCode (Simulated com.sunyt.testdemo/3.0.0))")
+        Log.d("NEUPass", "User-Agent: $field")
+      }
+      return field
+    }
+
 
   private fun useRequestedWith(request: Request.Builder): Request.Builder {
     val version = "3.0.0"
-    if (userAgent == null) {
-      userAgent = System.getProperty("http.agent")
-        ?.replace(Regex("Dalvik/\\d+(\\.\\d+)*"), "Mozilla/5.0")
-        ?.replace(")", "; NEUQRCode (Simulated com.sunyt.testdemo/$version))")
-      Log.d("NEUPass", "User-Agent: $userAgent")
-    }
     return request
       .header("User-Agent", userAgent?: "Mozilla/5.0 (Linux; Android)")
       .header("X-Requested-With", "com.sunyt.testdemo")

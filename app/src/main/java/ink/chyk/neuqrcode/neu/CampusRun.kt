@@ -1,13 +1,16 @@
 package ink.chyk.neuqrcode.neu
 
+import android.util.*
 import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.*
+import kotlinx.serialization.json.*
 import okhttp3.*
+import okhttp3.RequestBody.Companion.toRequestBody
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import java.security.MessageDigest
-import java.util.*
+import java.util.Base64
 
 
 class CampusRun(
@@ -29,15 +32,18 @@ class CampusRun(
   // 统一身份认证 callback URL
   private val callbackUrl = "https://tybzhtypt.neu.edu.cn/bdlp_h5_fitness_test/public/index.php/index/login/neuLogin"
 
+  // Referer
+  private val referer = "https://tybzhtypt.neu.edu.cn/bdlp_h5_fitness_test/view/db/"
+
   private val encryption = object {
     // 加密算法
     private val MD5_SALT = "rDJiNB9j7vD2"
     private val AES_KEY = "Wet2C8d34f62ndi3".toByteArray(Charsets.UTF_8)
     private val AES_IV = "K6iv85jBD8jgf32D".toByteArray(Charsets.UTF_8)
 
-    fun signMD5(obj: Map<String, String>): String {
+    fun signMD5(obj: Map<String, Any>): String {
       val textToHash = obj.keys.sorted().joinToString("") { key ->
-        key + obj[key]
+        key + obj[key].toString()
       }
       val md5 = MessageDigest.getInstance("MD5")
       md5.update((textToHash + MD5_SALT).toByteArray(Charsets.UTF_8))
@@ -63,8 +69,13 @@ class CampusRun(
     }
   }
 
-  // 步道乐跑 Token
-  private var token: String? = null
+  // 登录时返回的请求参数
+  private var args: Map<String, Any>? = null
+
+  // 客户端
+  private val client = OkHttpClient.Builder()
+    .followRedirects(false)
+    .build()
 
   // copied from BasicViewModel
   private suspend fun getPortalTicket(reLogin: Boolean = false): String {
@@ -96,27 +107,120 @@ class CampusRun(
   suspend fun loginCampusRun() {
     // 登录步道乐跑
 
-    val portalTicket = getPortalTicket(true)
+    val portalTicket = getPortalTicket()
     val campusRunTicket = neu.loginNEUAppTicket(portalTicket, callbackUrl)
 
-    val client = OkHttpClient()
+    //Log.d("CampusRun", "CampusRun Ticket: $campusRunTicket")
+
+    val client = OkHttpClient.Builder()
+      .followRedirects(false)
+      .build()
 
     val req1 = Request.Builder()
-      .url(callbackUrl)
-      .header("Cookie", "Path=/; PHPSESSID=$campusRunTicket")
+      .url("$callbackUrl?ticket=$campusRunTicket")
+      .header("User-Agent", neu.userAgent?: "NEUQRCode")
       .build()
 
     val res1 = executeRequest(client, req1, "登录步道乐跑失败")
 
     if (res1.code != 302) {
+      Log.d("CampusRun", "Not 302: ${res1.code}")
       throw RequestFailedException("登录步道乐跑失败: ${res1.code}")
     }
 
-    val location = res1.header("Location")?: throw RequestFailedException("登录步道乐跑失败: 无法获取 Location")
+    val req2 = Request.Builder()
+      .url(callbackUrl)
+      .header("Cookie", "Path=/; PHPSESSID=$campusRunTicket")
+      .build()
+
+    val res2 = executeRequest(client, req2, "登录步道乐跑失败")
+
+    val location = res2.header("Location")?: throw RequestFailedException("登录步道乐跑失败: 无法获取 Location")
     val query = location.split("?")[1].split("&").associate {
       val (key, value) = it.split("=")
       key to value
     }
-    token = query["token"]?: throw RequestFailedException("登录步道乐跑失败: 无法获取 Token")
+    // 反序列化参数
+    args = mapOf(
+      "uid" to query["uid"]!!,
+      "token" to query["token"]!!,
+      "school_id" to query["school_id"]!!,
+      "term_id" to query["term_id"]!!,
+      "course_id" to query["course_id"]!!,
+      "class_id" to "0",
+      "student_num" to query["student_num"]!!,
+      "card_id" to query["card_id"]!!,
+      "version" to 1,
+      "ostype" to "5",
+      "role" to 1
+    )
+
+    // Log.d("CampusRun", "CampusRun Args: $args")
+  }
+
+  fun random6(): String {
+    // 随机六位数当作 nonce
+    return (100000..999999).random().toString()
+  }
+
+  private fun toJsonObject(map: Map<String, Any>): JsonObject {
+    return buildJsonObject {
+      map.forEach { (key, value) ->
+        when (value) {
+          is String -> put(key, value)
+          is Int -> put(key, value)
+          is Boolean -> put(key, value)
+          is Float -> put(key, value)
+          is Double -> put(key, value)
+          is Long -> put(key, value)
+          is JsonObject -> put(key, value)
+          is JsonArray -> put(key, value)
+          else -> error("Unsupported type: ${value::class.simpleName}")
+        }
+      }
+    }
+  }
+
+  // 乐跑 API 请求
+  private suspend inline fun <reified T> campusRunApiRequest(
+    endpoint: String,
+    requestArgs: Map<String, Any>,
+  ): T? {
+    val url = "$apiHost$endpoint"
+
+    val newArgs = requestArgs.toMutableMap()
+    newArgs["nonce"] = random6()
+    newArgs["timestamp"] = System.currentTimeMillis() / 1000
+
+    val sign = encryption.signMD5(newArgs)
+    newArgs["sign"] = sign
+
+    val encrypted = encryption.aesEncrypt(Json.encodeToString(toJsonObject(newArgs)))
+
+    // 编码为 form-urlencoded
+    val requestBody = FormBody.Builder()
+      .add("ostype", "5")
+      .add("data", encrypted)
+      .build()
+
+    val request = Request.Builder()
+      .url(url)
+      .header("User-Agent", neu.userAgent?: "NEUQRCode")
+      .header("Referer", referer)
+      .post(requestBody)
+      .build()
+
+    val response = executeRequest(client, request, "请求步道乐跑 API 失败")
+
+    val responseBody = response.body?.string()?: throw RequestFailedException("请求步道乐跑 API 失败: 无法获取响应体")
+    val responseDecrypted = encryption.aesDecrypt(
+      Json.decodeFromString<CampusRunResponse>(responseBody).data
+    )
+
+    return Json.decodeFromString<T>(responseDecrypted)
+  }
+
+  suspend fun getIndex(): WpIndexResponse? {
+    return campusRunApiRequest(api.index, args!!)
   }
 }
