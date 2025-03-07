@@ -19,9 +19,12 @@ fun AppsScreen(
   innerPadding: PaddingValues
 ) {
   Box(
-    modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp),
+    modifier = Modifier
+      .fillMaxSize()
+      .padding(innerPadding)
+      .padding(16.dp),
   ) {
-    Column (
+    Column(
       verticalArrangement = Arrangement.spacedBy(8.dp),
       modifier = Modifier
     ) {
@@ -61,7 +64,9 @@ fun CampusRunCard(
 
   Card {
     Column(
-      modifier = Modifier.padding(16.dp).fillMaxWidth(),
+      modifier = Modifier
+        .padding(16.dp)
+        .fillMaxWidth(),
     ) {
       Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -81,14 +86,32 @@ fun CampusRunCard(
               AppsViewModel.LoadingState.LOADING -> {
                 stringResource(R.string.loading)
               }
+
               AppsViewModel.LoadingState.SUCCESS -> {
                 termName.value
               }
+
               AppsViewModel.LoadingState.FAILED -> {
                 stringResource(R.string.no_network)
               }
             },
             color = MaterialTheme.colorScheme.onSurface,
+          )
+        }
+        IconButton(
+          onClick = {},
+          colors = IconButtonColors(
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            containerColor = MaterialTheme.colorScheme.primary,
+            disabledContentColor = MaterialTheme.colorScheme.onSurface,
+            disabledContainerColor = MaterialTheme.colorScheme.surface,
+          ),
+          modifier = Modifier.size(48.dp),
+        ) {
+          Icon(
+            painter = painterResource(id = R.drawable.ic_golang),
+            contentDescription = null,
+            modifier = Modifier.height(32.dp),
           )
         }
       }
