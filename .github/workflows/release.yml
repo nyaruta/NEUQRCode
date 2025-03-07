@@ -32,8 +32,8 @@ jobs:
 
       - name: Setup APK Signing Key
         run: |
-            echo ${{ secrets.KEYSTORE }} | base64 --decode > keystore.jks
-            echo ${{ secrets.LOCAL_PROPERTIES}} | base64 --decode >> local.properties
+            echo "${{ secrets.KEYSTORE }}" | base64 --decode > keystore.jks
+            echo "${{ secrets.LOCAL_PROPERTIES}}" | base64 --decode >> local.properties
 
       - name: Build with Gradle
         run: ./gradlew :app:assembleRelease
