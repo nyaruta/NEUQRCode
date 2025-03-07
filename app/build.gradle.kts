@@ -5,6 +5,29 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.lsplugin.jgit)
+    alias(libs.plugins.lsplugin.apksign)
+    alias(libs.plugins.lsplugin.apktransform)
+}
+
+val repo = jgit.repo()
+val VerCode = repo?.commitCount("refs/remotes/origin/main") ?: 1
+val VerName = repo?.latestTag?.removePrefix("v") ?: "1.0"
+
+apksign {
+    storeFileProperty = "releaseStoreFile"
+    storePasswordProperty = "releaseStorePassword"
+    keyAliasProperty = "releaseKeyAlias"
+    keyPasswordProperty = "releaseKeyPassword"
+}
+
+apktransform {
+    copy {
+        when (it.buildType) {
+            "release" -> file("${it.name}/ink.chyk.neuqrcode.${VerName}.apk")
+            else -> null
+        }
+    }
 }
 
 android {
@@ -16,8 +39,8 @@ android {
         minSdk = 28
         //noinspection ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 17
-        versionName = "3.0-pre8"
+        versionCode = VerCode
+        versionName = VerName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
