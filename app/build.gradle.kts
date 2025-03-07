@@ -96,5 +96,4 @@ dependencies {
     implementation(libs.browser)
     implementation(libs.coil)
     implementation(libs.coil.net)
-    implementation(libs.webview)
 }

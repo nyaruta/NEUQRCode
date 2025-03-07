@@ -49,8 +49,6 @@ paging-compose = { group = "androidx.paging", name = "paging-compose", version.r
 browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 coil = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-net = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
-webview = { group = "io.github.kevinnzou", name = "compose-webview", version.ref = "webview" }
-
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
