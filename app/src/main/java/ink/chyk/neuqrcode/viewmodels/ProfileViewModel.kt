@@ -122,25 +122,31 @@ class ProfileViewModel(
     prepareSessionAnd { session ->
       try {
         val userInfoResponse = neu.getUserInfo(session)
-        _userInfo.value = userInfoResponse.first.info
+        _userInfo.value = userInfoResponse.first?.info
         updateSession(userInfoResponse.second)
 
         val idsResponse = neu.getPersonalDataIds(session)
         val ids = idsResponse.first
         updateSession(idsResponse.second)
 
-        val mailUnreadResponse = neu.getPersonalDataItem(session, ids, "mail.coremailStudent")
-        _mailUnread.value = mailUnreadResponse.first.data
-        _coreMailRedirector.value = mailUnreadResponse.first.data.url
+        if (ids == null) {
+          return@prepareSessionAnd
+        }
+
+        val mailUnreadResponse = neu.getPersonalDataItem(
+          session, ids, "mail.coremailStudent"
+        )
+        _mailUnread.value = mailUnreadResponse.first?.data
+        _coreMailRedirector.value = mailUnreadResponse.first?.data?.url
         Log.d("refreshUserInfo", "CoreMail redirector: ${_coreMailRedirector.value}")
         updateSession(mailUnreadResponse.second)
 
         val cardBalanceResponse = neu.getPersonalDataItem(session, ids, "card.balance")
-        _cardBalance.value = cardBalanceResponse.first.data
+        _cardBalance.value = cardBalanceResponse.first?.data
         updateSession(cardBalanceResponse.second)
 
         val netBalanceResponse = neu.getPersonalDataItem(session, ids, "net.balance")
-        _netBalance.value = netBalanceResponse.first.data
+        _netBalance.value = netBalanceResponse.first?.data
         updateSession(netBalanceResponse.second)
 
         _headers.value = NetworkHeaders.Builder()
@@ -244,10 +250,14 @@ class ProfileViewModel(
       prepareSessionAnd { session ->
         val response = neu.uploadImage(session, byteArray, mimeType, fileName)
         updateSession(response.second)
+        if (response.first == null) {
+          Log.d("uploadAvatar", "Upload failed")
+          throw Exception("Upload failed")
+        }
         Log.d("uploadAvatar", "Response: ${response.first}")
-        Log.d("uploadAvatar", "Uploaded url: ${response.first.url}")
-        _userInfo.value = _userInfo.value?.copy(avatar = response.first.url)
-        val response2 = neu.updateAvatar(session, response.first.url)
+        Log.d("uploadAvatar", "Uploaded url: ${response.first!!.url}")
+        _userInfo.value = _userInfo.value?.copy(avatar = response.first!!.url)
+        val response2 = neu.updateAvatar(session, response.first!!.url)
         Log.d("uploadAvatar", "Update avatar response: ${response2.first}")
         updateSession(response2.second)
         onUploadComplete()
@@ -281,6 +291,11 @@ class ProfileViewModel(
         Toast.makeText(context, R.string.error_open_coremail, Toast.LENGTH_SHORT).show()
       }
     }
+  }
+
+  private fun jumpToErrorPage(context: Context, msg: String) {
+    val intent = Intent(context, ErrorActivity::class.java)
+    context.startActivity(intent)
   }
 
 }

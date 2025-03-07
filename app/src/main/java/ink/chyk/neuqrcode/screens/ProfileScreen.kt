@@ -108,7 +108,7 @@ fun ProfileScreen(
       )
       RowButton(
         iconResource = R.drawable.ic_fluent_settings_24_regular,
-        text= stringResource(R.string.settings),
+        text = stringResource(R.string.settings),
         clickable = true,
         onClick = {
           // 跳转到设置页面
@@ -152,9 +152,15 @@ fun ProfileScreen(
     onConfirm = {
       Toast.makeText(context, context.getString(R.string.uploading), Toast.LENGTH_SHORT).show()
       showUploadAvatarDialog.value = false
-      viewModel.uploadAvatar(byteArray.value!!, mimeType.value!!, fileName.value!!, {
-      Toast.makeText(context, context.getString(R.string.upload_finished), Toast.LENGTH_LONG).show()
-    }) }
+      try {
+        viewModel.uploadAvatar(byteArray.value!!, mimeType.value!!, fileName.value!!, {
+          Toast.makeText(context, context.getString(R.string.upload_finished), Toast.LENGTH_LONG)
+            .show()
+        })
+      } catch (e: Exception) {
+        Toast.makeText(context, context.getString(R.string.upload_failed), Toast.LENGTH_SHORT).show()
+      }
+    }
   )
 }
 

@@ -53,8 +53,12 @@ class ECodeViewModel(
       prepareSessionAnd { session ->
         // 重新获取二维码
         val eCode = neu.getQRCode(session)
+        if (eCode == null) {
+          return@prepareSessionAnd
+        }
         if (_userInfo.value == null) {
-          _userInfo.value = neu.getECodeUserInfo(session).data[0].attributes
+          val eCodeUserInfo = neu.getECodeUserInfo(session) ?: return@prepareSessionAnd
+          _userInfo.value = eCodeUserInfo.data[0].attributes
         }
         _code.value = eCode.data[0].attributes.qrCode
         _codeGenerateTime.value = eCode.data[0].attributes.createTime

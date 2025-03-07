@@ -243,7 +243,7 @@ class NEUPass(
   private suspend inline fun <reified T> basicAppRequest(
     session: NEUAppSession,
     url: String
-  ): T {
+  ): T? {
     //Log.d("NEUPass", "Request: $url")
     val client = OkHttpClient.Builder()
       .followRedirects(false)
@@ -282,7 +282,7 @@ class NEUPass(
         if (!onFailed()) {
           throw RequestFailedException(url)
         }
-        return@withContext Json.decodeFromString("{}")
+        return@withContext null as T
       }
     }
   }
@@ -293,7 +293,7 @@ class NEUPass(
     url: String,
     postBody: MultipartBody? = null,
     putBody: MultipartBody? = null
-  ): Pair<T, PersonalSession> {
+  ): Pair<T?, PersonalSession> {
     // 新的 3.x api 在每次请求后都有可能更新 sess_id
     // 返回结果和新的 session
     val client = OkHttpClient.Builder()
@@ -374,28 +374,29 @@ class NEUPass(
           if (!onFailed()) {
             throw RequestFailedException(url)
           }
-          return@withContext Pair(Json.decodeFromString("{}"), session)
+          // 返回空数据 即这个T的默认值
+          return@withContext Pair(null as T, session)
         }
       }
     }
   }
 
-  suspend fun getQRCode(session: NEUAppSession): ListedResponse<ECodeResponse> {
+  suspend fun getQRCode(session: NEUAppSession): ListedResponse<ECodeResponse>? {
     return basicAppRequest(session, "https://ecode.neu.edu.cn/ecode/api/qr-code")
   }
 
-  suspend fun getECodeUserInfo(session: NEUAppSession): ListedResponse<ECodeUserInfoResponse> {
+  suspend fun getECodeUserInfo(session: NEUAppSession): ListedResponse<ECodeUserInfoResponse>? {
     return basicAppRequest(session, "https://ecode.neu.edu.cn/ecode/api/user-info")
   }
 
-  suspend fun getUserInfo(session: PersonalSession): Pair<UserInfoOuter, PersonalSession> {
+  suspend fun getUserInfo(session: PersonalSession): Pair<UserInfoOuter?, PersonalSession> {
     return basicPersonalApiRequest(
       session,
       "https://personal.neu.edu.cn/portal/personal/frontend/data/info"
     )
   }
 
-  suspend fun getPersonalDataIds(session: PersonalSession): Pair<PersonalDataIdOuter, PersonalSession> {
+  suspend fun getPersonalDataIds(session: PersonalSession): Pair<PersonalDataIdOuter?, PersonalSession> {
     return basicPersonalApiRequest(
       session,
       "https://personal.neu.edu.cn/portal/personal/frontend/data/items?type=personal_data"
@@ -406,7 +407,7 @@ class NEUPass(
     session: PersonalSession,
     ids: PersonalDataIdOuter,
     key: String
-  ): Pair<PersonalDataItemOuter, PersonalSession> {
+  ): Pair<PersonalDataItemOuter?, PersonalSession> {
     val id = ids.data.first { it.key == key }.id
     return basicPersonalApiRequest(
       session,
@@ -419,7 +420,7 @@ class NEUPass(
     image: ByteArray,
     mimeType: String,
     fileName: String
-  ): Pair<UploadImageResponse, PersonalSession> {
+  ): Pair<UploadImageResponse?, PersonalSession> {
     val requestBody = MultipartBody.Builder()
       .setType(MultipartBody.FORM)
       .addFormDataPart("category", "image")
@@ -439,7 +440,7 @@ class NEUPass(
   suspend fun updateAvatar(
     session: PersonalSession,
     imageUrl: String
-  ): Pair<List<String>, PersonalSession> {
+  ): Pair<List<String>?, PersonalSession> {
     val requestBody = MultipartBody.Builder()
       .setType(MultipartBody.FORM)
       .addFormDataPart("avatar", imageUrl)
