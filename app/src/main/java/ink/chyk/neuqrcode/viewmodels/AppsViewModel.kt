@@ -1,8 +1,10 @@
 package ink.chyk.neuqrcode.viewmodels
 
+import android.content.*
 import android.util.*
 import androidx.lifecycle.*
 import com.tencent.mmkv.*
+import ink.chyk.neuqrcode.activities.*
 import ink.chyk.neuqrcode.neu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -43,5 +45,12 @@ class AppsViewModel(
         }
       }
     }
+  }
+
+  fun startCampusRun(context: Context) {
+    // 进入乐跑
+    val intent = Intent(context, CampusRunningActivity::class.java)
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+    context.startActivity(intent)
   }
 }
