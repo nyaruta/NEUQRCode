@@ -5,7 +5,10 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.lsplugin.jgit)
 }
+
+val repo = jgit.repo()
 
 android {
     namespace = "ink.chyk.neuqrcode"
@@ -16,8 +19,8 @@ android {
         minSdk = 28
         //noinspection ExpiredTargetSdkVersion
         targetSdk = 28
-        versionCode = 17
-        versionName = "3.0-pre8"
+        versionCode = repo?.commitCount("refs/remotes/origin/main") ?: 1
+        versionName = repo?.latestTag?.removePrefix("v") ?: "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
