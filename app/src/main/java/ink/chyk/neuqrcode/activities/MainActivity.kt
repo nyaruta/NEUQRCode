@@ -7,6 +7,7 @@ import android.widget.*
 import android.app.ActivityManager
 import androidx.activity.*
 import androidx.activity.compose.*
+import androidx.collection.*
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
@@ -167,7 +168,7 @@ fun MainApp(screen: String?) {
   val appsViewModel: AppsViewModel = viewModel(factory = AppsViewModelFactory({ false }))
 
   val navController = rememberNavController()
-  var previousSelectedItem by remember { mutableStateOf(0) }
+  var previousSelectedItem by remember { mutableIntStateOf(0) }
   var selectedItem by remember { mutableIntStateOf(0) }
 
   LaunchedEffect(navController) {

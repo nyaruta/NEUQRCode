@@ -176,7 +176,7 @@ fun CampusRunCard(
 
             Box(modifier = Modifier.wrapContentSize()) {
               // 用于存储文字的宽度
-              var textWidth by remember { mutableStateOf(0) }
+              var textWidth by remember { mutableIntStateOf(0) }
 
               Text(
                 buildAnnotatedString {
