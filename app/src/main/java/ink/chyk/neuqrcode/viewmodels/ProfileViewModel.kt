@@ -2,10 +2,8 @@ package ink.chyk.neuqrcode.viewmodels
 
 import android.content.Context
 import android.content.Intent
-import android.net.*
 import android.util.*
 import android.widget.Toast
-import androidx.browser.customtabs.*
 import androidx.lifecycle.*
 import coil3.network.*
 import com.tencent.mmkv.*
@@ -32,11 +30,9 @@ data class GitHubRelease(
 class ProfileViewModel(
   val mmkv: MMKV,
   val neu: NEUPass
-) : ViewModel() {
+) : PersonalViewModel(neu, mmkv) {
   private val _userInfo = MutableStateFlow<UserInfo?>(null)
   val userInfo: StateFlow<UserInfo?> = _userInfo
-  private val _mailUnread = MutableStateFlow<PersonalDataItem?>(null)
-  val mailUnread: StateFlow<PersonalDataItem?> = _mailUnread
   private val _cardBalance = MutableStateFlow<PersonalDataItem?>(null)
   val cardBalance: StateFlow<PersonalDataItem?> = _cardBalance
   private val _netBalance = MutableStateFlow<PersonalDataItem?>(null)
@@ -45,78 +41,6 @@ class ProfileViewModel(
   private val _headers = MutableStateFlow<NetworkHeaders?>(null)
   val headers: StateFlow<NetworkHeaders?> = _headers
   val loadComplete: StateFlow<Boolean> = _loadComplete
-
-  private val _coreMailRedirector = MutableStateFlow<String?>(null)
-
-
-  /**
-   * 获取智慧东大 统一身份认证 的 ticket
-   * 如果 mmkv 中没有记录，或者 reLogin 为 true，则重新登录。
-   *
-   * @param reLogin 是否强制重新登录
-   *
-   * @return ticket（TGT-xxxx-tpass）
-   */
-  private suspend fun getPortalTicket(reLogin: Boolean = false): String {
-    Log.d("getPortalTicket", "reLogin: $reLogin")
-    val studentId = mmkv.decodeString("student_id")!!
-    val password = mmkv.decodeString("password")!!
-
-    var portalTicket: String? = mmkv.decodeString("portal_ticket")
-    if (portalTicket == null || reLogin) {
-      portalTicket = neu.loginPersonalTicket(studentId, password)
-      mmkv.encode("portal_ticket", portalTicket)
-    }
-
-    return portalTicket
-  }
-
-  private fun updateSession(session: PersonalSession) {
-    mmkv.encode("personal_lc", session.lc)
-    mmkv.encode("personal_vl", session.vl)
-    mmkv.encode("personal_sess_id", session.sessId)
-  }
-
-  suspend fun <T> prepareSessionAnd(action: suspend (PersonalSession) -> T): T {
-    try {
-      val lc = mmkv.decodeString("personal_lc")
-      val vl = mmkv.decodeString("personal_vl")
-      val sessId = mmkv.decodeString("personal_sess_id")
-      if (lc == null || vl == null || sessId == null) {
-        // 登录
-        Log.d("prepareSessionAnd", "No session found, logging in")
-        val ticket = getPortalTicket()
-        var personalTicket: String
-        try {
-          personalTicket = neu.loginPersonalApiTicket(ticket)
-        } catch (e: TicketFailedException) {
-          val newTicket = getPortalTicket(true)
-          personalTicket = neu.loginPersonalApiTicket(newTicket)
-        }
-        mmkv.encode("personal_ticket", personalTicket)
-        val session = neu.loginPersonalApi(personalTicket)
-        updateSession(session)
-        return action(session)
-      } else {
-        val session = PersonalSession(lc, vl, sessId)
-        try {
-          return action(session)
-        } catch (e: SessionExpiredException) {
-          // 重新登录
-          val ticket = getPortalTicket(true)
-          val personal_ticket = neu.loginPersonalApiTicket(ticket)
-          mmkv.encode("personal_ticket", personal_ticket)
-          val newSession = neu.loginPersonalApi(personal_ticket)
-          updateSession(newSession)
-          return action(newSession)
-        }
-      }
-    } catch (e: Exception) {
-      // 错误处理逻辑
-      e.printStackTrace()
-      throw e
-    }
-  }
 
   private suspend fun refreshUserInfo() {
     prepareSessionAnd { session ->
@@ -132,14 +56,6 @@ class ProfileViewModel(
         if (ids == null) {
           return@prepareSessionAnd
         }
-
-        val mailUnreadResponse = neu.getPersonalDataItem(
-          session, ids, "mail.coremailStudent"
-        )
-        _mailUnread.value = mailUnreadResponse.first?.data
-        _coreMailRedirector.value = mailUnreadResponse.first?.data?.url
-        Log.d("refreshUserInfo", "CoreMail redirector: ${_coreMailRedirector.value}")
-        updateSession(mailUnreadResponse.second)
 
         val cardBalanceResponse = neu.getPersonalDataItem(session, ids, "card.balance")
         _cardBalance.value = cardBalanceResponse.first?.data
@@ -265,33 +181,6 @@ class ProfileViewModel(
     }
   }
 
-  private suspend fun getCoreMailUrl(): String? {
-    val redirector = _coreMailRedirector.value
-    if (redirector != null) {
-      val pair = prepareSessionAnd { session -> neu.getCoreMailUrl(session, redirector) }
-      updateSession(pair.second)
-      val coreMailUrl = pair.first
-      return coreMailUrl
-    } else {
-      return null
-    }
-  }
-
-  fun openCoreMail(context: Context) {
-    viewModelScope.launch {
-      val url = getCoreMailUrl()
-      if (url != null) {
-        val intent = CustomTabsIntent.Builder()
-          .setStartAnimations(context, R.anim.slide_in_right, R.anim.slide_out_left)
-          .setExitAnimations(context, android.R.anim.slide_in_left, android.R.anim.slide_out_right)
-          .build()
-        val uri = Uri.parse(url)
-        intent.launchUrl(context, uri)
-      } else {
-        Toast.makeText(context, R.string.error_open_coremail, Toast.LENGTH_SHORT).show()
-      }
-    }
-  }
 
   private fun jumpToErrorPage(context: Context, msg: String) {
     val intent = Intent(context, ErrorActivity::class.java)

@@ -79,6 +79,8 @@ class CampusRunningActivity : ComponentActivity() {
           val customTabsIntent = CustomTabsIntent.Builder()
             .setUrlBarHidingEnabled(true)
             .setShowTitle(false)
+            .setStartAnimations(context, R.anim.slide_in_right, R.anim.slide_out_left)
+            .setExitAnimations(context, android.R.anim.slide_in_left, android.R.anim.slide_out_right)
             .build()
           customTabsIntent.intent.addFlags(FLAG_ACTIVITY_NEW_DOCUMENT)
           customTabsIntent.launchUrl(context, Uri.parse(url))

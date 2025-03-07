@@ -1,6 +1,7 @@
 package ink.chyk.neuqrcode.neu
 
 import kotlinx.serialization.*
+import kotlinx.serialization.builtins.*
 import kotlinx.serialization.json.*
 
 @Serializable
@@ -174,3 +175,34 @@ data class Course(
 enum class CoursePeriod {
   MORNING, AFTERNOON, EVENING
 }
+
+@Serializable
+data class MailListResponse(
+  @Serializable(with = MailListTransformer::class)
+  val list: List<MailDetails>,
+  val num: String,
+  val url: String
+)
+
+object MailListTransformer : JsonTransformingSerializer<List<MailDetails>>(ListSerializer(MailDetails.serializer())) {
+  override fun transformDeserialize(element: JsonElement): JsonElement {
+    return if (element is JsonArray) {
+      element
+    } else {
+      JsonArray(listOf(element))
+    }
+  }
+}
+
+@Serializable
+data class MailDetails(
+  val mid: String,
+  val msid: String? = null,
+  val fid: String,
+  val flag: String,
+  val from: String,
+  val to: String,
+  val subject: String,
+  val size: String,
+  val date: String,
+)

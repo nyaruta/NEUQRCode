@@ -139,4 +139,6 @@
     <string name="run_t5_5">你的坚持，让梦想照进了现实！</string>
     <string name="location_permission_required">需要定位权限</string>
     <string name="location_permission_required_content">请授予 NEU 一码通定位权限，\n以在校园乐跑中使用。</string>
+    <string name="student_mailbox">学生邮箱</string>
+    <string name="unreads"> 封未读邮件</string>
 </resources>

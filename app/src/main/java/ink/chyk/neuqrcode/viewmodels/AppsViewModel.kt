@@ -1,7 +1,10 @@
 package ink.chyk.neuqrcode.viewmodels
 
 import android.content.*
+import android.net.*
 import android.util.*
+import android.widget.*
+import androidx.browser.customtabs.*
 import androidx.compose.ui.graphics.*
 import androidx.lifecycle.*
 import com.tencent.mmkv.*
@@ -18,7 +21,9 @@ class AppsViewModel(
   private val neu: NEUPass,
   private val mmkv: MMKV,
   private val campusRun: CampusRun
-) : ViewModel() {
+) : PersonalViewModel(
+  neu, mmkv
+) {
 
   enum class LoadingState {
     LOADING,
@@ -33,10 +38,21 @@ class AppsViewModel(
   // 当前学期名称
   private var _termName = MutableStateFlow("")
   val termName: StateFlow<String> = _termName
+
+  // 存储乐跑 API 返回的数据
   private var _beforeRun = MutableStateFlow<BeforeRunResponse?>(null)
   val beforeRun: StateFlow<BeforeRunResponse?> = _beforeRun
   private var _termRunRecord = MutableStateFlow<GetTermRunRecordResponse?>(null)
   val termRunRecord: StateFlow<GetTermRunRecordResponse?> = _termRunRecord
+
+  // 加载状态：邮件
+  private var _mailListState = MutableStateFlow(LoadingState.LOADING)
+  val mailListState: StateFlow<LoadingState> = _mailListState
+
+  // 邮件列表
+  private var _mailList = MutableStateFlow<MailListResponse?>(null)
+  val mailList: StateFlow<MailListResponse?> = _mailList
+  private val _coreMailRedirector = MutableStateFlow<String?>(null)
 
   private val t1 = arrayOf(
     R.string.run_t1_1,
@@ -105,6 +121,55 @@ class AppsViewModel(
       distanceDouble < 80 -> Color(0, 165, 255) to t3.random()
       distanceDouble < 96 -> Color(0, 255, 165) to t4.random()
       else -> Color(20, 255, 20) to t5.random()
+    }
+  }
+
+  fun initMailBox() {
+    viewModelScope.launch {
+      withContext(Dispatchers.IO) {
+        try {
+          // 获取未读邮件
+          prepareSessionAnd {
+            val mailListResponse = neu.getMailList(it)
+            val mailList = mailListResponse.first
+            updateSession(mailListResponse.second)
+            _mailList.value = mailList
+            _coreMailRedirector.value = mailList?.url
+            _mailListState.value = LoadingState.SUCCESS
+          }
+        } catch (e: Exception) {
+          Log.e("AppsViewModel", "initMailBox: ${e.message}")
+          _mailListState.value = LoadingState.FAILED
+        }
+      }
+    }
+  }
+
+  private suspend fun getCoreMailUrl(): String? {
+    val redirector = _coreMailRedirector.value
+    if (redirector != null) {
+      val pair = prepareSessionAnd { session -> neu.getCoreMailUrl(session, redirector) }
+      updateSession(pair.second)
+      val coreMailUrl = pair.first
+      return coreMailUrl
+    } else {
+      return null
+    }
+  }
+
+  fun openCoreMail(context: Context) {
+    viewModelScope.launch {
+      val url = getCoreMailUrl()
+      if (url != null) {
+        val intent = CustomTabsIntent.Builder()
+          .setStartAnimations(context, R.anim.slide_in_right, R.anim.slide_out_left)
+          .setExitAnimations(context, android.R.anim.slide_in_left, android.R.anim.slide_out_right)
+          .build()
+        val uri = Uri.parse(url)
+        intent.launchUrl(context, uri)
+      } else {
+        Toast.makeText(context, R.string.error_open_coremail, Toast.LENGTH_SHORT).show()
+      }
     }
   }
 }

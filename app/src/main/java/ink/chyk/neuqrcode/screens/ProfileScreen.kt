@@ -1,10 +1,8 @@
 package ink.chyk.neuqrcode.screens
 
 import android.annotation.*
-import android.app.Activity
 import android.content.*
 import android.content.ClipboardManager
-import android.content.pm.*
 import android.util.*
 import android.widget.Toast
 import androidx.activity.compose.*
@@ -29,7 +27,6 @@ import ink.chyk.neuqrcode.activities.*
 import ink.chyk.neuqrcode.neu.*
 import ink.chyk.neuqrcode.viewmodels.*
 import ink.chyk.neuqrcode.R
-import android.graphics.drawable.Icon as AndroidIcon
 import coil3.compose.AsyncImage
 import coil3.network.*
 import coil3.request.*
@@ -44,7 +41,6 @@ fun ProfileScreen(
   val userInfo by viewModel.userInfo.collectAsState()
   val cardBalance by viewModel.cardBalance.collectAsState()
   val netBalance by viewModel.netBalance.collectAsState()
-  val mailUnread by viewModel.mailUnread.collectAsState()
   val headers by viewModel.headers.collectAsState()
   val loadComplete by viewModel.loadComplete.collectAsState()
 
@@ -92,13 +88,6 @@ fun ProfileScreen(
           }
         } ${netBalance?.unit}" else null,
         clickable = false
-      )
-      RowButton(
-        iconResource = R.drawable.ic_fluent_mail_24_regular,
-        text = stringResource(R.string.email),
-        content = if (loadComplete) "${stringResource(R.string.email_unread)} ${mailUnread?.valueString}" else null,
-        clickable = true,
-        onClick = { viewModel.openCoreMail(context) }
       )
       RowButton(
         iconResource = R.drawable.ic_fluent_person_swap_24_regular,

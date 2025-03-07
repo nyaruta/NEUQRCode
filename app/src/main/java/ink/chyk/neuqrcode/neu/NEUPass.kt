@@ -374,6 +374,8 @@ class NEUPass(
         if (e is SessionExpiredException) {
           throw e
         } else {
+          Log.d("NEUPass", "Error: ${e.message}")
+          e.printStackTrace()
           // 请求失败
           if (!onFailed()) {
             throw RequestFailedException(url)
@@ -404,6 +406,15 @@ class NEUPass(
     return basicPersonalApiRequest(
       session,
       "https://personal.neu.edu.cn/portal/personal/frontend/data/items?type=personal_data"
+    )
+  }
+
+  suspend fun getMailList(
+    session: PersonalSession,
+  ): Pair<MailListResponse?, PersonalSession> {
+    return basicPersonalApiRequest(
+      session,
+      "https://personal.neu.edu.cn/portal/neu/frontend/mail/list"
     )
   }
 
