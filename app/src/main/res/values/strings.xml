@@ -137,4 +137,6 @@
     <string name="run_t5_3">你已经证明了，没有什么能阻挡你！</string>
     <string name="run_t5_4">"跑完的不是终点，而是新的起点！</string>
     <string name="run_t5_5">你的坚持，让梦想照进了现实！</string>
+    <string name="location_permission_required">需要定位权限</string>
+    <string name="location_permission_required_content">请授予 NEU 一码通定位权限，\n以在校园乐跑中使用。</string>
 </resources>

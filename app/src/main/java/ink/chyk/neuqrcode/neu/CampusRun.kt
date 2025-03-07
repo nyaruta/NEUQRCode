@@ -7,7 +7,6 @@ import kotlinx.coroutines.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 import okhttp3.*
-import okhttp3.RequestBody.Companion.toRequestBody
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -26,8 +25,9 @@ class CampusRun(
     // API 端点
     val index = "/WpIndex/Index"
     val beforeRun = "/Run2/beforeRunV260"
-    val getTimestamp = "/Run/getTimestampV278"
-    val getTermList = "/WpRun/getTermList"
+
+    // val getTimestamp = "/Run/getTimestampV278"
+    // val getTermList = "/WpRun/getTermList"
     val getTermRunRecord = "/WpRun/getTermRunRecord"
   }
 
@@ -37,6 +37,10 @@ class CampusRun(
 
   // Referer
   private val referer = "https://tybzhtypt.neu.edu.cn/bdlp_h5_fitness_test/view/db/"
+
+  // 开始跑步的 url
+  private val startRunUrl =
+    "https://tybzhtypt.neu.edu.cn/bdlp_h5_fitness_test/view/db/#/pages/run/index"
 
   private val encryption = object {
     // 加密算法
@@ -71,6 +75,9 @@ class CampusRun(
       return Base64.getEncoder().encodeToString(encryptedBytes)
     }
   }
+
+  // ST
+  private var campusRunTicket: String? = null
 
   // 登录时返回的请求参数
   private var args: Map<String, Any>? = null
@@ -112,7 +119,7 @@ class CampusRun(
 
     val portalTicket = getPortalTicket()
 
-    val campusRunTicket = neu.loginNEUAppTicket(portalTicket, callbackUrl)
+    campusRunTicket = neu.loginNEUAppTicket(portalTicket, callbackUrl)
 
     //Log.d("CampusRun", "CampusRun Ticket: $campusRunTicket")
 
@@ -237,5 +244,12 @@ class CampusRun(
 
   suspend fun getTermRunRecord(): GetTermRunRecordResponse? {
     return campusRunApiRequest(api.getTermRunRecord, args!!)
+  }
+
+  fun toStartRunUrl(): String {
+    // Cookie to Url
+    return "$startRunUrl?${
+      args!!.map { (key, value) -> "$key=$value" }.joinToString("&")
+    }&timestamp=${System.currentTimeMillis() / 1000}&login_type=4"
   }
 }

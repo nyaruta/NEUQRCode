@@ -87,8 +87,9 @@ class AppsViewModel(
 
   fun startCampusRun(context: Context) {
     // 进入乐跑
+
     val intent = Intent(context, CampusRunningActivity::class.java)
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+    intent.putExtra("url", campusRun.toStartRunUrl())
     context.startActivity(intent)
   }
 

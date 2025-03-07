@@ -116,6 +116,7 @@ fun CampusRunCard(
           )
         }
         IconButton(
+          enabled = loadingState.value == AppsViewModel.LoadingState.SUCCESS,
           onClick = {
             // 进入乐跑按钮
             viewModel.startCampusRun(context)
