@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.lsplugin.jgit)
     alias(libs.plugins.lsplugin.apksign)
+    alias(libs.plugins.lsplugin.apktransform)
 }
 
 val repo = jgit.repo()

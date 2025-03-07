@@ -59,4 +59,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 lsplugin-jgit = { id = "org.lsposed.lsplugin.jgit", version = "1.1" }
 lsplugin-apksign = { id = "org.lsposed.lsplugin.apksign", version = "1.4" }
-
+lsplugin-apktransform = { id = "org.lsposed.lsplugin.apktransform", version = "1.2" }
