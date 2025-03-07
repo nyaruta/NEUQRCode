@@ -42,10 +42,10 @@ fun getAppVersionName(): String {
 }
 
 apksign {
-    storeFileProperty = project.properties["releaseStoreFile"].toString()
-    storePasswordProperty = project.properties["releaseStorePassword"].toString()
-    keyAliasProperty = project.properties["releaseKeyAlias"].toString()
-    keyPasswordProperty = project.properties["releaseKeyPassword"].toString()
+    storeFileProperty = "releaseStoreFile"
+    storePasswordProperty = "releaseStorePassword"
+    keyAliasProperty = "releaseKeyAlias"
+    keyPasswordProperty = "releaseKeyPassword"
 }
 
 apktransform {
