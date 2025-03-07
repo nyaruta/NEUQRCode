@@ -231,7 +231,7 @@ fun TodayCoursesList(
               .width(4.dp)
               .height(40.dp)
               .clip(RoundedCornerShape(4.dp)),
-            color = Color(viewModel.calcCourseColor(it.name, dark))
+            color = Color(HashColorHelper.calcColor(it.name, dark))
           ) {}
           Spacer(modifier = Modifier.width(8.dp))
           // 使用剩余权重，截断多余文本，显示省略号

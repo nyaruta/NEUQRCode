@@ -1,6 +1,5 @@
 package ink.chyk.neuqrcode.viewmodels
 
-import androidx.core.graphics.*
 import androidx.lifecycle.*
 import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.*
@@ -39,34 +38,9 @@ class CoursesViewModel(
     } ?: emptyList()
   }
 
-  private fun isCourseStopped(courseName: String): Boolean =
-    courseName.startsWith("停课")
-
   fun getWeekday(): String {
     val localDate = LocalDate.parse(_date.value, formatter)
     return localDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
-  }
-
-  private val courseColorCache = mutableMapOf<String, Int>()
-
-  fun calcCourseColor(
-    courseName: String,
-    darkMode: Boolean
-  ): Int {
-    // 根据名称的哈希值计算颜色
-    if (courseColorCache.containsKey(courseName)) {
-      return courseColorCache[courseName]!!
-    }
-    val courseColor = if (isCourseStopped(courseName)) {
-      0xFFB0B0B0.toInt()
-    } else {
-      val hue = Math.floorMod(courseName.hashCode(), 360).toFloat()
-      val saturation = 0.6f
-      val lightness = if (darkMode) 0.6f else 0.85f
-      ColorUtils.HSLToColor(floatArrayOf(hue, saturation, lightness))
-    }
-    courseColorCache[courseName] = courseColor
-    return courseColor
   }
 
   fun thisWeek(): Int {
