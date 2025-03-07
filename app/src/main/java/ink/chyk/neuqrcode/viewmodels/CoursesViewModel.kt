@@ -92,7 +92,24 @@ class CoursesViewModel(
   }
 
   private suspend fun initQuote() {
-    _quote.value = Hitokoto().getQuote()
+    try {
+      _quote.value = Hitokoto().getQuote()
+    } catch (e: Exception) {
+      _quote.value = HitokotoQuote(
+        id = 0,
+        uuid = "",
+        hitokoto = "网络错误",
+        type = "",
+        from = "",
+        fromWho = "",
+        creator = "",
+        creatorUid = 0,
+        reviewer = 0,
+        commitFrom = "",
+        createdAt = 0,
+        length = 0
+      )
+    }
   }
 
   init {
