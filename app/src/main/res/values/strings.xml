@@ -120,13 +120,13 @@
     <string name="campus_run">校园乐跑</string>
     <string name="loading">加载中…</string>
     <string name="no_network">加载失败，请连接校园网。</string>
-    <string name="run_t1_1">跑步的旅程从第一步开始，你已经走在路上了！</string>
+    <string name="run_t1_1">从第一步开始，你已经走在路上了！</string>
     <string name="run_t1_2">迈出第一步，你已经比昨天更强大！</string>
     <string name="run_t1_3">每一次起跑，都是对未来的承诺。</string>
     <string name="run_t2_1">每一步都在塑造更好的自己，加油！</string>
-    <string name="run_t2_2">跑过的路不会骗你，汗水终将化为力量！</string>
+    <string name="run_t2_2">跑过的路不会骗你，汗水将化为力量！</string>
     <string name="run_t2_3">你已经超越了很多人，继续突破自己！</string>
-    <string name="run_t3_1">每一次呼吸都在证明你的毅力，继续前行！</string>
+    <string name="run_t3_1">你已经走过了最难的路，胜利在望！</string>
     <string name="run_t3_2">跑下去，胜利的曙光就在不远处！</string>
     <string name="run_t3_3">坚持到现在，你已经是自己的英雄！</string>
     <string name="run_t4_1">最后的坚持，将成就最闪耀的自己！</string>
