@@ -53,9 +53,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/debug/*.apk
 
       - name: Set up date
+      - name: Pre-release
+        if: github.event_name == 'push' && github.repository == 'chiyuki0325/NEUQRCode'
         run: echo "DATE=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
       
       - name: Pre-release
@@ -64,7 +66,7 @@ jobs:
         with:
           files: |
             app/release/*.apk
-            app/build/outputs/apk/debug/*.apk
+            app/debug/*.apk
           prerelease: true
           tag_name: beta
           body: "此为预览版本，可能存在不稳定情况，欢迎随时反馈。\n构建日期：${{ env.DATE }}"
