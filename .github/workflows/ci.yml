@@ -56,7 +56,6 @@ jobs:
           path: app/debug/*.apk
 
       - name: Set up date
-      - name: Pre-release
         if: github.event_name == 'push' && github.repository == 'chiyuki0325/NEUQRCode'
         run: echo "DATE=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
       
