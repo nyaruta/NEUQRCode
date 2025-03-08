@@ -57,7 +57,7 @@ jobs:
 
       - name: Set up date
         if: github.event_name == 'push' && github.repository == 'chiyuki0325/NEUQRCode'
-        run: echo "DATE=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+        run: echo "DATE=$(date -u +%y.%m.%d)" >> $GITHUB_ENV
       
       - name: Pre-release
         if: github.event_name == 'push' && github.repository == 'chiyuki0325/NEUQRCode'
