@@ -118,6 +118,15 @@ class ProfileViewModel(
       context.packageManager.getPackageInfo(context.packageName, 0)
     val versionName = packageInfo.versionName
 
+    val isDebug = versionName?.substringAfterLast("-")?.length == 8
+
+    if (isDebug) {
+      toast(R.string.debug_no_update)
+      return
+    }
+
+    val versionMajorName = versionName?.substringBefore("-")  // v3.0.2-3-commithash -> v3.0.2
+
     val client = OkHttpClient.Builder()
       .build()
 
@@ -131,8 +140,8 @@ class ProfileViewModel(
         if (response.isSuccessful) {
           val body = response.body?.string()
           val responseJson = Json.decodeFromString<GitHubRelease>(body!!)
-          val tagName = responseJson.tagName.removePrefix("v")
-          if (tagName != versionName) {
+          val tagName = responseJson.tagName
+          if (tagName != versionMajorName) {
             val sb = StringBuilder()
             sb.append(context.getString(R.string.found_latest_release, tagName))
               .append("\n")
