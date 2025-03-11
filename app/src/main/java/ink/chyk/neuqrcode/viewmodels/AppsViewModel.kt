@@ -161,12 +161,18 @@ class AppsViewModel(
     viewModelScope.launch {
       val url = getCoreMailUrl()
       if (url != null) {
+        /*
         val intent = CustomTabsIntent.Builder()
           .setStartAnimations(context, R.anim.slide_in_right, R.anim.slide_out_left)
           .setExitAnimations(context, android.R.anim.slide_in_left, android.R.anim.slide_out_right)
           .build()
         val uri = Uri.parse(url)
         intent.launchUrl(context, uri)
+         */
+
+        val intent = Intent(context, MailBoxActivity::class.java)
+        intent.putExtra("url", url)
+        context.startActivity(intent)
       } else {
         Toast.makeText(context, R.string.error_open_coremail, Toast.LENGTH_SHORT).show()
       }

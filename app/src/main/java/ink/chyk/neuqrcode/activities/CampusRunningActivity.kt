@@ -1,10 +1,8 @@
 package ink.chyk.neuqrcode.activities
 
-import android.*
-import android.annotation.*
+import android.Manifest
 import android.content.pm.*
 import android.os.*
-import android.webkit.WebSettings.*
 import androidx.activity.*
 import androidx.activity.compose.*
 import androidx.activity.result.*
@@ -14,17 +12,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
-import androidx.compose.ui.viewinterop.*
 import androidx.core.content.*
 import androidx.lifecycle.*
-import com.tencent.smtt.export.external.interfaces.*
 import ink.chyk.neuqrcode.ui.theme.*
 import com.tencent.smtt.sdk.*
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.R
 
 class CampusRunningActivity : ComponentActivity() {
@@ -81,7 +77,13 @@ class CampusRunningActivity : ComponentActivity() {
     AppTheme {
       Scaffold { innerPadding ->
         if (permissionGranted) {
-          CampusRunningWebView(url, webViewState, Modifier.padding(innerPadding), isDarkMode)
+          CustomWebView(
+            url,
+            webViewState,
+            Modifier.padding(innerPadding),
+            isDarkMode,
+            listenBack = false,
+            finish = { finish() })
         } else {
           PermissionGrantScreen(Modifier.padding(innerPadding))
         }
@@ -145,78 +147,5 @@ class CampusRunningActivity : ComponentActivity() {
         textAlign = TextAlign.Center,
       )
     }
-  }
-
-  @SuppressLint("SetJavaScriptEnabled")
-  @Composable
-  fun CampusRunningWebView(
-    url: String,
-    state: MutableState<WebView?> = remember { mutableStateOf(null) },
-    modifier: Modifier = Modifier,
-    isDarkMode: Boolean = false
-  ) {
-    // 封装 TBS WebView 组件
-    // 部分代码来自 https://stackoverflow.com/questions/34986413/location-is-accessed-in-chrome-doesnt-work-in-webview/34990055
-
-    val ctx = LocalContext.current
-
-    AndroidView(factory = { context ->
-      val webView = WebView(context).apply {
-        settings.apply {
-          javaScriptEnabled = true
-          domStorageEnabled = true
-          setGeolocationEnabled(true)
-          setAppCacheEnabled(true)
-          setGeolocationDatabasePath(ctx.filesDir.path)
-          mixedContentMode = MIXED_CONTENT_ALWAYS_ALLOW
-          useWideViewPort = true
-          allowFileAccess = true
-          allowContentAccess = true
-          safeBrowsingEnabled = false
-
-
-          webChromeClient = object: WebChromeClient() {
-            override fun onGeolocationPermissionsShowPrompt(
-              origin: String?,
-              callback: GeolocationPermissionsCallback?
-            ) {
-              callback?.invoke(origin, true, false)
-            }
-          }
-
-          webViewClient = object: WebViewClient() {
-            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-              // 允许页面跳转
-              view?.loadUrl(url)
-              return true
-            }
-
-            override fun onPageFinished(view: WebView?, url: String?) {
-              // 注入暗黑模式 css
-              super.onPageFinished(view, url)
-              if (isDarkMode) {
-                view?.evaluateJavascript(
-                  """
-                  (() => {
-                    const startBtn = document.querySelector(".run__start-btn")
-                    if (startBtn) startBtn.click()
-                    
-                    const css = document.createElement('style')
-                    css.type = 'text/css'
-                    css.innerHTML = 'html { filter: invert(1) hue-rotate(180deg) saturate(1); }'
-                    document.head.appendChild(css)
-                  })()
-                  """.trimIndent()
-                ) {}
-              }
-            }
-          }
-        }
-      }
-
-      state.value = webView
-      webView.loadUrl(url)
-      webView
-    }, modifier = modifier.fillMaxSize())
   }
 }
