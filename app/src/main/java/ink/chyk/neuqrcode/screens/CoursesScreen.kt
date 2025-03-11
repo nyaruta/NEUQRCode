@@ -222,8 +222,8 @@ fun TodayCoursesList(
         ) {
           // 保持课程时间宽度固定
           Column(modifier = Modifier.width(IntrinsicSize.Min)) {
-            Text(it.start)
-            Text(it.end)
+            Text(it.start, fontFamily = FontFamily(Font(R.font.roboto_numeric)), fontWeight = FontWeight.Medium)
+            Text(it.end, fontFamily = FontFamily(Font(R.font.roboto_numeric)), fontWeight = FontWeight.Medium)
           }
           Spacer(modifier = Modifier.width(8.dp))
           Surface(
