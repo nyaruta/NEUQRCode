@@ -56,6 +56,12 @@ class CoursesViewModel(
     return localDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
   }
 
+  fun getWeekdayNum(dateId: String): Int {
+    // 传入 dateId 获取星期几，周日为0，以此类推
+    val localDate = LocalDate.parse(dateId, formatter)
+    return localDate.dayOfWeek.value
+  }
+
   fun thisWeek(dateId: String): Int {
     // 根据 dateId 计算当前周数
     val localDate = LocalDate.parse(dateId, formatter)
@@ -132,5 +138,13 @@ class CoursesViewModel(
 
   fun isToday(dateId: String): Boolean {
     return dateId == today
+  }
+
+  fun prevDay(dateId: String): String {
+    return LocalDate.parse(dateId, formatter).minusDays(1).format(formatter)
+  }
+
+  fun nextDay(dateId: String): String {
+    return LocalDate.parse(dateId, formatter).plusDays(1).format(formatter)
   }
 }

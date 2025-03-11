@@ -2,7 +2,9 @@ package ink.chyk.neuqrcode.screens
 
 import android.content.*
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material3.*
@@ -10,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.*
@@ -26,8 +29,10 @@ import java.time.format.TextStyle as TimeTextStyle
 import java.util.Locale
 import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.neu.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.time.*
+import kotlin.math.*
 
 
 @Composable
@@ -68,19 +73,30 @@ fun TodayCourses(
   dateState: MutableStateFlow<String>
 ) {
   // 课表主组件
+  // 其中的 dateState 由最顶级组件传递
 
   val showWeekJumpDialog = remember { mutableStateOf(false) }
 
+  val density = LocalDensity.current
+  var width by remember { mutableStateOf(0) }
+  val widthDp = with(density) { width.toDp() }
+
   Column(
-    modifier = Modifier.fillMaxSize(),
-    verticalArrangement = Arrangement.SpaceBetween
+    modifier = Modifier
+      .fillMaxSize()
+      .onSizeChanged { size ->
+        width = size.width
+      }
   ) {
-    Column {
+    Column(
+      modifier = Modifier.weight(1f)
+    ) {
       // 日期和每日一言
       TodayTitle(viewModel, dateState)
-      Spacer(modifier = Modifier.height(32.dp))
-      // 课程卡片
-      CoursesCard(viewModel, dateState)
+      Spacer(modifier = Modifier.height(16.dp))
+
+      // 课程卡片封装组件
+      CoursesCardOuter(viewModel, dateState, widthDp)
     }
     // 底部选择器
     DaySelector(viewModel, showJumpDialog = { showWeekJumpDialog.value = true }, dateState)
@@ -92,6 +108,108 @@ fun TodayCourses(
       viewModel = viewModel,
       onDismissRequest = { showWeekJumpDialog.value = false },
       dateState = dateState
+    )
+  }
+}
+
+@Composable
+fun CoursesCardOuter(
+  viewModel: CoursesViewModel,
+  dateState: MutableStateFlow<String>,
+  width: Dp,
+) {
+  // 课程卡片封装组件（左右滑动翻页）
+  val dateId by dateState.collectAsState()
+  val density = LocalDensity.current
+  val widthPx = with(density) { width.toPx() }
+  val scope = rememberCoroutineScope()
+
+  var currentDate by remember { mutableStateOf(dateId) }
+  var prevDate by remember { mutableStateOf(viewModel.prevDay(dateId)) }
+  var nextDate by remember { mutableStateOf(viewModel.nextDay(dateId)) }
+
+  var offsetX by remember { mutableFloatStateOf(0f) }
+
+  val spacingPx = with(density) { 4.dp.toPx() }
+
+  // 处理外部dateId变化
+  LaunchedEffect(dateId) {
+    if (dateId != currentDate) {
+      currentDate = dateId
+      offsetX = 0f
+    }
+  }
+
+  // 更新前后日期
+  LaunchedEffect(currentDate) {
+    prevDate = viewModel.prevDay(currentDate)
+    nextDate = viewModel.nextDay(currentDate)
+  }
+
+  val dragModifier = Modifier.draggable(
+    orientation = Orientation.Horizontal,
+    state = rememberDraggableState { delta ->
+      offsetX += delta
+    },
+    onDragStopped = { velocity ->
+      val target = when {
+        offsetX < -widthPx / 5 -> -widthPx
+        offsetX > widthPx / 5 -> widthPx
+        else -> 0f
+      }
+
+      scope.launch {
+        animate(
+          initialValue = offsetX,
+          targetValue = target,
+          /*
+          animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+          )
+          */
+          animationSpec = tween(durationMillis = 300)
+        ) { value, _ -> offsetX = value }
+
+        if (target != 0f) {
+          val newDate = if (target < 0) nextDate else prevDate
+          currentDate = newDate
+          dateState.value = newDate
+          offsetX = 0f
+        }
+      }
+    }
+  )
+
+  Box(
+    modifier = Modifier
+      .width(width)
+      .fillMaxHeight()
+      .then(dragModifier)
+      .clipToBounds()
+  ) {
+    // 前一页
+    CoursesCard(
+      viewModel, prevDate,
+      modifier = Modifier
+        .width(width)
+        .offset { IntOffset((offsetX - widthPx - spacingPx).roundToInt(), 0) }
+    )
+
+    // 当前页
+    CoursesCard(
+      viewModel, currentDate,
+      modifier = Modifier
+        .width(width)
+        .offset { IntOffset(offsetX.roundToInt(), 0) }
+    )
+
+    // 后一页
+    CoursesCard(
+      viewModel, nextDate,
+      modifier = Modifier
+        .width(width)
+        .offset { IntOffset((offsetX + widthPx + spacingPx).roundToInt(), 0) }
     )
   }
 }
@@ -121,16 +239,16 @@ fun TodayTitle(
 @Composable
 fun CoursesCard(
   viewModel: CoursesViewModel,
-  dateState: MutableStateFlow<String>
+  dateId: String,
+  modifier: Modifier = Modifier
 ) {
   // 课表卡片
 
-  val dateId by dateState.collectAsState()
   val todayCourses = viewModel.getCoursesByDate(dateId)
   val scrollState = rememberScrollState()
 
   Card(
-    modifier = Modifier
+    modifier = modifier
       .fillMaxWidth()
       .padding(0.dp)
       .verticalScroll(scrollState),
@@ -142,7 +260,7 @@ fun CoursesCard(
         .fillMaxWidth()
     ) {
       if (todayCourses.isEmpty()) {
-        NoCoursesSplash()
+        NoCoursesSplash(dateId)
       } else {
         TodayCoursesList(todayCourses)
       }
@@ -414,7 +532,7 @@ fun PrevNextButton(
 }
 
 @Composable
-fun NoCoursesSplash() {
+fun NoCoursesSplash(dateId: String) {
   val ctx = LocalContext.current
   Column(
     modifier = Modifier
@@ -424,7 +542,7 @@ fun NoCoursesSplash() {
   ) {
     Image(
       painter = painterResource(
-        listOf(R.drawable.neko1, R.drawable.neko2, R.drawable.neko3).random()
+        listOf(R.drawable.neko1, R.drawable.neko2, R.drawable.neko3)[dateId.hashCode().absoluteValue % 3]
       ),
       contentDescription = "No Courses",
       modifier = Modifier
