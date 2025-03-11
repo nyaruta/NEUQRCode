@@ -78,7 +78,7 @@ fun TodayCourses(
   val showWeekJumpDialog = remember { mutableStateOf(false) }
 
   val density = LocalDensity.current
-  var width by remember { mutableStateOf(0) }
+  var width by remember { mutableIntStateOf(0) }
   val widthDp = with(density) { width.toDp() }
 
   Column(

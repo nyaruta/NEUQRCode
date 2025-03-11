@@ -298,6 +298,8 @@ class NEUPass(
     postBody: MultipartBody? = null,
     putBody: MultipartBody? = null
   ): Pair<T?, PersonalSession> {
+    //Log.d("NEUPass", "Request: $url")
+
     // 新的 3.x api 在每次请求后都有可能更新 sess_id
     // 返回结果和新的 session
     val client = OkHttpClient.Builder()
@@ -341,6 +343,9 @@ class NEUPass(
             throw SessionExpiredException()
           }
           val body = response.body?.string()
+
+          //Log.d("NEUPass", "Response: $body")
+
           val result: PersonalResponse<T>
           try {
             result = Json.decodeFromString<PersonalResponse<T>>(body!!)

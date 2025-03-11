@@ -2,6 +2,8 @@ package ink.chyk.neuqrcode.neu
 
 import kotlinx.serialization.*
 import kotlinx.serialization.builtins.*
+import kotlinx.serialization.descriptors.*
+import kotlinx.serialization.encoding.*
 import kotlinx.serialization.json.*
 
 @Serializable
@@ -200,9 +202,30 @@ data class MailDetails(
   val msid: String? = null,
   val fid: String,
   val flag: String,
+  @Serializable(with = StringOrArraySerializer::class)
   val from: String,
+  @Serializable(with = StringOrArraySerializer::class)
   val to: String,
   val subject: String,
   val size: String,
   val date: String,
 )
+
+// generated with deepseek
+// 我还不是很了解 kotlinx.serialization 的自定义序列化器
+
+object StringOrArraySerializer : KSerializer<String> {
+  override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("StringOrArray", PrimitiveKind.STRING)
+
+  override fun serialize(encoder: Encoder, value: String) {
+    encoder.encodeString(value)
+  }
+
+  override fun deserialize(decoder: Decoder): String {
+    return when (val element = decoder.decodeSerializableValue(JsonElement.serializer())) {
+      is JsonArray -> element.joinToString(" ") { it.jsonPrimitive.content }
+      is JsonPrimitive -> element.content
+      else -> throw SerializationException("Expected String or Array for field")
+    }
+  }
+}
