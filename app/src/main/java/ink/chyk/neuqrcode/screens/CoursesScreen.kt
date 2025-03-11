@@ -26,15 +26,22 @@ import java.time.format.TextStyle as TimeTextStyle
 import java.util.Locale
 import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.neu.*
+import kotlinx.coroutines.flow.*
+import java.time.*
 
 
 @Composable
 fun CoursesScreen(
   viewModel: CoursesViewModel,
   @Suppress("UNUSED_PARAMETER")
-  navController: NavController,
+  navController: NavController,  // 没必要
   innerPadding: PaddingValues
 ) {
+  // 课程表界面
+
+  // date 状态放在最顶级组件 之后逐级传递
+  val dateState = MutableStateFlow<String>(viewModel.today)
+
   if (!viewModel.isCourseImported()) {
     return ImportCoursesSplash()
   }
@@ -46,17 +53,22 @@ fun CoursesScreen(
       .padding(16.dp),
     contentAlignment = Alignment.Center
   ) {
-    TodayCourses(viewModel)
+    TodayCourses(viewModel, dateState)
   }
 }
 
+// 早午晚图标常量
 val MORNING_ICON = R.drawable.ic_fluent_weather_sunny_24_regular
 val AFTERNOON_ICON = R.drawable.ic_fluent_weather_sunny_low_24_regular
 val EVENING_ICON = R.drawable.ic_fluent_weather_partly_cloudy_night_24_regular
 
 @Composable
-fun TodayCourses(viewModel: CoursesViewModel) {
+fun TodayCourses(
+  viewModel: CoursesViewModel,
+  dateState: MutableStateFlow<String>
+) {
   // 课表主组件
+
   val showWeekJumpDialog = remember { mutableStateOf(false) }
 
   Column(
@@ -64,32 +76,40 @@ fun TodayCourses(viewModel: CoursesViewModel) {
     verticalArrangement = Arrangement.SpaceBetween
   ) {
     Column {
-      TodayTitle(viewModel)
+      // 日期和每日一言
+      TodayTitle(viewModel, dateState)
       Spacer(modifier = Modifier.height(32.dp))
-      CoursesCard(viewModel)
+      // 课程卡片
+      CoursesCard(viewModel, dateState)
     }
-    DaySelector(viewModel, showJumpDialog = { showWeekJumpDialog.value = true })
+    // 底部选择器
+    DaySelector(viewModel, showJumpDialog = { showWeekJumpDialog.value = true }, dateState)
   }
 
+  // 日期跳转对话框
   if (showWeekJumpDialog.value) {
     WeekJumpDialog(
       viewModel = viewModel,
-      onDismissRequest = { showWeekJumpDialog.value = false }
+      onDismissRequest = { showWeekJumpDialog.value = false },
+      dateState = dateState
     )
   }
 }
 
 @Composable
-fun TodayTitle(viewModel: CoursesViewModel) {
-  val date by viewModel.date.collectAsState()
+fun TodayTitle(
+  viewModel: CoursesViewModel,
+  dateState: MutableStateFlow<String>
+) {
+  val date by dateState.collectAsState()
   val quote by viewModel.quote.collectAsState()
   val ctx = LocalContext.current
 
   Text(
     ctx.getString(R.string.date).format(
-      date.slice(4..5).toInt(),
-      date.slice(6..7).toInt(),
-      viewModel.getWeekday()
+      date.slice(4..5).toInt(),  // 月
+      date.slice(6..7).toInt(),  // 日
+      viewModel.getWeekday(date)
     ),
     style = MaterialTheme.typography.headlineMedium,
     modifier = Modifier.fillMaxWidth(),
@@ -99,9 +119,14 @@ fun TodayTitle(viewModel: CoursesViewModel) {
 }
 
 @Composable
-fun CoursesCard(viewModel: CoursesViewModel) {
-  val dateId by viewModel.date.collectAsState()
-  val todayCourses = viewModel.getTodayCourses(dateId)
+fun CoursesCard(
+  viewModel: CoursesViewModel,
+  dateState: MutableStateFlow<String>
+) {
+  // 课表卡片
+
+  val dateId by dateState.collectAsState()
+  val todayCourses = viewModel.getCoursesByDate(dateId)
   val scrollState = rememberScrollState()
 
   Card(
@@ -119,7 +144,7 @@ fun CoursesCard(viewModel: CoursesViewModel) {
       if (todayCourses.isEmpty()) {
         NoCoursesSplash()
       } else {
-        TodayCoursesList(todayCourses, viewModel)
+        TodayCoursesList(todayCourses)
       }
     }
   }
@@ -168,11 +193,10 @@ fun FoldInTextAnimation(quote: HitokotoQuote?) {
 @Composable
 fun TodayCoursesList(
   todayCourses: List<Course>,
-  viewModel: CoursesViewModel,
   dark: Boolean = isSystemInDarkTheme()
 ) {
   val ctx = LocalContext.current
-  var previousIcon = 0
+  var previousIcon = 0  // 用于判断是否需要显示早午晚标题
   todayCourses.forEach {
     val icon = when (it.period) {
       CoursePeriod.MORNING -> MORNING_ICON
@@ -181,10 +205,13 @@ fun TodayCoursesList(
     }
 
     if (icon != previousIcon) {
+      // 课程区间变化了，显示早午晚标题
+
       Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
       ) {
+        // 早午晚标题
         Text(
           when (it.period) {
             CoursePeriod.MORNING -> ctx.getString(R.string.morning_courses)
@@ -195,6 +222,8 @@ fun TodayCoursesList(
           modifier = Modifier.padding(vertical = 8.dp)
         )
         Spacer(modifier = Modifier.weight(1f))
+
+        // 这是一条可爱的分割线
         Surface(
           modifier = Modifier
             .height(1.dp)
@@ -220,12 +249,21 @@ fun TodayCoursesList(
           verticalAlignment = Alignment.CenterVertically,
           modifier = Modifier.weight(1f)
         ) {
-          // 保持课程时间宽度固定
+          // 课程开始和结束时间
           Column(modifier = Modifier.width(IntrinsicSize.Min)) {
-            Text(it.start, fontFamily = FontFamily(Font(R.font.roboto_numeric)), fontWeight = FontWeight.Medium)
-            Text(it.end, fontFamily = FontFamily(Font(R.font.roboto_numeric)), fontWeight = FontWeight.Medium)
+            Text(
+              it.start,
+              fontFamily = FontFamily(Font(R.font.roboto_numeric)),
+              fontWeight = FontWeight.Medium
+            )
+            Text(
+              it.end,
+              fontFamily = FontFamily(Font(R.font.roboto_numeric)),
+              fontWeight = FontWeight.Medium
+            )
           }
           Spacer(modifier = Modifier.width(8.dp))
+          // 课程颜色
           Surface(
             modifier = Modifier
               .width(4.dp)
@@ -236,12 +274,14 @@ fun TodayCoursesList(
           Spacer(modifier = Modifier.width(8.dp))
           // 使用剩余权重，截断多余文本，显示省略号
           Column(modifier = Modifier.weight(1f)) {
+            // 课程名称
             Text(
               Pangu.spacingText(it.name),
               style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 20.sp),
               maxLines = 1,
               overflow = TextOverflow.Ellipsis
             )
+            // 课程地点
             Text(
               locationToAnnotated(it.location),
               style = MaterialTheme.typography.bodyMedium,
@@ -264,22 +304,23 @@ fun TodayCoursesList(
 fun DaySelector(
   viewModel: CoursesViewModel,
   showJumpDialog: () -> Unit,
-  dark: Boolean = isSystemInDarkTheme()
+  dateState: MutableStateFlow<String>,
+  dark: Boolean = isSystemInDarkTheme(),
 ) {
   val ctx = LocalContext.current
-  val dateState by viewModel.date.collectAsState()
+  val dateId by dateState.collectAsState()
 
   Column {
     Row(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.SpaceBetween
     ) {
-      viewModel.thisWeekDates().forEach {
+      viewModel.thisWeekDates(dateId).forEach {
         // 简单解包
         val (pack1, courseCount) = it
-        val (date, dateId) = pack1
+        val (thatDate, thatDateId) = pack1
 
-        val backgroundColor = if (dateId == dateState) {
+        val backgroundColor = if (thatDateId == dateId) {
           if (dark) Color.DarkGray else Color.LightGray
         } else Color.Transparent
 
@@ -291,7 +332,7 @@ fun DaySelector(
             .clip(RoundedCornerShape(8.dp))
             .background(backgroundColor)
             .clickable {
-              viewModel.setDate(dateId)
+              dateState.value = thatDateId
             },
           contentAlignment = Alignment.Center
         ) {
@@ -299,12 +340,12 @@ fun DaySelector(
             horizontalAlignment = Alignment.CenterHorizontally
           ) {
             Text(
-              date.dayOfMonth.toString(),
+              thatDate.dayOfMonth.toString(),
               // style = MaterialTheme.typography.bodyMedium,
             )
             Text(
               "${
-                date.dayOfWeek.getDisplayName(
+                thatDate.dayOfWeek.getDisplayName(
                   TimeTextStyle.SHORT,
                   Locale.getDefault()
                 )
@@ -322,14 +363,14 @@ fun DaySelector(
     ) {
       PrevNextButton(
         icon = R.drawable.ic_fluent_chevron_left_20_filled,
-        onClick = { viewModel.prevWeek() }
+        onClick = { dateState.value = viewModel.prevWeek(dateId) }
       )
-      val thisWeekNum = viewModel.thisWeek()
+      val thisWeekNum = viewModel.thisWeek(dateId)
       Text(
         if (thisWeekNum == -1) ctx.getString(R.string.in_vacation)
         else
           ctx.getString(
-            if (viewModel.isToday()) R.string.current_week
+            if (viewModel.isToday(dateId)) R.string.current_week
             else R.string.current_week_navigated
           ).format(thisWeekNum),
 
@@ -338,10 +379,10 @@ fun DaySelector(
         }
       )
 
-      if (!viewModel.isToday()) {
+      if (!viewModel.isToday(dateId)) {
         Text(
           modifier = Modifier.clickable {
-            viewModel.backToday()
+            dateState.value = viewModel.backToday()
           },
           text = ctx.getString(R.string.week_jump_today),
           color = MaterialTheme.colorScheme.secondary,
@@ -351,7 +392,7 @@ fun DaySelector(
 
       PrevNextButton(
         icon = R.drawable.ic_fluent_chevron_right_20_filled,
-        onClick = { viewModel.nextWeek() }
+        onClick = { dateState.value = viewModel.nextWeek(dateId) }
       )
     }
   }
@@ -459,6 +500,7 @@ fun ImportCoursesButton(modifier: Modifier = Modifier) {
 fun WeekJumpDialog(
   viewModel: CoursesViewModel,
   onDismissRequest: () -> Unit,
+  dateState: MutableStateFlow<String>
 ) {
   val datePickerState = rememberDatePickerState(
     selectableDates = object : SelectableDates {
@@ -513,7 +555,7 @@ fun WeekJumpDialog(
         ) {
           TextButton(
             onClick = {
-              viewModel.backToday()
+              dateState.value = viewModel.backToday()
               onDismissRequest()
             }
           ) {
@@ -531,7 +573,7 @@ fun WeekJumpDialog(
           TextButton(
             onClick = {
               if (viewModel.isDateInTerm(selectedDate)) {
-                viewModel.setDate(selectedDate)
+                dateState.value = selectedDate
                 onDismissRequest()
               }
             }
