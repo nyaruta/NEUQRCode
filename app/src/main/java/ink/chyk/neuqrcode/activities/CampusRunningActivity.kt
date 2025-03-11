@@ -1,15 +1,14 @@
 package ink.chyk.neuqrcode.activities
 
 import android.*
-import android.content.Intent.*
+import android.annotation.*
 import android.content.pm.*
-import android.net.*
 import android.os.*
+import android.webkit.WebSettings.*
 import androidx.activity.*
 import androidx.activity.compose.*
 import androidx.activity.result.*
 import androidx.activity.result.contract.*
-import androidx.browser.customtabs.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -19,8 +18,13 @@ import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
+import androidx.compose.ui.viewinterop.*
 import androidx.core.content.*
+import androidx.lifecycle.*
+import com.tencent.smtt.export.external.interfaces.*
 import ink.chyk.neuqrcode.ui.theme.*
+import com.tencent.smtt.sdk.*
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import ink.chyk.neuqrcode.R
 
 class CampusRunningActivity : ComponentActivity() {
@@ -44,6 +48,8 @@ class CampusRunningActivity : ComponentActivity() {
 
     // Check permission status initially
     checkLocationPermission()
+
+    enableEdgeToEdge()
 
     setContent {
       CampusRunningScreen(url ?: "https://www.neu.edu.cn/")
@@ -69,29 +75,52 @@ class CampusRunningActivity : ComponentActivity() {
     // Use the permission state from the activity
     val permissionGranted by remember { permissionState }
 
-    val context = LocalContext.current
+    val webViewState = remember { mutableStateOf<WebView?>(null) }
+    val isDarkMode = isSystemInDarkTheme()
 
     AppTheme {
       Scaffold { innerPadding ->
         if (permissionGranted) {
-          Text(stringResource(R.string.loading))
-
-          val customTabsIntent = CustomTabsIntent.Builder()
-            .setUrlBarHidingEnabled(true)
-            .setShowTitle(false)
-            .setStartAnimations(context, R.anim.slide_in_right, R.anim.slide_out_left)
-            .setExitAnimations(context, android.R.anim.slide_in_left, android.R.anim.slide_out_right)
-            .build()
-          customTabsIntent.intent.addFlags(FLAG_ACTIVITY_NEW_DOCUMENT)
-          customTabsIntent.launchUrl(context, Uri.parse(url))
-
-          // 退出 activity
-          finish()
+          CampusRunningWebView(url, webViewState, Modifier.padding(innerPadding), isDarkMode)
         } else {
           PermissionGrantScreen(Modifier.padding(innerPadding))
         }
       }
     }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleEvent = remember { mutableStateOf(Lifecycle.Event.ON_ANY) }
+
+
+    DisposableEffect(lifecycleOwner) {
+      val observer = LifecycleEventObserver { _, event ->
+        lifecycleEvent.value = event
+        when (event) {
+          Lifecycle.Event.ON_PAUSE -> webViewState.value?.onPause()
+          Lifecycle.Event.ON_RESUME -> webViewState.value?.onResume()
+          Lifecycle.Event.ON_DESTROY -> webViewState.value?.destroy()
+          else -> {}
+        }
+      }
+
+      lifecycleOwner.lifecycle.addObserver(observer)
+
+      onDispose {
+        lifecycleOwner.lifecycle.removeObserver(observer)
+        webViewState.value?.destroy()
+      }
+    }
+
+    /*
+    BackHandler {
+      if (webViewState.value?.canGoBack() == true) {
+        webViewState.value?.goBack()
+      } else {
+        webViewState.value?.destroy()
+        finish()
+      }
+    }
+     */
   }
 
   @Composable
@@ -116,5 +145,78 @@ class CampusRunningActivity : ComponentActivity() {
         textAlign = TextAlign.Center,
       )
     }
+  }
+
+  @SuppressLint("SetJavaScriptEnabled")
+  @Composable
+  fun CampusRunningWebView(
+    url: String,
+    state: MutableState<WebView?> = remember { mutableStateOf(null) },
+    modifier: Modifier = Modifier,
+    isDarkMode: Boolean = false
+  ) {
+    // 封装 TBS WebView 组件
+    // 部分代码来自 https://stackoverflow.com/questions/34986413/location-is-accessed-in-chrome-doesnt-work-in-webview/34990055
+
+    val ctx = LocalContext.current
+
+    AndroidView(factory = { context ->
+      val webView = WebView(context).apply {
+        settings.apply {
+          javaScriptEnabled = true
+          domStorageEnabled = true
+          setGeolocationEnabled(true)
+          setAppCacheEnabled(true)
+          setGeolocationDatabasePath(ctx.filesDir.path)
+          mixedContentMode = MIXED_CONTENT_ALWAYS_ALLOW
+          useWideViewPort = true
+          allowFileAccess = true
+          allowContentAccess = true
+          safeBrowsingEnabled = false
+
+
+          webChromeClient = object: WebChromeClient() {
+            override fun onGeolocationPermissionsShowPrompt(
+              origin: String?,
+              callback: GeolocationPermissionsCallback?
+            ) {
+              callback?.invoke(origin, true, false)
+            }
+          }
+
+          webViewClient = object: WebViewClient() {
+            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+              // 允许页面跳转
+              view?.loadUrl(url)
+              return true
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+              // 注入暗黑模式 css
+              super.onPageFinished(view, url)
+              if (isDarkMode) {
+                view?.evaluateJavascript(
+                  """
+                  (() => {
+                    const startBtn = document.querySelector(".run__start-btn")
+                    if (startBtn) startBtn.click()
+                    
+                    const css = document.createElement('style')
+                    css.type = 'text/css'
+                    css.innerHTML = 'html { filter: invert(1) hue-rotate(180deg) saturate(1); }'
+                    document.head.appendChild(css)
+                  })()
+                  """.trimIndent()
+                ) {}
+              }
+            }
+          }
+        }
+      }
+
+      state.value = webView
+      webView.loadUrl(url)
+      webView
+    }, modifier = modifier.fillMaxSize())
   }
 }
