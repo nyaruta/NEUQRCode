@@ -139,8 +139,8 @@ fun CampusRunCard(
           colors = IconButtonColors(
             contentColor = MaterialTheme.colorScheme.onPrimary,
             containerColor = MaterialTheme.colorScheme.primary,
-            disabledContentColor = MaterialTheme.colorScheme.onSurface,
-            disabledContainerColor = MaterialTheme.colorScheme.surface,
+            disabledContentColor = MaterialTheme.colorScheme.onSecondary,
+            disabledContainerColor = MaterialTheme.colorScheme.secondary,
           ),
           modifier = Modifier.size(48.dp),
         ) {
@@ -369,10 +369,11 @@ fun MailBoxCard(
           colors = IconButtonColors(
             contentColor = MaterialTheme.colorScheme.onPrimary,
             containerColor = MaterialTheme.colorScheme.primary,
-            disabledContentColor = MaterialTheme.colorScheme.onSurface,
-            disabledContainerColor = MaterialTheme.colorScheme.surface,
+            disabledContentColor = MaterialTheme.colorScheme.onSecondary,
+            disabledContainerColor = MaterialTheme.colorScheme.secondary,
           ),
           modifier = Modifier.size(48.dp),
+          enabled = loadingState.value == AppsViewModel.LoadingState.SUCCESS,
         ) {
           Icon(
             painter = painterResource(id = R.drawable.ic_fluent_mail_read_32_regular),
