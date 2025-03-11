@@ -261,6 +261,10 @@ fun DailyProgressCircle(
   distance: String,
   modifier: Modifier = Modifier
 ) {
+  var distanceFloat = distance.toFloat()
+  if (distanceFloat > 5) {
+    distanceFloat = 5f
+  }
   val dailyMax = 5  // km
 
   Column(
@@ -272,12 +276,13 @@ fun DailyProgressCircle(
     ) {
       CircularProgressIndicator(
         progress = {
-          distance.toFloat() / dailyMax
+          distanceFloat / dailyMax
         }
       )
       Text(
         text = distance,
         modifier = Modifier.align(Alignment.Center),
+        fontSize = if (distance == "0") 14.sp else 12.sp
       )
     }
     Text(

@@ -23,7 +23,7 @@ class HashColorHelper {
       } else {
         val hue = Math.floorMod(courseName.hashCode(), 360).toFloat()
         val saturation = 0.6f
-        val lightness = if (darkMode) 0.6f else 0.85f
+        val lightness = if (darkMode) 0.6f else 0.4f
         ColorUtils.HSLToColor(floatArrayOf(hue, saturation, lightness))
       }
       colorCache[courseName] = courseColor
