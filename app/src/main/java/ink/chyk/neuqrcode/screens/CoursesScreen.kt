@@ -173,9 +173,7 @@ fun CoursesCardOuter(
 
         if (target != 0f) {
           val newDate = if (target < 0) nextDate else prevDate
-          currentDate = newDate
           dateState.value = newDate
-          offsetX = 0f
         }
       }
     }
