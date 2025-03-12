@@ -117,9 +117,19 @@ class CampusRun(
   suspend fun loginCampusRun() = withContext(Dispatchers.IO) {
     // 登录步道乐跑
 
-    val portalTicket = getPortalTicket()
+    var portalTicket = getPortalTicket()
 
-    campusRunTicket = neu.loginNEUAppTicket(portalTicket, callbackUrl)
+    try {
+      campusRunTicket = neu.loginNEUAppTicket(portalTicket, callbackUrl)
+    } catch (e: Exception) {
+      when (e) {
+        is TicketFailedException, is TicketExpiredException -> {
+          portalTicket = getPortalTicket(true)  // 过期了 重新登录
+          campusRunTicket = neu.loginNEUAppTicket(portalTicket, callbackUrl)
+        }
+        else -> throw e
+      }
+    }
 
     //Log.d("CampusRun", "CampusRun Ticket: $campusRunTicket")
 
