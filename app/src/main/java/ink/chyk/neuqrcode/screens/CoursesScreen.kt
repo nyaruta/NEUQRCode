@@ -112,13 +112,13 @@ fun TodayCourses(
   }
 }
 
+// Refactored with DeepSeek
 @Composable
 fun CoursesCardOuter(
   viewModel: CoursesViewModel,
   dateState: MutableStateFlow<String>,
   width: Dp,
 ) {
-  // 课程卡片封装组件（左右滑动翻页）
   val dateId by dateState.collectAsState()
   val density = LocalDensity.current
   val widthPx = with(density) { width.toPx() }
@@ -132,7 +132,6 @@ fun CoursesCardOuter(
 
   val spacingPx = with(density) { 4.dp.toPx() }
 
-  // 处理外部dateId变化
   LaunchedEffect(dateId) {
     if (dateId != currentDate) {
       currentDate = dateId
@@ -140,7 +139,6 @@ fun CoursesCardOuter(
     }
   }
 
-  // 更新前后日期
   LaunchedEffect(currentDate) {
     prevDate = viewModel.prevDay(currentDate)
     nextDate = viewModel.nextDay(currentDate)
@@ -148,9 +146,7 @@ fun CoursesCardOuter(
 
   val dragModifier = Modifier.draggable(
     orientation = Orientation.Horizontal,
-    state = rememberDraggableState { delta ->
-      offsetX += delta
-    },
+    state = rememberDraggableState { delta -> offsetX += delta },
     onDragStopped = { velocity ->
       val target = when {
         offsetX < -widthPx / 5 -> -widthPx
@@ -159,23 +155,30 @@ fun CoursesCardOuter(
       }
 
       scope.launch {
+        // 第一步：滑动到目标位置
         animate(
           initialValue = offsetX,
           targetValue = target,
-          /*
-          animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-          )
-          */
           animationSpec = tween(durationMillis = 300)
         ) { value, _ -> offsetX = value }
 
         if (target != 0f) {
-          val newDate = if (target < 0) nextDate else prevDate
+          val isNext = target < 0
+          val newDate = if (isNext) nextDate else prevDate
+
+          // 更新当前日期和外部状态
           currentDate = newDate
           dateState.value = newDate
-          offsetX = 0f
+
+          // 第二步：设置初始偏移并动画复位
+          val initialOffset = if (isNext) widthPx else -widthPx
+          offsetX = initialOffset
+
+          animate(
+            initialValue = initialOffset,
+            targetValue = 0f,
+            animationSpec = tween(durationMillis = 300)
+          ) { value, _ -> offsetX = value }
         }
       }
     }
@@ -188,7 +191,7 @@ fun CoursesCardOuter(
       .then(dragModifier)
       .clipToBounds()
   ) {
-    // 前一页
+    // 左侧卡片（上一页）
     CoursesCard(
       viewModel, prevDate,
       modifier = Modifier
@@ -196,7 +199,7 @@ fun CoursesCardOuter(
         .offset { IntOffset((offsetX - widthPx - spacingPx).roundToInt(), 0) }
     )
 
-    // 当前页
+    // 当前卡片
     CoursesCard(
       viewModel, currentDate,
       modifier = Modifier
@@ -204,7 +207,7 @@ fun CoursesCardOuter(
         .offset { IntOffset(offsetX.roundToInt(), 0) }
     )
 
-    // 后一页
+    // 右侧卡片（下一页）
     CoursesCard(
       viewModel, nextDate,
       modifier = Modifier
