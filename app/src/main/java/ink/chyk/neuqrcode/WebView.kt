@@ -3,6 +3,7 @@ package ink.chyk.neuqrcode
 import android.annotation.*
 import android.webkit.WebSettings.*
 import androidx.activity.compose.*
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -18,7 +19,7 @@ fun CustomWebView(
   url: String,
   state: MutableState<WebView?> = remember { mutableStateOf(null) },
   modifier: Modifier = Modifier,
-  isDarkMode: Boolean = false,
+  isDarkMode: Boolean = isSystemInDarkTheme(),
   darkModeJs: String = """
                   (() => {
                     const startBtn = document.querySelector(".run__start-btn")

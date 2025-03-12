@@ -20,6 +20,7 @@ import androidx.lifecycle.*
 import ink.chyk.neuqrcode.ui.theme.*
 import com.tencent.smtt.sdk.*
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.tencent.mmkv.MMKV
 import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.R
 
@@ -34,6 +35,7 @@ class CampusRunningActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
 
     val url = intent.getStringExtra("url")
+    val mmkv = MMKV.defaultMMKV()
 
     // Register the launcher before the activity starts
     requestPermissionLauncher = registerForActivityResult(
@@ -48,7 +50,11 @@ class CampusRunningActivity : ComponentActivity() {
     enableEdgeToEdge()
 
     setContent {
-      CampusRunningScreen(url ?: "https://www.neu.edu.cn/")
+      if (url != null) {
+        CampusRunningScreen(url, mmkv)
+      } else {
+        ArgsErrorScreen()
+      }
     }
   }
 
@@ -67,23 +73,26 @@ class CampusRunningActivity : ComponentActivity() {
   }
 
   @Composable
-  fun CampusRunningScreen(url: String) {
+  fun CampusRunningScreen(url: String, mmkv: MMKV) {
     // Use the permission state from the activity
     val permissionGranted by remember { permissionState }
 
     val webViewState = remember { mutableStateOf<WebView?>(null) }
-    val isDarkMode = isSystemInDarkTheme()
 
     AppTheme {
       Scaffold { innerPadding ->
+        val alwaysDark = mmkv.decodeBool("campus_running_always_dark", false)
+        val isDark = if (alwaysDark) true else isSystemInDarkTheme()
+
         if (permissionGranted) {
           CustomWebView(
             url,
             webViewState,
             Modifier.padding(innerPadding),
-            isDarkMode,
             listenBack = false,
-            finish = { finish() })
+            finish = { finish() },
+            isDarkMode = isDark,
+          )
         } else {
           PermissionGrantScreen(Modifier.padding(innerPadding))
         }
@@ -127,6 +136,16 @@ class CampusRunningActivity : ComponentActivity() {
 
   @Composable
   fun PermissionGrantScreen(modifier: Modifier = Modifier) {
+    ErrorScreen(modifier, R.string.location_permission_required, R.string.location_permission_required_content)
+  }
+
+  @Composable
+  fun ArgsErrorScreen(modifier: Modifier = Modifier) {
+    ErrorScreen(modifier, R.string.args_error, R.string.args_error_content)
+  }
+
+  @Composable
+  fun ErrorScreen(modifier: Modifier = Modifier, text1: Int, text2: Int) {
     Column(
       modifier = modifier.fillMaxSize(),
       verticalArrangement = Arrangement.Center,
@@ -138,12 +157,12 @@ class CampusRunningActivity : ComponentActivity() {
       )
       Spacer(modifier = Modifier.height(32.dp))
       Text(
-        text = stringResource(id = R.string.location_permission_required),
+        text = stringResource(text1),
         style = MaterialTheme.typography.headlineMedium,
       )
       Spacer(modifier = Modifier.height(4.dp))
       Text(
-        text = stringResource(id = R.string.location_permission_required_content),
+        text = stringResource(text2),
         textAlign = TextAlign.Center,
       )
     }

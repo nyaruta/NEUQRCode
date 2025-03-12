@@ -142,4 +142,8 @@
     <string name="student_mailbox">学生邮箱</string>
     <string name="unreads"> 封未读邮件</string>
     <string name="debug_no_update">测试版本无须检查更新。</string>
+    <string name="campus_running_always_dark">校园乐跑始终深色模式</string>
+    <string name="campus_running_always_dark_description">在校园乐跑中始终使用深色模式，在 OLED 屏幕的手机上可以省电。</string>
+    <string name="args_error">参数错误</string>
+    <string name="args_error_content">请不要尝试使用 Activity Launcher 等工具调试本 App。</string>
 </resources>

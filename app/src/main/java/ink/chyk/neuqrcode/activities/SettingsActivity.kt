@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.ui.theme.*
@@ -45,6 +46,9 @@ fun Settings() {
   val mmkv = MMKV.defaultMMKV()
   var antiFlashlightState by remember {
     mutableStateOf(mmkv.decodeBool("anti_flashlight", false))
+  }
+  var campusRunningAlwaysDarkState by remember {
+    mutableStateOf(mmkv.decodeBool("campus_running_always_dark", false))
   }
 
   Column(
@@ -91,6 +95,16 @@ fun Settings() {
         mmkv.encode("anti_flashlight", antiFlashlightState)
       }
     )
+    SettingsCard(
+      name = stringResource(R.string.campus_running_always_dark),
+      description = stringResource(R.string.campus_running_always_dark_description),
+      icon = R.drawable.ic_fluent_weather_moon_24_regular,
+      state = campusRunningAlwaysDarkState,
+      onClick = {
+        campusRunningAlwaysDarkState = !campusRunningAlwaysDarkState
+        mmkv.encode("campus_running_always_dark", campusRunningAlwaysDarkState)
+      }
+    )
   }
 }
 
@@ -130,11 +144,11 @@ fun SettingsCard(
         ) {
           Text(
             text = name,
-            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold
           )
           Text(
             text = description,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.fillMaxWidth(), // 确保文本占满宽度
             softWrap = true // 允许文本自动换行
           )

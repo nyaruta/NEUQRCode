@@ -29,13 +29,11 @@ class MailBoxActivity : ComponentActivity() {
 
   @Composable
   fun MailBoxScreen(url: String, innerPadding: PaddingValues) {
-    val isDark = isSystemInDarkTheme()
     CustomWebView(
       url = url,
       modifier = Modifier
         .fillMaxSize()
         .padding(innerPadding),
-      isDarkMode = isDark,
       finish = { finish() })
   }
 }
