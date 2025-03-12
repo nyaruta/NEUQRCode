@@ -112,18 +112,18 @@ class ProfileViewModel(
       }
     }
 
-    toast(R.string.checking_update)
-
     val packageInfo =
       context.packageManager.getPackageInfo(context.packageName, 0)
     val versionName = packageInfo.versionName
 
-    val isDebug = versionName?.substringAfterLast("-")?.length == 8
+    val isDebug = (versionName?.substringAfterLast("-")?.length == 8) or (versionName?.contains("beta") == true)
 
     if (isDebug) {
       toast(R.string.debug_no_update)
       return
     }
+
+    toast(R.string.checking_update)
 
     val versionMajorName = versionName?.substringBefore("-")  // v3.0.2-3-commithash -> v3.0.2
 
