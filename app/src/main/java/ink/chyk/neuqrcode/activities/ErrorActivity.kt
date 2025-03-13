@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
+import com.tencent.mmkv.MMKV
 import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.ui.theme.*
@@ -24,17 +25,30 @@ class ErrorActivity : ComponentActivity() {
     enableEdgeToEdge()
 
     val monitor = NetworkMonitor(this)
+    val mmkv = MMKV.defaultMMKV()
 
     setContent {
-      ErrorScreen(monitor)
+      ErrorScreen(monitor, mmkv)
     }
   }
 
   @Composable
-  fun ErrorScreen(monitor: NetworkMonitor) {
+  fun ErrorScreen(monitor: NetworkMonitor, mmkv: MMKV) {
     val isConnected = monitor.isConnected.collectAsState()
 
     LaunchedEffect(Unit) {
+      // 自动重试机制
+      val isRetry = mmkv.decodeBool("retry", true)
+      // 第一次跳错误界面时 默认重试
+      if (isRetry) {
+        mmkv.encode("retry", false)
+        finish()
+      } else {
+        // 第二次再进入错误界面时，不再重试
+        mmkv.encode("retry", true)
+      }
+
+      // 启用网络状态监视
       withContext(Dispatchers.IO) {
         monitor.startMonitoring()
       }
