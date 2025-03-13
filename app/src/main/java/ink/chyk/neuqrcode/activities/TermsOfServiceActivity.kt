@@ -12,11 +12,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
 import com.tencent.mmkv.*
 import ink.chyk.neuqrcode.ui.theme.*
 import ink.chyk.neuqrcode.R
+import ink.chyk.neuqrcode.Utilities
 import kotlinx.coroutines.time.*
 import java.time.*
 
@@ -50,13 +52,17 @@ fun TermsOfServiceScreen(
   var check2 by remember { mutableStateOf(false) }
   var check3 by remember { mutableStateOf(false) }
 
+  val ctx = LocalContext.current
+
 
   LaunchedEffect(Unit) {
-    while (countdown > 0) {
-      delay(
-        Duration.ofSeconds(1)
-      )
-      countdown--
+    if (!Utilities.isDebug(ctx)) {
+      while (countdown > 0) {
+        delay(
+          Duration.ofSeconds(1)
+        )
+        countdown--
+      }
     }
     timer = true
   }

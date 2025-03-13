@@ -115,8 +115,7 @@ class ProfileViewModel(
     val packageInfo =
       context.packageManager.getPackageInfo(context.packageName, 0)
     val versionName = packageInfo.versionName
-
-    val isDebug = (versionName?.substringAfterLast("-")?.length == 8) or (versionName?.contains("beta") == true)
+    val isDebug = Utilities.isDebug(versionName)
 
     if (isDebug) {
       toast(R.string.debug_no_update)
