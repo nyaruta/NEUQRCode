@@ -27,7 +27,7 @@ open class PersonalViewModel(
 
     var portalTicket: String? = mmkv.decodeString("portal_ticket")
     if (portalTicket == null || reLogin) {
-      portalTicket = neu.loginPersonalTicket(studentId, password)
+      portalTicket = neu.loginPortalTicketMobile(studentId, password)
       mmkv.encode("portal_ticket", portalTicket)
     }
 
