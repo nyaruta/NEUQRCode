@@ -1,10 +1,8 @@
 package ink.chyk.neuqrcode.viewmodels
 
 import android.content.*
-import android.net.*
 import android.util.*
 import android.widget.*
-import androidx.browser.customtabs.*
 import androidx.compose.ui.graphics.*
 import androidx.lifecycle.*
 import com.tencent.mmkv.*
@@ -170,7 +168,7 @@ class AppsViewModel(
         intent.launchUrl(context, uri)
          */
 
-        val intent = Intent(context, MailBoxActivity::class.java)
+        val intent = Intent(context, WebPageActivity::class.java)
         intent.putExtra("url", url)
         context.startActivity(intent)
       } else {

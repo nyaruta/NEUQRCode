@@ -38,7 +38,7 @@
             android:launchMode="singleTask" />
         <activity android:name=".activities.SettingsActivity" />
         <activity android:name=".activities.CampusRunningActivity" />
-        <activity android:name=".activities.MailBoxActivity" />
+        <activity android:name=".activities.WebPageActivity" />
 
         <service
             android:name="com.tencent.smtt.export.external.DexClassLoaderProviderService"

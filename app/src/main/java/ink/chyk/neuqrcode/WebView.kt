@@ -32,7 +32,9 @@ fun CustomWebView(
                   })()
                   """.trimIndent(),
   listenBack: Boolean = true,
-  finish: () -> Unit
+  finish: () -> Unit,
+  cookies: String? = null,
+  extraScripts: String? = null
 ) {
   // 封装 TBS WebView 组件
   // 部分代码来自 https://stackoverflow.com/questions/34986413/location-is-accessed-in-chrome-doesnt-work-in-webview/34990055
@@ -78,12 +80,23 @@ fun CustomWebView(
                 darkModeJs
               ) {}
             }
+            // 注入其他脚本
+            if (extraScripts != null) {
+              view?.evaluateJavascript(extraScripts) {}
+            }
           }
         }
       }
     }
 
+    // 储存 webview 实例
     state.value = webView
+
+    // 注入 cookie
+    if (cookies != null) {
+      setCookieForDomain(url, cookies)
+    }
+
     webView.loadUrl(url)
     webView
   }, modifier = modifier.fillMaxSize())
@@ -95,4 +108,14 @@ fun CustomWebView(
       finish()
     }
   }
+}
+
+
+private fun setCookieForDomain(url: String, cookie: String) {
+  val cookieManager = CookieManager.getInstance().apply {
+    setAcceptCookie(true)
+    setCookie(url, cookie)
+  }
+
+  cookieManager.flush()
 }
