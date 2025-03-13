@@ -17,7 +17,7 @@ import ink.chyk.neuqrcode.activities.*
 import ink.chyk.neuqrcode.neu.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
-import kotlin.Pair
+import kotlin.random.Random
 
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
@@ -43,7 +43,13 @@ class ProfileViewModel(
   val headers: StateFlow<NetworkHeaders?> = _headers
   val loadComplete: StateFlow<Boolean> = _loadComplete
 
-  private suspend fun refreshUserInfo() {
+  fun refreshUserInfo() {
+    viewModelScope.launch {
+      _refreshUserInfo()
+    }
+  }
+
+  private suspend fun _refreshUserInfo() {
     prepareSessionAnd { session ->
       try {
         val userInfoResponse = neu.getUserInfo(session)
@@ -58,9 +64,14 @@ class ProfileViewModel(
           return@prepareSessionAnd
         }
 
+        // 随机等待几十毫秒防止风控
+        delay(Random.nextInt(120).toLong())
+
         val cardBalanceResponse = neu.getPersonalDataItem(session, ids, "card.balance")
         _cardBalance.value = cardBalanceResponse.first?.data
         updateSession(cardBalanceResponse.second)
+
+        delay(Random.nextInt(120).toLong())
 
         val netBalanceResponse = neu.getPersonalDataItem(session, ids, "net.balance")
         _netBalance.value = netBalanceResponse.first?.data
@@ -72,12 +83,12 @@ class ProfileViewModel(
           .build()
 
         _loadComplete.value = true
-      } catch (e: SessionExpiredException) {
+      } catch (_: SessionExpiredException) {
         // 重新登录
         mmkv.remove("personal_lc")
         mmkv.remove("personal_vl")
         mmkv.remove("personal_sess_id")
-        refreshUserInfo()
+        _refreshUserInfo()
       }
     }
   }
@@ -188,12 +199,6 @@ class ProfileViewModel(
     }
   }
 
-  init {
-    viewModelScope.launch {
-      refreshUserInfo()
-    }
-  }
-
   fun uploadAvatar(
     byteArray: ByteArray,
     mimeType: String,
@@ -219,11 +224,4 @@ class ProfileViewModel(
       }
     }
   }
-
-
-  private fun jumpToErrorPage(context: Context, msg: String) {
-    val intent = Intent(context, ErrorActivity::class.java)
-    context.startActivity(intent)
-  }
-
 }

@@ -55,6 +55,10 @@ fun ProfileScreen(
   val fileName = remember { mutableStateOf<String?>(null) }
   val context = LocalContext.current
 
+  LaunchedEffect(Unit) {
+    viewModel.refreshUserInfo()
+  }
+
   Box(
     modifier = Modifier
       .fillMaxSize()
