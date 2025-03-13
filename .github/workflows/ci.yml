@@ -5,14 +5,14 @@ on:
     tags-ignore:
       - 'v*'
     branches:
-      - '*'
+      - 'main'  # 只在主分支触发测试构建
   pull_request:
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    # 只在非PR合并提交时运行
-    if: ${{ !startsWith(github.event.head_commit.message, 'Merge pull request') }}
+    # 只在非 [release] 时运行
+    if: ${{ !(startsWith(github.event.head_commit.message, '[release') || contains(github.event.head_commit.message, 'NoCI')) }}
     outputs:
       build_date: ${{ steps.set-build-date.outputs.build_date }}
     steps:
