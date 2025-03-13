@@ -44,7 +44,7 @@ abstract class BasicViewModel(
 
     var portalTicket: String? = mmkv.decodeString("portal_ticket")
     if (portalTicket == null || reLogin) {
-      portalTicket = neu.loginPortalTicketMobile(studentId, password)
+      portalTicket = neu.loginPortalTicket(studentId, password)
       mmkv.encode("portal_ticket", portalTicket)
     }
 
@@ -64,14 +64,14 @@ abstract class BasicViewModel(
       try {
         // 假设 portalTicket 没过期
         appTicket = newAppTicket(portalTicket)
-      } catch (e: TicketFailedException) {
+      } catch (_: TicketFailedException) {
         // 重新登录
         portalTicket = getPortalTicket(true)
         appTicket = newAppTicket(portalTicket)
       }
       mmkv.encode("${appName}_ticket", appTicket)
     }
-    return appTicket!! // 不可能为空!!
+    return appTicket // 不可能为空!!
   }
 
   /**
@@ -107,7 +107,7 @@ abstract class BasicViewModel(
       val session = getAppSession(neu, mmkv)
       try {
         action(session)
-      } catch (e: SessionExpiredException) {
+      } catch (_: SessionExpiredException) {
         // 重新准备 session
         val newSession = newAppSession()
         mmkv.encode("${appName}_session", newSession.session)
@@ -119,7 +119,7 @@ abstract class BasicViewModel(
 
         try {
           loginApp(newSession, appTicket)
-        } catch (e: TicketExpiredException) {
+        } catch (_: TicketExpiredException) {
           // 重新获取 ticket
           val portalTicket = getPortalTicket(true)
           val newAppTicket = newAppTicket(portalTicket)

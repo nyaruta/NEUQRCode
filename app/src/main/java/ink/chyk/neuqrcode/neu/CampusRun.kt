@@ -93,7 +93,7 @@ class CampusRun(
     val password = mmkv.decodeString("password")!!
     var portalTicket: String? = mmkv.decodeString("portal_ticket")
     if (portalTicket == null || reLogin) {
-      portalTicket = neu.loginPortalTicketMobile(studentId, password)
+      portalTicket = neu.loginPortalTicket(studentId, password)
       mmkv.encode("portal_ticket", portalTicket)
     }
     return portalTicket
