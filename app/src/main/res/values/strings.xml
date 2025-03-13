@@ -146,4 +146,5 @@
     <string name="campus_running_always_dark_description">在校园乐跑中始终使用深色模式，在 OLED 屏幕的手机上可以省电。</string>
     <string name="args_error">参数错误</string>
     <string name="args_error_content">请不要尝试使用 Activity Launcher 等工具调试本 App。</string>
+    <string name="recharge">充值和缴费</string>
 </resources>

@@ -92,6 +92,12 @@ fun ProfileScreen(
         clickable = false
       )
       RowButton(
+        iconResource = R.drawable.ic_fluent_payment_24_regular,
+        text = stringResource(R.string.recharge),
+        clickable = true,
+        onClick = { viewModel.recharge(context) }
+      )
+      RowButton(
         iconResource = R.drawable.ic_fluent_person_swap_24_regular,
         text = stringResource(R.string.logout_account),
         clickable = true,

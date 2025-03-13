@@ -157,6 +157,31 @@ class ProfileViewModel(
     }
   }
 
+  private suspend fun _recharge(context: Context) = withContext(Dispatchers.IO) {
+    var portalTicket = getPortalTicket()
+    var rechargeTicket: String
+    val url = "https://pay.neu.edu.cn/drCasLogin"
+
+    try {
+      rechargeTicket = neu.loginNEUAppTicket(portalTicket, url)
+    } catch (e: TicketFailedException) {
+      portalTicket = getPortalTicket(true)
+      rechargeTicket = neu.loginNEUAppTicket(portalTicket, url)
+    }
+
+    val redirectUrl = "$url?ticket=$rechargeTicket"
+
+    val intent = Intent(context, WebPageActivity::class.java)
+    intent.putExtra("url", redirectUrl)
+    context.startActivity(intent)
+  }
+
+  fun recharge(context: Context) {
+    viewModelScope.launch {
+      _recharge(context)
+    }
+  }
+
   init {
     viewModelScope.launch {
       refreshUserInfo()
