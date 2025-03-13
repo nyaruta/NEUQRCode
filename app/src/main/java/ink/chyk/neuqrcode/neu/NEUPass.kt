@@ -31,9 +31,28 @@ class NEUPass(
   private fun useRequestedWith(request: Request.Builder): Request.Builder {
     val version = "3.0.0"
     return request
-      .header("User-Agent", userAgent?: "Mozilla/5.0 (Linux; Android)")
+      .header("User-Agent", userAgent ?: "Mozilla/5.0 (Linux; Android)")
       .header("X-Requested-With", "com.sunyt.testdemo")
       .header("X-App-Version", version)
+  }
+
+  suspend fun loginPortalTicket(studentId: String, password: String): String {
+    // 登录账号，依次尝试每个 API
+    // mobile -> web -> mobileLegacy
+
+    try {
+      return loginPortalTicketMobile(studentId, password)
+    } catch (e: PasswordIncorrectException) {
+      throw e
+    } catch (_: Exception) {
+      return try {
+        loginPortalTicketWeb(studentId, password)
+      } catch (e: PasswordIncorrectException) {
+        throw e
+      } catch (_: Exception) {
+        loginPortalTicketMobileLegacy(studentId, password)
+      }
+    }
   }
 
   suspend fun loginPortalTicketMobile(studentId: String, password: String): String {
@@ -114,14 +133,15 @@ class NEUPass(
     // 登录账号（web 统一身份认证接口）
     // credits: https://github.com/neucn/neugo
 
-    val url = "https://pass.neu.edu.cn/tpass/login?service=https://personal.neu.edu.cn/portal/manage/common/cas_login/1?redirect=https%3A%2F%2Fpersonal.neu.edu.cn%2Fportal"
+    val url =
+      "https://pass.neu.edu.cn/tpass/login?service=https://personal.neu.edu.cn/portal/manage/common/cas_login/1?redirect=https%3A%2F%2Fpersonal.neu.edu.cn%2Fportal"
     // 吐槽：好长的 url，二次重定向了
 
     fun extractLt(html: String): String? {
       // 从登录网页中提取 lt 参数
       val ltLine = html.lines().firstOrNull { it.contains("name=\"lt\"") }
       val lt = ltLine?.substringAfter("value=\"")?.substringBefore("\"")
-      return if (lt?.endsWith("tpass")==true) lt else null
+      return if (lt?.endsWith("tpass") == true) lt else null
     }
 
     fun extractTitle(html: String): String? {
@@ -143,6 +163,13 @@ class NEUPass(
       val res1 = Utilities.executeRequest(client, req1, "failed to get CAS login webpage")
       val html = res1.body?.string() ?: throw RequestFailedException(url)
       val lt = extractLt(html) ?: throw IllegalArgumentException("lt not found")
+      val cookies = res1.headers.filter { it.first == "Set-Cookie" }
+        .map { it.second }
+        .firstOrNull { it.startsWith("JSESSIONID") }
+
+      if (cookies == null) {
+        throw Exception("Failed to extract cookies")
+      }
 
       val sb = StringBuilder()
       sb.append("rsa=").append("$studentId$password$lt")
@@ -153,7 +180,8 @@ class NEUPass(
 
       val req2 = useRequestedWith(
         Request.Builder()
-          .url("https://pass.neu.edu.cn/tpass/login")
+          .url(url)
+          .header("Cookie", cookies)
           .post(sb.toString().toRequestBody("application/x-www-form-urlencoded".toMediaTypeOrNull()))
       ).build()
 
@@ -165,8 +193,8 @@ class NEUPass(
           .map { it.second }
           .firstOrNull { it.startsWith("CASTGC") }
           ?.substringAfter("CASTGC=")
-            ?.substringBefore(";")
-            ?: throw TicketFailedException()
+          ?.substringBefore(";")
+          ?: throw TicketFailedException()
       } else {
         // 200
         val title = extractTitle(res2.body?.string() ?: "")
