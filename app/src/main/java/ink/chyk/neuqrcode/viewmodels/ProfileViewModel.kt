@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.*
 import android.widget.Toast
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.lifecycle.*
 import coil3.network.*
 import com.tencent.mmkv.*
@@ -171,9 +172,14 @@ class ProfileViewModel(
 
     val redirectUrl = "$url?ticket=$rechargeTicket"
 
-    val intent = Intent(context, WebPageActivity::class.java)
-    intent.putExtra("url", redirectUrl)
-    context.startActivity(intent)
+    val intent = CustomTabsIntent.Builder()
+      .setShowTitle(false)
+      .setUrlBarHidingEnabled(true)
+      .setStartAnimations(context, R.anim.slide_in_right, R.anim.slide_out_left)
+      .setExitAnimations(context, android.R.anim.slide_in_left, android.R.anim.slide_out_right)
+      .build()
+
+    intent.launchUrl(context, android.net.Uri.parse(redirectUrl))
   }
 
   fun recharge(context: Context) {
