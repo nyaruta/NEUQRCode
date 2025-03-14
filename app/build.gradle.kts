@@ -30,6 +30,7 @@ fun getGitDescribe(): String {
         standardOutput = out
     }
     return out.toString().trim()
+}
 
 fun getAppVersionCode(): Int {
     val commitCount = getGitCommitCount()
