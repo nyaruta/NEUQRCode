@@ -5,7 +5,7 @@ on:
     tags-ignore:
       - 'v*'
     branches:
-      - '*'
+      - 'main'
   pull_request:
 
 jobs:
@@ -13,12 +13,15 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    if: ${{ !(startsWith(github.event.head_commit.message, '[release') || contains(github.event.head_commit.message, 'NoCI')) }}
+    env:
+      PREREL: ${{ github.event_name == 'push' && github.repository == 'chiyuki0325/NEUQRCode' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-tags: true
-          fetch-depth: 0
+          fetch-depth: 0 
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -51,11 +54,20 @@ jobs:
           path: app/debug/*.apk
 
       - name: Set up date
-        if: github.event_name == 'push' && github.repository == 'chiyuki0325/NEUQRCode'
+        if: ${{ env.PREREL }}
         run: echo "DATE=$(date -u +%y.%m.%d)" >> $GITHUB_ENV
       
+      - name: Delete Previous Release
+        if: ${{ env.PREREL }}
+        run: |
+          if gh release view beta &> /dev/null; then
+            gh release delete beta --cleanup-tag -y
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Pre-release
-        if: github.event_name == 'push' && github.repository == 'chiyuki0325/NEUQRCode'
+        if: ${{ env.PREREL }}
         uses: softprops/action-gh-release@v2
         with:
           files: |
