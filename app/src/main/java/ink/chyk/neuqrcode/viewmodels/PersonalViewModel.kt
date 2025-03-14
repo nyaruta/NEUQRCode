@@ -27,7 +27,7 @@ open class PersonalViewModel(
 
     var portalTicket: String? = mmkv.decodeString("portal_ticket")
     if (portalTicket == null || reLogin) {
-      portalTicket = neu.loginPersonalTicket(studentId, password)
+      portalTicket = neu.loginPortalTicket(studentId, password)
       mmkv.encode("portal_ticket", portalTicket)
     }
 
@@ -53,7 +53,7 @@ open class PersonalViewModel(
         var personalTicket: String
         try {
           personalTicket = neu.loginPersonalApiTicket(ticket)
-        } catch (e: TicketFailedException) {
+        } catch (_: TicketFailedException) {
           val newTicket = getPortalTicket(true)
           personalTicket = neu.loginPersonalApiTicket(newTicket)
         }
@@ -65,7 +65,7 @@ open class PersonalViewModel(
         val session = PersonalSession(lc, vl, sessId)
         try {
           return action(session)
-        } catch (e: SessionExpiredException) {
+        } catch (_: SessionExpiredException) {
           // 重新登录
           val ticket = getPortalTicket(true)
           val personal_ticket = neu.loginPersonalApiTicket(ticket)

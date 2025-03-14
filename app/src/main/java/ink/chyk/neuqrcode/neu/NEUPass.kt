@@ -31,12 +31,31 @@ class NEUPass(
   private fun useRequestedWith(request: Request.Builder): Request.Builder {
     val version = "3.0.0"
     return request
-      .header("User-Agent", userAgent?: "Mozilla/5.0 (Linux; Android)")
+      .header("User-Agent", userAgent ?: "Mozilla/5.0 (Linux; Android)")
       .header("X-Requested-With", "com.sunyt.testdemo")
       .header("X-App-Version", version)
   }
 
-  suspend fun loginPersonalTicket(studentId: String, password: String): String {
+  suspend fun loginPortalTicket(studentId: String, password: String): String {
+    // 登录账号，依次尝试每个 API
+    // mobile -> web -> mobileLegacy
+
+    try {
+      return loginPortalTicketMobile(studentId, password)
+    } catch (e: PasswordIncorrectException) {
+      throw e
+    } catch (_: Exception) {
+      return try {
+        loginPortalTicketWeb(studentId, password)
+      } catch (e: PasswordIncorrectException) {
+        throw e
+      } catch (_: Exception) {
+        loginPortalTicketMobileLegacy(studentId, password)
+      }
+    }
+  }
+
+  suspend fun loginPortalTicketMobile(studentId: String, password: String): String {
     // 登录账号（智慧东大 3.x API）
     val url = "https://personal.neu.edu.cn/prize/Front/Oauth/User/sso"
 
@@ -73,6 +92,121 @@ class NEUPass(
     }
   }
 
+  suspend fun loginPortalTicketMobileLegacy(studentId: String, password: String): String {
+    // 登录账号（只会东大 2.x API，作为回退）
+
+    val url = "https://portal.neu.edu.cn/mobile/api/auth/tickets"
+
+    val client = OkHttpClient.Builder()
+      .followRedirects(false)
+      .build()
+
+    val requestBody = FormBody.Builder()
+      .add("username", studentId)
+      .add("password", password)
+      .build()
+
+    val request = useRequestedWith(
+      Request.Builder()
+        .url(url)
+        .post(requestBody)
+    ).build()
+
+    return withContext(Dispatchers.IO) {
+      client.newCall(request).execute().use { response ->
+        if (response.isSuccessful) {
+          val body = response.body?.string()
+          if (body?.startsWith("TGT") == true) {
+            // 登录成功
+            body
+          } else {
+            throw PasswordIncorrectException()
+          }
+        } else {
+          throw PasswordIncorrectException()
+        }
+      }
+    }
+  }
+
+  suspend fun loginPortalTicketWeb(studentId: String, password: String): String {
+    // 登录账号（web 统一身份认证接口）
+    // credits: https://github.com/neucn/neugo
+
+    val url =
+      "https://pass.neu.edu.cn/tpass/login?service=https://personal.neu.edu.cn/portal/manage/common/cas_login/1?redirect=https%3A%2F%2Fpersonal.neu.edu.cn%2Fportal"
+    // 吐槽：好长的 url，二次重定向了
+
+    fun extractLt(html: String): String? {
+      // 从登录网页中提取 lt 参数
+      val ltLine = html.lines().firstOrNull { it.contains("name=\"lt\"") }
+      val lt = ltLine?.substringAfter("value=\"")?.substringBefore("\"")
+      return if (lt?.endsWith("tpass") == true) lt else null
+    }
+
+    fun extractTitle(html: String): String? {
+      // 从登录网页中提取 title
+      val titleLine = html.lines().firstOrNull { it.contains("<title>") }
+      return titleLine?.substringAfter("<title>")?.substringBefore("</title>")
+    }
+
+    val client = OkHttpClient.Builder()
+      .followRedirects(false)
+      .build()
+
+    val req1 = useRequestedWith(
+      Request.Builder()
+        .url(url)
+    ).build()
+
+    return withContext(Dispatchers.IO) {
+      val res1 = Utilities.executeRequest(client, req1, "failed to get CAS login webpage")
+      val html = res1.body?.string() ?: throw RequestFailedException(url)
+      val lt = extractLt(html) ?: throw IllegalArgumentException("lt not found")
+      val cookies = res1.headers.filter { it.first == "Set-Cookie" }
+        .map { it.second }
+        .firstOrNull { it.startsWith("JSESSIONID") }
+
+      if (cookies == null) {
+        throw Exception("Failed to extract cookies")
+      }
+
+      val sb = StringBuilder()
+      sb.append("rsa=").append("$studentId$password$lt")
+        .append("&ul=").append(studentId.length)
+        .append("&pl=").append(password.length)
+        .append("&lt=").append(lt)
+        .append("&execution=e1s1&_eventId=submit")
+
+      val req2 = useRequestedWith(
+        Request.Builder()
+          .url(url)
+          .header("Cookie", cookies)
+          .post(sb.toString().toRequestBody("application/x-www-form-urlencoded".toMediaTypeOrNull()))
+      ).build()
+
+      val res2 = Utilities.executeRequest(client, req2, "failed to login")
+
+      if (res2.code == 302) {
+        // 从 cookie 中提取 CASTGC
+        return@withContext res2.headers.filter { it.first == "Set-Cookie" }
+          .map { it.second }
+          .firstOrNull { it.startsWith("CASTGC") }
+          ?.substringAfter("CASTGC=")
+          ?.substringBefore(";")
+          ?: throw TicketFailedException()
+      } else {
+        // 200
+        val title = extractTitle(res2.body?.string() ?: "")
+        if (title == "智慧东大--统一身份认证") {
+          throw PasswordIncorrectException()
+        } else {
+          throw TicketFailedException()
+        }
+      }
+    }
+  }
+
   suspend fun loginNEUAppTicket(
     portalTicket: String,
     callbackUrl: String
@@ -103,6 +237,7 @@ class NEUPass(
             throw TicketFailedException()
           }
         } else {
+          // CASTGC 过期
           throw TicketFailedException()
         }
       }
@@ -298,6 +433,8 @@ class NEUPass(
     postBody: MultipartBody? = null,
     putBody: MultipartBody? = null
   ): Pair<T?, PersonalSession> {
+    //Log.d("NEUPass", "Request: $url")
+
     // 新的 3.x api 在每次请求后都有可能更新 sess_id
     // 返回结果和新的 session
     val client = OkHttpClient.Builder()
@@ -341,6 +478,9 @@ class NEUPass(
             throw SessionExpiredException()
           }
           val body = response.body?.string()
+
+          //Log.d("NEUPass", "Response: $body")
+
           val result: PersonalResponse<T>
           try {
             result = Json.decodeFromString<PersonalResponse<T>>(body!!)

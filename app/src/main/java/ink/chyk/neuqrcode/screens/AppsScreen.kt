@@ -139,8 +139,8 @@ fun CampusRunCard(
           colors = IconButtonColors(
             contentColor = MaterialTheme.colorScheme.onPrimary,
             containerColor = MaterialTheme.colorScheme.primary,
-            disabledContentColor = MaterialTheme.colorScheme.onSurface,
-            disabledContainerColor = MaterialTheme.colorScheme.surface,
+            disabledContentColor = MaterialTheme.colorScheme.onSecondary,
+            disabledContainerColor = MaterialTheme.colorScheme.secondary,
           ),
           modifier = Modifier.size(48.dp),
         ) {
@@ -261,6 +261,10 @@ fun DailyProgressCircle(
   distance: String,
   modifier: Modifier = Modifier
 ) {
+  var distanceFloat = distance.toFloat()
+  if (distanceFloat > 5) {
+    distanceFloat = 5f
+  }
   val dailyMax = 5  // km
 
   Column(
@@ -272,12 +276,13 @@ fun DailyProgressCircle(
     ) {
       CircularProgressIndicator(
         progress = {
-          distance.toFloat() / dailyMax
+          distanceFloat / dailyMax
         }
       )
       Text(
         text = distance,
         modifier = Modifier.align(Alignment.Center),
+        fontSize = if (distance == "0") 14.sp else 12.sp
       )
     }
     Text(
@@ -369,10 +374,11 @@ fun MailBoxCard(
           colors = IconButtonColors(
             contentColor = MaterialTheme.colorScheme.onPrimary,
             containerColor = MaterialTheme.colorScheme.primary,
-            disabledContentColor = MaterialTheme.colorScheme.onSurface,
-            disabledContainerColor = MaterialTheme.colorScheme.surface,
+            disabledContentColor = MaterialTheme.colorScheme.onSecondary,
+            disabledContainerColor = MaterialTheme.colorScheme.secondary,
           ),
           modifier = Modifier.size(48.dp),
+          enabled = loadingState.value == AppsViewModel.LoadingState.SUCCESS,
         ) {
           Icon(
             painter = painterResource(id = R.drawable.ic_fluent_mail_read_32_regular),

@@ -1,13 +1,12 @@
 package ink.chyk.neuqrcode.activities
 
+import android.app.*
 import android.content.*
 import android.os.*
 import android.util.*
 import android.widget.*
-import android.app.ActivityManager
 import androidx.activity.*
 import androidx.activity.compose.*
-import androidx.collection.*
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
@@ -21,14 +20,19 @@ import androidx.lifecycle.viewmodel.compose.*
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import com.tencent.mmkv.*
-import ink.chyk.neuqrcode.screens.*
-import ink.chyk.neuqrcode.viewmodels.*
+import com.tencent.smtt.export.external.TbsCoreSettings.*
+import com.tencent.smtt.sdk.QbSdk
+import com.tencent.smtt.sdk.QbSdk.*
 import ink.chyk.neuqrcode.R
+import ink.chyk.neuqrcode.screens.*
 import ink.chyk.neuqrcode.ui.theme.*
+import ink.chyk.neuqrcode.viewmodels.*
 import kotlinx.serialization.*
 import kotlin.math.*
 
 class MainActivity : ComponentActivity() {
+
+  @ExperimentalSerializationApi
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     // 初始化 mmkv
@@ -54,6 +58,26 @@ class MainActivity : ComponentActivity() {
       finish()
       return
     }
+
+    // 加载 Tencent Browsing Service
+    val context = this.applicationContext
+    setDownloadWithoutWifi(true)  // 反正都有流量卡
+    // 在调用TBS初始化、创建WebView之前进行如下配置
+    initTbsSettings(
+      hashMapOf(
+        TBS_SETTINGS_USE_SPEEDY_CLASSLOADER to true,
+        TBS_SETTINGS_USE_DEXLOADER_SERVICE to true
+      ) as Map<String, Boolean>
+    )
+    initX5Environment(context, object : PreInitCallback {
+      override fun onCoreInitFinished() {
+        Log.d("MainActivity", "X5 Core Init Finished")
+      }
+      override fun onViewInitFinished(isX5: Boolean) {
+        Log.d("MainActivity", "X5 View Init Finished: $isX5")
+      }
+    })
+
 
     enableEdgeToEdge()
     setContent {

@@ -4,7 +4,7 @@
     <string name="about_content_source">查看源码</string>
     <string name="about_copyright_1">© 2024 – 2025 斬風千雪 ❄️</string>
     <string name="about_copyright_2">© 1923 – 2025 东北大学</string>
-    <string name="about_version">版本: v%1$s</string>
+    <string name="about_version">版本: %1$s</string>
     <string name="source_url">https://github.com/chiyuki0325/NEUQRCode</string>
     <string name="uniform_auth">统一身份认证</string>
     <string name="student_id">学号</string>
@@ -141,4 +141,10 @@
     <string name="location_permission_required_content">请授予 NEU 一码通定位权限，\n以在校园乐跑中使用。</string>
     <string name="student_mailbox">学生邮箱</string>
     <string name="unreads"> 封未读邮件</string>
+    <string name="debug_no_update">测试版本无须检查更新。</string>
+    <string name="campus_running_always_dark">校园乐跑始终深色模式</string>
+    <string name="campus_running_always_dark_description">在校园乐跑中始终使用深色模式，在 OLED 屏幕的手机上可以省电。</string>
+    <string name="args_error">参数错误</string>
+    <string name="args_error_content">请不要尝试使用 Activity Launcher 等工具调试本 App。</string>
+    <string name="recharge">充值和缴费</string>
 </resources>

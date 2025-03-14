@@ -16,56 +16,74 @@ import kotlin.Pair
 class CoursesViewModel(
   private val mmkv: MMKV
 ) : ViewModel() {
-  private var _date: MutableStateFlow<String> = MutableStateFlow(
-    LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
-  )
-  val date: StateFlow<String> = _date
+  // 课程表 ViewModel
 
+  // 2025.3.11 更改：date 状态不再由 ViewModel 维护，转为在界面中维护
+  // 为了做翻页
+
+  // 每日一言
   private var _quote = MutableStateFlow<HitokotoQuote?>(null)
   val quote: StateFlow<HitokotoQuote?> = _quote
 
+  // 日期格式化器
+  // 储存成一个状态避免啰唆
   val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
-  private val today get() = LocalDate.now().format(formatter)
+  // 今天的日期 id
+  val today get() = LocalDate.now().format(formatter)
+
+  // 学期开始时的日期 id
+  private val termStart = mmkv.decodeString("term_start") ?: today
+
+  // 学期开始时的日期对象
+  private val termStartDate = LocalDate.parse(termStart, formatter)
 
   fun isCourseImported(): Boolean {
+    // 课程表是否导入过
     return mmkv.containsKey("course_keys")
   }
 
-  fun getTodayCourses(date: String): List<Course> {
-    return mmkv.decodeString("course_${date}")?.let {
+  fun getCoursesByDate(dateId: String): List<Course> {
+    // 根据 dateId 获取课程
+    return mmkv.decodeString("course_${dateId}")?.let {
       Json.decodeFromString(it)
     } ?: emptyList()
   }
 
-  fun getWeekday(): String {
-    val localDate = LocalDate.parse(_date.value, formatter)
+  fun getWeekday(dateId: String): String {
+    // 传入 dateId 获取星期几
+    val localDate = LocalDate.parse(dateId, formatter)
     return localDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
   }
 
-  fun thisWeek(): Int {
-    // 计算当前周数
-    val currentDate = LocalDate.parse(_date.value, formatter)
-    val termStartString = mmkv.decodeString("term_start") ?: return -1
-    val termStart = LocalDate.parse(termStartString, formatter)
-    return (currentDate.toEpochDay() - termStart.toEpochDay()).toInt() / 7 + 1
+  fun getWeekdayNum(dateId: String): Int {
+    // 传入 dateId 获取星期几，周日为0，以此类推
+    val localDate = LocalDate.parse(dateId, formatter)
+    return localDate.dayOfWeek.value
   }
 
-  fun thisWeekDates(): List<Pair<Pair<LocalDate, String>, Int>> {
-    // 计算本周日期
-    // 日期对象，日期字符串，课程数量
-    val currentDate = LocalDate.parse(_date.value, formatter)
-    val dayOfWeek = currentDate.dayOfWeek.value.toLong().let { if (it == 7L) 0L else it }
-    val weekStart = currentDate.minusDays(dayOfWeek)
+  fun thisWeek(dateId: String): Int {
+    // 根据 dateId 计算当前周数
+    val localDate = LocalDate.parse(dateId, formatter)
+    return (localDate.toEpochDay() - termStartDate.toEpochDay()).toInt() / 7 + 1
+  }
+
+  fun thisWeekDates(dateId: String): List<Pair<Pair<LocalDate, String>, Int>> {
+    // 计算本周日期，数据提供给底部切换周几的按钮
+    // 当前 dateId -> 日期对象，日期字符串，课程数量
+    val localDate = LocalDate.parse(dateId, formatter)
+    val dayOfWeek = localDate.dayOfWeek.value.toLong().let { if (it == 7L) 0L else it }
+    val weekStart = localDate.minusDays(dayOfWeek)
     return (0..6).map {
-      val date = weekStart.plusDays(it.toLong())
-      val dateId = date.format(formatter)
-      val courseCount = getTodayCourses(dateId).size
-      date to dateId to courseCount
+      val thatDate = weekStart.plusDays(it.toLong())
+      val thatDateId = thatDate.format(formatter)
+      val courseCount = getCoursesByDate(thatDateId).size
+      thatDate to thatDateId to courseCount
     }
   }
 
   private suspend fun initQuote() {
+    // 初始化每日一言
     try {
       _quote.value = Hitokoto().getQuote()
     } catch (e: Exception) {
@@ -87,38 +105,46 @@ class CoursesViewModel(
   }
 
   init {
+    // ViewModel 对象在 MainActivity 创建时就被实例化
+    // 而加载每日一言时开销不大
+    // 所以在这里直接初始化
     viewModelScope.launch {
       initQuote()
     }
   }
 
-  fun setDate(date: String) {
-    _date.value = date
-  }
-
-  fun isDateInTerm(date: String): Boolean {
+  fun isDateInTerm(dateId: String): Boolean {
+    // 判断 dateId 日期是否在学期内
     val termStart = mmkv.decodeString("term_start") ?: return false
-    return termStart.toInt() <= date.toInt()
+    return termStart.toInt() <= dateId.toInt()
   }
 
-  fun prevWeek() {
-    val newDate = LocalDate.parse(_date.value, formatter).minusWeeks(1).format(formatter)
+  fun prevWeek(dateId: String): String {
+    val newDate = LocalDate.parse(dateId, formatter).minusWeeks(1).format(formatter)
     // 边界检查
     if (!isDateInTerm(newDate)) {
-      return
+      return dateId
     }
-    _date.value = newDate
+    return newDate
   }
 
-  fun nextWeek() {
-    _date.value = LocalDate.parse(_date.value, formatter).plusWeeks(1).format(formatter)
+  fun nextWeek(dateId: String): String {
+    return LocalDate.parse(dateId, formatter).plusWeeks(1).format(formatter)
   }
 
-  fun backToday() {
-    _date.value = today?: LocalDate.now().format(formatter)
+  fun backToday(): String {
+    return today?: LocalDate.now().format(formatter)
   }
 
-  fun isToday(): Boolean {
-    return _date.value == today
+  fun isToday(dateId: String): Boolean {
+    return dateId == today
+  }
+
+  fun prevDay(dateId: String): String {
+    return LocalDate.parse(dateId, formatter).minusDays(1).format(formatter)
+  }
+
+  fun nextDay(dateId: String): String {
+    return LocalDate.parse(dateId, formatter).plusDays(1).format(formatter)
   }
 }

@@ -1,4 +1,5 @@
 // import com.android.build.gradle.internal.tasks.*
+import com.android.build.gradle.internal.tasks.*
 import java.io.ByteArrayOutputStream
 
 plugins {
@@ -109,11 +110,13 @@ android {
         compose = true
     }
 
-    /*
+
     tasks.withType<L8DexDesugarLibTask> {
-        keepRulesConfigurations.set(listOf("-keep class java.time.zone.** { *; }", "-keep interface java.time.zone.** { *; }"))
+        keepRulesConfigurations.set(listOf(
+            "-keep class com.tencent.smtt.** { *; }",
+            "-keep class com.tencent.tbs.** { *; }"
+        ))
     }
-    */
 }
 
 dependencies {
@@ -147,4 +150,6 @@ dependencies {
     implementation(libs.browser)
     implementation(libs.coil)
     implementation(libs.coil.net)
+    implementation(libs.tbs)
+    implementation(libs.androidx.compose.foundation)
 }

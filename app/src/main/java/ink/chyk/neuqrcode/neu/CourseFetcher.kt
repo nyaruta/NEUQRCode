@@ -133,7 +133,7 @@ class CourseFetcher(
     val password = mmkv.decodeString("password")!!
     var portalTicket: String? = mmkv.decodeString("portal_ticket")
     if (portalTicket == null || reLogin) {
-      portalTicket = neu.loginPersonalTicket(studentId, password)
+      portalTicket = neu.loginPortalTicket(studentId, password)
       mmkv.encode("portal_ticket", portalTicket)
     }
     return portalTicket
@@ -150,7 +150,7 @@ class CourseFetcher(
       .build()
 
     return withContext(Dispatchers.IO) {
-      val response = executeRequest(client, request, "获取 session 失败")
+      val response = Utilities.executeRequest(client, request, "获取 session 失败")
 
       if (response.code == 302) {
         val headers = response.headers
@@ -233,12 +233,12 @@ class CourseFetcher(
 
     return withContext(Dispatchers.IO) {
       // 执行登录请求
-      val loginResponse = executeRequest(client, loginRequest, "登录失败")
+      val loginResponse = Utilities.executeRequest(client, loginRequest, "登录失败")
 
       // 检查是否需要重定向
       if (loginResponse.code == 302) {
         // 执行后续请求
-        val afterLoginResponse = executeRequest(client, afterLoginRequest, "登录后请求失败")
+        val afterLoginResponse = Utilities.executeRequest(client, afterLoginRequest, "登录后请求失败")
 
         // 登录成功
         Log.d("CourseFetcher", "Login success")
@@ -297,7 +297,7 @@ class CourseFetcher(
    */
   private suspend fun fetchIdsAndSemesterId(client: OkHttpClient): Pair<String, String> {
     val request = buildEAMSRequest(courseTableUrl).get().build()
-    val response = executeRequest(client, request, "获取必要参数 ids 和 semesterId 失败")
+    val response = Utilities.executeRequest(client, request, "获取必要参数 ids 和 semesterId 失败")
 
     val html = response.body?.string() ?: throw RequestFailedException("响应体为空")
     val ids = extractIds(html) ?: throw RequestFailedException("无法提取 ids")
@@ -344,7 +344,7 @@ class CourseFetcher(
       .header("Content-Type", "application/x-www-form-urlencoded")
       .build()
 
-    val response = executeRequest(client, request, "获取课程表失败")
+    val response = Utilities.executeRequest(client, request, "获取课程表失败")
 
     val html = response.body?.string() ?: throw RequestFailedException("课程表响应体为空")
     if (!html.contains("课表格式说明")) {
@@ -353,21 +353,6 @@ class CourseFetcher(
 
     //Log.d("CourseFetcher", html)
     return html
-  }
-
-  /**
-   * 执行请求并处理通用逻辑
-   */
-  private suspend fun executeRequest(
-    client: OkHttpClient,
-    request: Request,
-    errorMessage: String
-  ): Response {
-    return client.newCall(request).execute().also { response ->
-      if (response.code !in 200..399) {
-        throw RequestFailedException("$errorMessage: ${response.code}")
-      }
-    }
   }
 
   // 解析课表

@@ -5,7 +5,7 @@ on:
     tags-ignore:
       - 'v*'
     branches:
-      - 'main'
+      - 'main'  # 只在主分支触发测试构建
   pull_request:
 
 jobs:

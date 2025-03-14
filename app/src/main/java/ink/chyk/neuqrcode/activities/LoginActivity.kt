@@ -225,16 +225,19 @@ fun LoginButton(
             val neu = NEUPass({
               throw RequestFailedException("请求失败")
             })
-            val ticket = neu.loginPersonalTicket(studentId, password)
+            val ticket = neu.loginPortalTicket(studentId, password)
             // 登录成功
             mmkv.encode("portal_ticket", ticket)
             openMainPage()
-          } catch (e: PasswordIncorrectException) {
+          } catch (_: PasswordIncorrectException) {
             // 密码错误
             openErrorDialog(ctx.getString(R.string.password_error_content))
-          } catch (e: RequestFailedException) {
+          } catch (_: RequestFailedException) {
             // 请求失败
             openErrorDialog(ctx.getString(R.string.request_error_content))
+          } catch (e: Exception) {
+            // 其他错误
+            openErrorDialog("${e.toString()} ${e.message}")
           }
         }
       },

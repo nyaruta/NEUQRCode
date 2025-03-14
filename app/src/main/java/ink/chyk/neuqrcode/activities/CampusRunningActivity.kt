@@ -1,26 +1,27 @@
 package ink.chyk.neuqrcode.activities
 
-import android.*
-import android.content.Intent.*
+import android.Manifest
 import android.content.pm.*
-import android.net.*
 import android.os.*
 import androidx.activity.*
 import androidx.activity.compose.*
 import androidx.activity.result.*
 import androidx.activity.result.contract.*
-import androidx.browser.customtabs.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
 import androidx.core.content.*
+import androidx.lifecycle.*
 import ink.chyk.neuqrcode.ui.theme.*
+import com.tencent.smtt.sdk.*
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.tencent.mmkv.MMKV
+import ink.chyk.neuqrcode.*
 import ink.chyk.neuqrcode.R
 
 class CampusRunningActivity : ComponentActivity() {
@@ -34,6 +35,7 @@ class CampusRunningActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
 
     val url = intent.getStringExtra("url")
+    val mmkv = MMKV.defaultMMKV()
 
     // Register the launcher before the activity starts
     requestPermissionLauncher = registerForActivityResult(
@@ -45,8 +47,14 @@ class CampusRunningActivity : ComponentActivity() {
     // Check permission status initially
     checkLocationPermission()
 
+    enableEdgeToEdge()
+
     setContent {
-      CampusRunningScreen(url ?: "https://www.neu.edu.cn/")
+      if (url != null) {
+        CampusRunningScreen(url, mmkv)
+      } else {
+        ArgsErrorScreen()
+      }
     }
   }
 
@@ -65,37 +73,79 @@ class CampusRunningActivity : ComponentActivity() {
   }
 
   @Composable
-  fun CampusRunningScreen(url: String) {
+  fun CampusRunningScreen(url: String, mmkv: MMKV) {
     // Use the permission state from the activity
     val permissionGranted by remember { permissionState }
 
-    val context = LocalContext.current
+    val webViewState = remember { mutableStateOf<WebView?>(null) }
 
     AppTheme {
       Scaffold { innerPadding ->
+        val alwaysDark = mmkv.decodeBool("campus_running_always_dark", false)
+        val isDark = if (alwaysDark) true else isSystemInDarkTheme()
+
         if (permissionGranted) {
-          Text(stringResource(R.string.loading))
-
-          val customTabsIntent = CustomTabsIntent.Builder()
-            .setUrlBarHidingEnabled(true)
-            .setShowTitle(false)
-            .setStartAnimations(context, R.anim.slide_in_right, R.anim.slide_out_left)
-            .setExitAnimations(context, android.R.anim.slide_in_left, android.R.anim.slide_out_right)
-            .build()
-          customTabsIntent.intent.addFlags(FLAG_ACTIVITY_NEW_DOCUMENT)
-          customTabsIntent.launchUrl(context, Uri.parse(url))
-
-          // 退出 activity
-          finish()
+          CustomWebView(
+            url,
+            webViewState,
+            Modifier.padding(innerPadding),
+            listenBack = false,
+            finish = { finish() },
+            isDarkMode = isDark,
+          )
         } else {
           PermissionGrantScreen(Modifier.padding(innerPadding))
         }
       }
     }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleEvent = remember { mutableStateOf(Lifecycle.Event.ON_ANY) }
+
+
+    DisposableEffect(lifecycleOwner) {
+      val observer = LifecycleEventObserver { _, event ->
+        lifecycleEvent.value = event
+        when (event) {
+          Lifecycle.Event.ON_PAUSE -> webViewState.value?.onPause()
+          Lifecycle.Event.ON_RESUME -> webViewState.value?.onResume()
+          Lifecycle.Event.ON_DESTROY -> webViewState.value?.destroy()
+          else -> {}
+        }
+      }
+
+      lifecycleOwner.lifecycle.addObserver(observer)
+
+      onDispose {
+        lifecycleOwner.lifecycle.removeObserver(observer)
+        webViewState.value?.destroy()
+      }
+    }
+
+    /*
+    BackHandler {
+      if (webViewState.value?.canGoBack() == true) {
+        webViewState.value?.goBack()
+      } else {
+        webViewState.value?.destroy()
+        finish()
+      }
+    }
+     */
   }
 
   @Composable
   fun PermissionGrantScreen(modifier: Modifier = Modifier) {
+    ErrorScreen(modifier, R.string.location_permission_required, R.string.location_permission_required_content)
+  }
+
+  @Composable
+  fun ArgsErrorScreen(modifier: Modifier = Modifier) {
+    ErrorScreen(modifier, R.string.args_error, R.string.args_error_content)
+  }
+
+  @Composable
+  fun ErrorScreen(modifier: Modifier = Modifier, text1: Int, text2: Int) {
     Column(
       modifier = modifier.fillMaxSize(),
       verticalArrangement = Arrangement.Center,
@@ -107,12 +157,12 @@ class CampusRunningActivity : ComponentActivity() {
       )
       Spacer(modifier = Modifier.height(32.dp))
       Text(
-        text = stringResource(id = R.string.location_permission_required),
+        text = stringResource(text1),
         style = MaterialTheme.typography.headlineMedium,
       )
       Spacer(modifier = Modifier.height(4.dp))
       Text(
-        text = stringResource(id = R.string.location_permission_required_content),
+        text = stringResource(text2),
         textAlign = TextAlign.Center,
       )
     }

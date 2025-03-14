@@ -15,10 +15,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
+import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.*
+import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.*
 import androidx.navigation.*
@@ -52,6 +54,10 @@ fun ProfileScreen(
   val mimeType = remember { mutableStateOf<String?>(null) }
   val fileName = remember { mutableStateOf<String?>(null) }
   val context = LocalContext.current
+
+  LaunchedEffect(Unit) {
+    viewModel.refreshUserInfo()
+  }
 
   Box(
     modifier = Modifier
@@ -88,6 +94,12 @@ fun ProfileScreen(
           }
         } ${netBalance?.unit}" else null,
         clickable = false
+      )
+      RowButton(
+        iconResource = R.drawable.ic_fluent_payment_24_regular,
+        text = stringResource(R.string.recharge),
+        clickable = true,
+        onClick = { viewModel.recharge(context) }
       )
       RowButton(
         iconResource = R.drawable.ic_fluent_person_swap_24_regular,
@@ -192,10 +204,17 @@ fun ProfileHeader(
     }
 
   // 大头，学号等
+
+  var height by remember { mutableIntStateOf(0) }
+  val heightDp = with(LocalDensity.current) { height.toDp() }
+
   Row(
     modifier = Modifier
       .fillMaxWidth()
       .padding(horizontal = 16.dp)
+      .onSizeChanged {
+        height = it.height
+      }
   ) {
     if (loadComplete) {
       var avatarUrl = userInfo?.avatar
@@ -215,7 +234,7 @@ fun ProfileHeader(
           .build(),
         contentDescription = "Avatar",
         modifier = Modifier
-          .height(96.dp)
+          .height(heightDp)
           .clip(RoundedCornerShape(8.dp))
           .clickable { pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
       )
@@ -233,7 +252,9 @@ fun ProfileHeader(
           modifier = Modifier.clickable {
             clipboardManager.setText(buildAnnotatedString { userInfo?.xgh })
             Toast.makeText(context, "已复制学号", Toast.LENGTH_SHORT).show()
-          }
+          },
+          maxLines = 3,
+          overflow = TextOverflow.Ellipsis
         )
       }
     } else {

@@ -93,33 +93,28 @@ class CampusRun(
     val password = mmkv.decodeString("password")!!
     var portalTicket: String? = mmkv.decodeString("portal_ticket")
     if (portalTicket == null || reLogin) {
-      portalTicket = neu.loginPersonalTicket(studentId, password)
+      portalTicket = neu.loginPortalTicket(studentId, password)
       mmkv.encode("portal_ticket", portalTicket)
     }
     return portalTicket
   }
 
-  /**
-   * 执行请求并处理通用逻辑
-   */
-  private suspend fun executeRequest(
-    client: OkHttpClient,
-    request: Request,
-    errorMessage: String
-  ): Response {
-    return client.newCall(request).execute().also { response ->
-      if (response.code !in 200..399) {
-        throw RequestFailedException("$errorMessage: ${response.code}")
-      }
-    }
-  }
-
   suspend fun loginCampusRun() = withContext(Dispatchers.IO) {
     // 登录步道乐跑
 
-    val portalTicket = getPortalTicket()
+    var portalTicket = getPortalTicket()
 
-    campusRunTicket = neu.loginNEUAppTicket(portalTicket, callbackUrl)
+    try {
+      campusRunTicket = neu.loginNEUAppTicket(portalTicket, callbackUrl)
+    } catch (e: Exception) {
+      when (e) {
+        is TicketFailedException, is TicketExpiredException -> {
+          portalTicket = getPortalTicket(true)  // 过期了 重新登录
+          campusRunTicket = neu.loginNEUAppTicket(portalTicket, callbackUrl)
+        }
+        else -> throw e
+      }
+    }
 
     //Log.d("CampusRun", "CampusRun Ticket: $campusRunTicket")
 
@@ -132,7 +127,7 @@ class CampusRun(
       .header("User-Agent", neu.userAgent ?: "NEUQRCode")
       .build()
 
-    val res1 = executeRequest(client, req1, "登录步道乐跑失败")
+    val res1 = Utilities.executeRequest(client, req1, "登录步道乐跑失败")
 
     if (res1.code != 302) {
       Log.d("CampusRun", "Not 302: ${res1.code}")
@@ -144,7 +139,7 @@ class CampusRun(
       .header("Cookie", "Path=/; PHPSESSID=$campusRunTicket")
       .build()
 
-    val res2 = executeRequest(client, req2, "登录步道乐跑失败")
+    val res2 = Utilities.executeRequest(client, req2, "登录步道乐跑失败")
 
     val location =
       res2.header("Location") ?: throw RequestFailedException("登录步道乐跑失败: 无法获取 Location")
@@ -222,7 +217,7 @@ class CampusRun(
       .post(requestBody)
       .build()
 
-    val response = executeRequest(client, request, "请求步道乐跑 API 失败")
+    val response = Utilities.executeRequest(client, request, "请求步道乐跑 API 失败")
 
     val responseBody = response.body?.string()
       ?: throw RequestFailedException("请求步道乐跑 API 失败: 无法获取响应体")

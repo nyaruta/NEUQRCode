@@ -2,7 +2,9 @@ package ink.chyk.neuqrcode.screens
 
 import android.content.*
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material3.*
@@ -10,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.*
@@ -26,15 +29,24 @@ import java.time.format.TextStyle as TimeTextStyle
 import java.util.Locale
 import ink.chyk.neuqrcode.R
 import ink.chyk.neuqrcode.neu.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import java.time.*
+import kotlin.math.*
 
 
 @Composable
 fun CoursesScreen(
   viewModel: CoursesViewModel,
   @Suppress("UNUSED_PARAMETER")
-  navController: NavController,
+  navController: NavController,  // 没必要
   innerPadding: PaddingValues
 ) {
+  // 课程表界面
+
+  // date 状态放在最顶级组件 之后逐级传递
+  val dateState = MutableStateFlow<String>(viewModel.today)
+
   if (!viewModel.isCourseImported()) {
     return ImportCoursesSplash()
   }
@@ -46,50 +58,174 @@ fun CoursesScreen(
       .padding(16.dp),
     contentAlignment = Alignment.Center
   ) {
-    TodayCourses(viewModel)
+    TodayCourses(viewModel, dateState)
   }
 }
 
+// 早午晚图标常量
 val MORNING_ICON = R.drawable.ic_fluent_weather_sunny_24_regular
 val AFTERNOON_ICON = R.drawable.ic_fluent_weather_sunny_low_24_regular
 val EVENING_ICON = R.drawable.ic_fluent_weather_partly_cloudy_night_24_regular
 
 @Composable
-fun TodayCourses(viewModel: CoursesViewModel) {
+fun TodayCourses(
+  viewModel: CoursesViewModel,
+  dateState: MutableStateFlow<String>
+) {
   // 课表主组件
+  // 其中的 dateState 由最顶级组件传递
+
   val showWeekJumpDialog = remember { mutableStateOf(false) }
 
+  val density = LocalDensity.current
+  var width by remember { mutableIntStateOf(0) }
+  val widthDp = with(density) { width.toDp() }
+
   Column(
-    modifier = Modifier.fillMaxSize(),
-    verticalArrangement = Arrangement.SpaceBetween
+    modifier = Modifier
+      .fillMaxSize()
+      .onSizeChanged { size ->
+        width = size.width
+      }
   ) {
-    Column {
-      TodayTitle(viewModel)
-      Spacer(modifier = Modifier.height(32.dp))
-      CoursesCard(viewModel)
+    Column(
+      modifier = Modifier.weight(1f)
+    ) {
+      // 日期和每日一言
+      TodayTitle(viewModel, dateState)
+      Spacer(modifier = Modifier.height(16.dp))
+
+      // 课程卡片封装组件
+      CoursesCardOuter(viewModel, dateState, widthDp)
     }
-    DaySelector(viewModel, showJumpDialog = { showWeekJumpDialog.value = true })
+    // 底部选择器
+    DaySelector(viewModel, showJumpDialog = { showWeekJumpDialog.value = true }, dateState)
   }
 
+  // 日期跳转对话框
   if (showWeekJumpDialog.value) {
     WeekJumpDialog(
       viewModel = viewModel,
-      onDismissRequest = { showWeekJumpDialog.value = false }
+      onDismissRequest = { showWeekJumpDialog.value = false },
+      dateState = dateState
     )
   }
 }
 
 @Composable
-fun TodayTitle(viewModel: CoursesViewModel) {
-  val date by viewModel.date.collectAsState()
+fun CoursesCardOuter(
+  viewModel: CoursesViewModel,
+  dateState: MutableStateFlow<String>,
+  width: Dp,
+) {
+  // 课程卡片封装组件（左右滑动翻页）
+  val dateId by dateState.collectAsState()
+  val density = LocalDensity.current
+  val widthPx = with(density) { width.toPx() }
+  val scope = rememberCoroutineScope()
+
+  var currentDate by remember { mutableStateOf(dateId) }
+  var prevDate by remember { mutableStateOf(viewModel.prevDay(dateId)) }
+  var nextDate by remember { mutableStateOf(viewModel.nextDay(dateId)) }
+
+  var offsetX by remember { mutableFloatStateOf(0f) }
+
+  val spacingPx = with(density) { 4.dp.toPx() }
+
+  // 处理外部dateId变化
+  LaunchedEffect(dateId) {
+    if (dateId != currentDate) {
+      currentDate = dateId
+      offsetX = 0f
+    }
+  }
+
+  // 更新前后日期
+  LaunchedEffect(currentDate) {
+    prevDate = viewModel.prevDay(currentDate)
+    nextDate = viewModel.nextDay(currentDate)
+  }
+
+  val dragModifier = Modifier.draggable(
+    orientation = Orientation.Horizontal,
+    state = rememberDraggableState { delta ->
+      offsetX += delta
+    },
+    onDragStopped = { velocity ->
+      val target = when {
+        offsetX < -widthPx / 5 -> -widthPx
+        offsetX > widthPx / 5 -> widthPx
+        else -> 0f
+      }
+
+      scope.launch {
+        animate(
+          initialValue = offsetX,
+          targetValue = target,
+          /*
+          animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+          )
+          */
+          animationSpec = tween(durationMillis = 300)
+        ) { value, _ -> offsetX = value }
+
+        if (target != 0f) {
+          val newDate = if (target < 0) nextDate else prevDate
+          dateState.value = newDate
+        }
+      }
+    }
+  )
+
+  Box(
+    modifier = Modifier
+      .width(width)
+      .fillMaxHeight()
+      .then(dragModifier)
+      .clipToBounds()
+  ) {
+    // 前一页
+    CoursesCard(
+      viewModel, prevDate,
+      modifier = Modifier
+        .width(width)
+        .offset { IntOffset((offsetX - widthPx - spacingPx).roundToInt(), 0) }
+    )
+
+    // 当前页
+    CoursesCard(
+      viewModel, currentDate,
+      modifier = Modifier
+        .width(width)
+        .offset { IntOffset(offsetX.roundToInt(), 0) }
+    )
+
+    // 后一页
+    CoursesCard(
+      viewModel, nextDate,
+      modifier = Modifier
+        .width(width)
+        .offset { IntOffset((offsetX + widthPx + spacingPx).roundToInt(), 0) }
+    )
+  }
+}
+
+@Composable
+fun TodayTitle(
+  viewModel: CoursesViewModel,
+  dateState: MutableStateFlow<String>
+) {
+  val date by dateState.collectAsState()
   val quote by viewModel.quote.collectAsState()
   val ctx = LocalContext.current
 
   Text(
     ctx.getString(R.string.date).format(
-      date.slice(4..5).toInt(),
-      date.slice(6..7).toInt(),
-      viewModel.getWeekday()
+      date.slice(4..5).toInt(),  // 月
+      date.slice(6..7).toInt(),  // 日
+      viewModel.getWeekday(date)
     ),
     style = MaterialTheme.typography.headlineMedium,
     modifier = Modifier.fillMaxWidth(),
@@ -99,13 +235,18 @@ fun TodayTitle(viewModel: CoursesViewModel) {
 }
 
 @Composable
-fun CoursesCard(viewModel: CoursesViewModel) {
-  val dateId by viewModel.date.collectAsState()
-  val todayCourses = viewModel.getTodayCourses(dateId)
+fun CoursesCard(
+  viewModel: CoursesViewModel,
+  dateId: String,
+  modifier: Modifier = Modifier
+) {
+  // 课表卡片
+
+  val todayCourses = viewModel.getCoursesByDate(dateId)
   val scrollState = rememberScrollState()
 
   Card(
-    modifier = Modifier
+    modifier = modifier
       .fillMaxWidth()
       .padding(0.dp)
       .verticalScroll(scrollState),
@@ -117,9 +258,9 @@ fun CoursesCard(viewModel: CoursesViewModel) {
         .fillMaxWidth()
     ) {
       if (todayCourses.isEmpty()) {
-        NoCoursesSplash()
+        NoCoursesSplash(dateId)
       } else {
-        TodayCoursesList(todayCourses, viewModel)
+        TodayCoursesList(todayCourses)
       }
     }
   }
@@ -168,11 +309,10 @@ fun FoldInTextAnimation(quote: HitokotoQuote?) {
 @Composable
 fun TodayCoursesList(
   todayCourses: List<Course>,
-  viewModel: CoursesViewModel,
   dark: Boolean = isSystemInDarkTheme()
 ) {
   val ctx = LocalContext.current
-  var previousIcon = 0
+  var previousIcon = 0  // 用于判断是否需要显示早午晚标题
   todayCourses.forEach {
     val icon = when (it.period) {
       CoursePeriod.MORNING -> MORNING_ICON
@@ -181,10 +321,13 @@ fun TodayCoursesList(
     }
 
     if (icon != previousIcon) {
+      // 课程区间变化了，显示早午晚标题
+
       Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
       ) {
+        // 早午晚标题
         Text(
           when (it.period) {
             CoursePeriod.MORNING -> ctx.getString(R.string.morning_courses)
@@ -195,6 +338,8 @@ fun TodayCoursesList(
           modifier = Modifier.padding(vertical = 8.dp)
         )
         Spacer(modifier = Modifier.weight(1f))
+
+        // 这是一条可爱的分割线
         Surface(
           modifier = Modifier
             .height(1.dp)
@@ -220,12 +365,21 @@ fun TodayCoursesList(
           verticalAlignment = Alignment.CenterVertically,
           modifier = Modifier.weight(1f)
         ) {
-          // 保持课程时间宽度固定
+          // 课程开始和结束时间
           Column(modifier = Modifier.width(IntrinsicSize.Min)) {
-            Text(it.start)
-            Text(it.end)
+            Text(
+              it.start,
+              fontFamily = FontFamily(Font(R.font.roboto_numeric)),
+              fontWeight = FontWeight.Medium
+            )
+            Text(
+              it.end,
+              fontFamily = FontFamily(Font(R.font.roboto_numeric)),
+              fontWeight = FontWeight.Medium
+            )
           }
           Spacer(modifier = Modifier.width(8.dp))
+          // 课程颜色
           Surface(
             modifier = Modifier
               .width(4.dp)
@@ -236,12 +390,14 @@ fun TodayCoursesList(
           Spacer(modifier = Modifier.width(8.dp))
           // 使用剩余权重，截断多余文本，显示省略号
           Column(modifier = Modifier.weight(1f)) {
+            // 课程名称
             Text(
               Pangu.spacingText(it.name),
               style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 20.sp),
               maxLines = 1,
               overflow = TextOverflow.Ellipsis
             )
+            // 课程地点
             Text(
               locationToAnnotated(it.location),
               style = MaterialTheme.typography.bodyMedium,
@@ -264,22 +420,23 @@ fun TodayCoursesList(
 fun DaySelector(
   viewModel: CoursesViewModel,
   showJumpDialog: () -> Unit,
-  dark: Boolean = isSystemInDarkTheme()
+  dateState: MutableStateFlow<String>,
+  dark: Boolean = isSystemInDarkTheme(),
 ) {
   val ctx = LocalContext.current
-  val dateState by viewModel.date.collectAsState()
+  val dateId by dateState.collectAsState()
 
   Column {
     Row(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.SpaceBetween
     ) {
-      viewModel.thisWeekDates().forEach {
+      viewModel.thisWeekDates(dateId).forEach {
         // 简单解包
         val (pack1, courseCount) = it
-        val (date, dateId) = pack1
+        val (thatDate, thatDateId) = pack1
 
-        val backgroundColor = if (dateId == dateState) {
+        val backgroundColor = if (thatDateId == dateId) {
           if (dark) Color.DarkGray else Color.LightGray
         } else Color.Transparent
 
@@ -291,7 +448,7 @@ fun DaySelector(
             .clip(RoundedCornerShape(8.dp))
             .background(backgroundColor)
             .clickable {
-              viewModel.setDate(dateId)
+              dateState.value = thatDateId
             },
           contentAlignment = Alignment.Center
         ) {
@@ -299,12 +456,12 @@ fun DaySelector(
             horizontalAlignment = Alignment.CenterHorizontally
           ) {
             Text(
-              date.dayOfMonth.toString(),
+              thatDate.dayOfMonth.toString(),
               // style = MaterialTheme.typography.bodyMedium,
             )
             Text(
               "${
-                date.dayOfWeek.getDisplayName(
+                thatDate.dayOfWeek.getDisplayName(
                   TimeTextStyle.SHORT,
                   Locale.getDefault()
                 )
@@ -322,14 +479,14 @@ fun DaySelector(
     ) {
       PrevNextButton(
         icon = R.drawable.ic_fluent_chevron_left_20_filled,
-        onClick = { viewModel.prevWeek() }
+        onClick = { dateState.value = viewModel.prevWeek(dateId) }
       )
-      val thisWeekNum = viewModel.thisWeek()
+      val thisWeekNum = viewModel.thisWeek(dateId)
       Text(
         if (thisWeekNum == -1) ctx.getString(R.string.in_vacation)
         else
           ctx.getString(
-            if (viewModel.isToday()) R.string.current_week
+            if (viewModel.isToday(dateId)) R.string.current_week
             else R.string.current_week_navigated
           ).format(thisWeekNum),
 
@@ -338,10 +495,10 @@ fun DaySelector(
         }
       )
 
-      if (!viewModel.isToday()) {
+      if (!viewModel.isToday(dateId)) {
         Text(
           modifier = Modifier.clickable {
-            viewModel.backToday()
+            dateState.value = viewModel.backToday()
           },
           text = ctx.getString(R.string.week_jump_today),
           color = MaterialTheme.colorScheme.secondary,
@@ -351,7 +508,7 @@ fun DaySelector(
 
       PrevNextButton(
         icon = R.drawable.ic_fluent_chevron_right_20_filled,
-        onClick = { viewModel.nextWeek() }
+        onClick = { dateState.value = viewModel.nextWeek(dateId) }
       )
     }
   }
@@ -373,7 +530,7 @@ fun PrevNextButton(
 }
 
 @Composable
-fun NoCoursesSplash() {
+fun NoCoursesSplash(dateId: String) {
   val ctx = LocalContext.current
   Column(
     modifier = Modifier
@@ -383,7 +540,7 @@ fun NoCoursesSplash() {
   ) {
     Image(
       painter = painterResource(
-        listOf(R.drawable.neko1, R.drawable.neko2, R.drawable.neko3).random()
+        listOf(R.drawable.neko1, R.drawable.neko2, R.drawable.neko3)[dateId.hashCode().absoluteValue % 3]
       ),
       contentDescription = "No Courses",
       modifier = Modifier
@@ -459,6 +616,7 @@ fun ImportCoursesButton(modifier: Modifier = Modifier) {
 fun WeekJumpDialog(
   viewModel: CoursesViewModel,
   onDismissRequest: () -> Unit,
+  dateState: MutableStateFlow<String>
 ) {
   val datePickerState = rememberDatePickerState(
     selectableDates = object : SelectableDates {
@@ -513,7 +671,7 @@ fun WeekJumpDialog(
         ) {
           TextButton(
             onClick = {
-              viewModel.backToday()
+              dateState.value = viewModel.backToday()
               onDismissRequest()
             }
           ) {
@@ -531,7 +689,7 @@ fun WeekJumpDialog(
           TextButton(
             onClick = {
               if (viewModel.isDateInTerm(selectedDate)) {
-                viewModel.setDate(selectedDate)
+                dateState.value = selectedDate
                 onDismissRequest()
               }
             }
