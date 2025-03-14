@@ -53,11 +53,11 @@ jobs:
           path: app/debug/*.apk
 
       - name: Set up date
-        if: ${{ env.PREREL }}
+        if: ${{ env.PREREL == 'true' }}
         run: echo "DATE=$(date -u +%y.%m.%d)" >> $GITHUB_ENV
       
       - name: Delete Previous Release
-        if: ${{ env.PREREL }}
+        if: ${{ env.PREREL == 'true' }}
         run: |
           if gh release view beta &> /dev/null; then
             gh release delete beta --cleanup-tag -y
@@ -66,7 +66,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pre-release
-        if: ${{ env.PREREL }}
+        if: ${{ env.PREREL == 'true' }}
         uses: softprops/action-gh-release@v2
         with:
           files: |
